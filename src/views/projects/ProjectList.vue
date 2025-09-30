@@ -5,9 +5,9 @@
             <tbody>
                 <tr v-for="id in [1, 2, 3]" :key="id">
                     <td>
-                        <RouterLink :to="{ name: 'ProjectHome', params: { projectId: id } }">
+                        <router-link :to="{ name: 'ProjectHome', params: { projectId: id } }">
                             프로젝트 {{ id }}
-                        </RouterLink>
+                        </router-link>
                     </td>
                 </tr>
             </tbody>
@@ -15,9 +15,7 @@
     </div>
 </template>
 
-<style scoped>
-.project-table {
-    width: 100%;
-    text-align: center;
-}
-</style>
+<script setup>
+// 라우터에서 넘겨준 projectId 받기
+const props = defineProps(['projectId']) 
+</script>

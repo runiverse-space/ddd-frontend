@@ -1,26 +1,16 @@
 <template>
-  <RouterView/>
+  
+  <div class="col-md-7 py-2">
+    <RouterView />
+  </div>
+      
 </template>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
+<script setup>
+import { RouterView } from 'vue-router';
 
-nav {
-  padding: 30px;
-}
+</script>
 
-nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
 
-nav a.RouterLink-exact-active {
-  color: #42b983;
-}
+<style scoped>
 </style>

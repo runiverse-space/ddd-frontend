@@ -1,3 +1,4 @@
+<!--컴포넌트의 UI-->
 <template>
   <!-- 상단 공통 헤더 -->
   <header class="header">
@@ -31,23 +32,19 @@
         </div>
       </div>
 
-      <!-- RouterLink 컴포넌트: 페이지 전환 시 전체 새로고침 없이 SPA 방식 이동 -->
-
-      <!-- <RouterLink to="/">홈</RouterLink>
-      <RouterLink to="/explore">탐색</RouterLink>
-      <RouterLink to="/community">커뮤니티</RouterLink>
-      <RouterLink to="/project">프로젝트</RouterLink> -->
+      
     </nav>
   </header>
 </template>
 
+<!--컴포넌트의 초기화 또는 이벤트 처리-->
 <script setup>
-import { RouterLink, useRouter } from 'vue-router';
 
-const router = useRouter();
+import { RouterLink } from 'vue-router';
+
 // 회원가입 페이지로 이동
 function handleSignUp() {
-  router.push("/signup")
+
 }
 
 // 로그인 페이지로 이동
@@ -56,8 +53,11 @@ function handleLogin() {
 }
 
 </script>
+<!--컴포넌트의 스타일 정의-->
 
-<!-- <style scoped>
+<!--<style scoped>
+
+
 .header {
   /* 헤더 배경색 */
   background: #f8f8f8;
@@ -75,4 +75,5 @@ nav {
   /* 중앙 정렬 */
   justify-content: center;
 }
-</style> -->
+
+</style>-->

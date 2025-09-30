@@ -1,3 +1,16 @@
+<!--컴포넌트의 UI-->
 <template>
-    <h1>탐색 페이지</h1>
+  <div>
+    탐색
+  </div>
 </template>
+
+<!--컴포넌트의 초기화 또는 이벤트 처리-->
+<script setup>
+
+
+</script>
+<!--컴포넌트의 스타일 정의-->
+<style scoped>
+ 
+</style>
