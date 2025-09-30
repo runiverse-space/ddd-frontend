@@ -17,7 +17,7 @@
               <RouterLink class="nav-link active" aria-current="page" to="/explore">탐색</RouterLink>
             </li>
             <li class="nav-item">
-              <RouterLink class="nav-link active" aria-current="page" to="/comunity">커뮤니티</RouterLink>
+              <RouterLink class="nav-link active" aria-current="page" to="/community">커뮤니티</RouterLink>
             </li>
             <li class="nav-item">
               <RouterLink class="nav-link active" aria-current="page" to="/project">프로젝트</RouterLink>
