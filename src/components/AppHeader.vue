@@ -25,15 +25,16 @@
 
           </ul>
           <div class="d-flex">
-            <button class="btn btn-dark btn-sm m-2">회원가입</button>
-            <button class="btn btn-outline-dark btn-sm m-2">로그인</button>
+            <button class="btn btn-dark btn-sm m-2" @click="handleSignUp()">회원가입</button>
+            <button class="btn btn-outline-dark btn-sm m-2" @click="handleLogin()">로그인</button>
           </div>
         </div>
       </div>
 
       <!-- RouterLink 컴포넌트: 페이지 전환 시 전체 새로고침 없이 SPA 방식 이동 -->
 
-      <!-- <RouterLink to="/explore">탐색</RouterLink>
+      <!-- <RouterLink to="/">홈</RouterLink>
+      <RouterLink to="/explore">탐색</RouterLink>
       <RouterLink to="/community">커뮤니티</RouterLink>
       <RouterLink to="/project">프로젝트</RouterLink> -->
     </nav>
@@ -42,6 +43,16 @@
 
 <script setup>
 import { RouterLink } from 'vue-router';
+
+// 회원가입 페이지로 이동
+function handleSignUp() {
+
+}
+
+// 로그인 페이지로 이동
+function handleLogin() {
+
+}
 
 </script>
 
