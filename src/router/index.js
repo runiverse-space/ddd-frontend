@@ -11,6 +11,7 @@ import RetrospecRoutes from './RetrospecRoutes'
 import ProjectList from '@/views/projects/ProjectList.vue'
 import ProjectHome from '@/views/projects/ProjectHome.vue'
 import Signup from '@/views/users/Signup'
+import Login from '@/views/users/Login'
 
 
 /*
@@ -46,7 +47,7 @@ const routes = [
 
       { path: "signup", name: "Signup", component: Signup },
 
-      // { path: "login", name: "Login", component: Home },
+      { path: "login", name: "Login", component: Login },
       
       { path: "explore", name: "Explore", component: Explore },
       
