@@ -8,40 +8,44 @@
           <h5 class="fw-bold mb-3">개인정보입력 <span class="text-danger small">(필수입력)</span></h5>
 
           <!-- 아이디 -->
-          <div class="mb-5 text-start">
+          <div class="mb-3">
             <label class="form-label">아이디 <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" placeholder="이름을 입력합니다" />
+            <input type="text" class="form-control" placeholder="이름을 입력합니다" v-model="users.userLoginId" />
           </div>
 
           <!-- 비밀번호 -->
-          <div class="mb-5 text-start">
+          <div class="mb-3">
             <label class="form-label">비밀번호 <span class="text-danger">*</span></label>
-            <input type="password" class="form-control" placeholder="비밀번호를 입력합니다" />
+            <input type="password" class="form-control" placeholder="비밀번호를 입력합니다" v-model="users.userPassword" />
           </div>
 
           <!-- 이름 -->
-          <div class="mb-5 text-start">
+          <div class="mb-3">
             <label class="form-label">이름 <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" placeholder="이름을 입력합니다" />
+            <input type="text" class="form-control" placeholder="이름을 입력합니다" v-model="users.userName" />
           </div>
 
           <!-- 이메일 -->
-          <div class="row mb-5 text-start">
-            <div class="col">
-              <label class="form-label">이메일 <span class="text-danger">*</span></label>
-              <div class="input-group">
-                <input type="text" class="form-control" placeholder="이메일" />
-                <span class="input-group-text">@</span>
-                <input type="text" class="form-control" placeholder="직접입력" />
-                <!-- <select class="form-select">
-                <option>선택하세요</option>
-                <option>gmail.com</option>
-                <option>naver.com</option>
-                <option>daum.net</option>
-              </select> -->
-              </div>
+          <div class="mb-3">
+            <label class="form-label">이메일 <span class="text-danger">*</span></label>
+            <input type="email" class="form-control" placeholder="이메일을 입력합니다" v-model="users.userEmail" />
+          </div>
+
+          <!-- 자기 소개 -->
+          <div class="mb-3">
+            <label class="form-label">자기 소개</label>
+            <input type="text" class="form-control" placeholder="소개글을 입력하세요" v-model="users.userIntro" />
+          </div>
+
+          <div class="input-group mb-2">
+            <label for="ufAttach" class="col-sm-2 col-form-label">첨부그림</label>
+            <div class="col-sm-10">
+              <input type="file" class="form-control-file" ref="ufAttach" />
             </div>
           </div>
+
+          <!-- 기술 스택 선택 -->
+          <TagSelector label="사용 기술 스택" @tagEvent="handleTagEvent"/>
 
           <!-- 태그 -->
 
@@ -87,14 +91,18 @@
                 <label class="form-check-label" for="periodUnlimited">회원탈퇴시</label>
               </div>
             </div>
+
+            <div class="my-5 justify-content-end">
+              <button type="submit" class="btn btn-dark m-2">가입하기</button>
+              <button type="button" class="btn btn-success m-2" @click="handleReset()">재작성</button>
+            </div>
+
           </div>
         </div>
       </div>
 
-      <!-- 기술 스택 선택 -->
-      <TagSelector v-model="form.skills" label="사용 기술 스택" />
 
-      <button type="submit" class="btn btn-success mt-3">회원가입</button>
+
     </form>
   </div>
 
@@ -103,15 +111,53 @@
 <script setup>
 import { ref } from "vue";
 import TagSelector from "@/components/TagSelector.vue";
+import usersApi from "@/apis/usersApi";
 
-const form = ref({
-  username: "",
-  email: "",
-  password: "",
-  skills: [],
+// 상태 정의
+const users = ref({
+  userLoginId: "user1",
+  userPassword: "abc123!!",
+  userName: "사용자1",
+  userEmail: "user1@mycompany.com",
+  userIntro: "aaaa",
 });
 
-function handleSubmit() {
+const ufAttach = ref(null);
 
+async function handleSubmit() {
+  // 멀티파트 객체 생성
+  const formData = new FormData();
+  // 문자파트 추가
+  formData.append("userLoginId", users.value.userLoginId);
+  formData.append("userPassword", users.value.userPassword);
+  formData.append("userName", users.value.userName);
+  formData.append("userEmail", users.value.userEmail);
+  formData.append("userIntro", users.value.userIntro);
+  // 파일파트 추가
+  if (ufAttach.value.files.length !== 0) {
+    formData.append("ufAttach", ufAttach.value.files[0]);
+  }
+  // 회원가입 요청
+  try {
+    const response = await usersApi.usersCreate(formData);
+    console.log(response.data);
+    // router.back();
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+function handleReset() {
+  users.value = {
+    userLoginId: "",
+    userPassword: "",
+    userName: "",
+    userEmail: "",
+    userIntro: "",
+  }
+}
+
+function handleTagEvent() {
+  console.log("handleTagEvent() 실행");
 }
 </script>

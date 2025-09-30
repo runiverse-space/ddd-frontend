@@ -27,7 +27,7 @@
           </ul>
           <div class="d-flex">
             <button class="btn btn-dark btn-sm m-2" @click="handleSignUp()">회원가입</button>
-            <button class="btn btn-outline-dark btn-sm m-2" @click="handleLogin()">로그인</button>
+            <button class="btn active btn-sm m-2" @click="handleLogin()">로그인</button>
           </div>
         </div>
       </div>
@@ -40,16 +40,18 @@
 <!--컴포넌트의 초기화 또는 이벤트 처리-->
 <script setup>
 
-import { RouterLink } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
+
+const router = useRouter();
 
 // 회원가입 페이지로 이동
 function handleSignUp() {
-
+  router.push("/signup");
 }
 
 // 로그인 페이지로 이동
 function handleLogin() {
-
+  router.push("/login");
 }
 
 </script>
