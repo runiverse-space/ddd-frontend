@@ -1,10 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import DefaultLayout from '@/layout/DefaultLayout.vue'
 import Home from '@/views/Home.vue'
 import Explore from '@/views/Explore.vue'
 import Community from '@/views/Community.vue'
-import ProjectLayout from'@/layouts/ProjectLayout.vue'
+import ProjectLayout from'@/layout/ProjectLayout.vue'
 import ScheduleRoutes from './ScheduleRoutes'
 import KnowledgeRoutes from './KnowledgeRoutes'
 import RetrospecRoutes from './RetrospecRoutes'
