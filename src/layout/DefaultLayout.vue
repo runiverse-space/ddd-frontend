@@ -1,5 +1,6 @@
+<!--컴포넌트의 UI-->
 <template>
-    <!-- 기본 레이아웃: 홈/탐색/커뮤니티에서 공통 사용 -->
+  <!-- 기본 레이아웃: 홈/탐색/커뮤니티에서 공통 사용 -->
     <div class="default-layout">
         <AppHeader />
 
@@ -11,7 +12,15 @@
     </div>
 </template>
 
+<!--컴포넌트의 초기화 또는 이벤트 처리-->
 <script setup>
-// 공통 헤더 import
-import AppHeader from '@/components/AppHeader.vue'
+import AppHeader from '@/components/AppHeader.vue';
+import { RouterView } from 'vue-router';
+
+
+
 </script>
+<!--컴포넌트의 스타일 정의-->
+<style scoped>
+ 
+</style>

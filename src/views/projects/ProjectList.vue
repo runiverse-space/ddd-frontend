@@ -8,7 +8,12 @@
                         <router-link :to="{ name: 'ProjectHome', params: { projectId: project.projectId } }" @click="handleProjectClick(project.projectId)">
                             프로젝트 {{ project.projectId }}
                         </router-link>
+
                     </td>
+                    <td>프로젝트 타이틀:{{ project.projectTitle }}</td>
+                    <td>프로젝트 내용: {{ project.projectContent }}</td>
+                    <td>만든사람: {{ project.userId }}</td>
+                  
                 </tr>
             </tbody>
         </table>
