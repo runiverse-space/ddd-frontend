@@ -1,6 +1,6 @@
 <template>
   
-  <div class="col-md-7 py-2">
+  <div class="d-flex flex-column vh-100">
     <RouterView />
   </div>
       
