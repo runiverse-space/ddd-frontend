@@ -54,11 +54,7 @@ const routes = [
     
       { path: "project", name: "ProjectList", component: ProjectList },
       
-      {
-        path: "project", 
-        redirect: "/project/1"
-
-      },
+     
       
       {
         path: "project/:projectId",

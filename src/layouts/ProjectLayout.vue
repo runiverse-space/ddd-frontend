@@ -34,11 +34,23 @@
 
 <!--컴포넌트의 초기화 또는 이벤트 처리-->
 <script setup>
+import { onMounted, watch } from 'vue';
 import { RouterView } from 'vue-router';
 import { RouterLink } from 'vue-router';
 
 const props = defineProps(['projectId']);
 
+// 마운트 시 확인
+onMounted(() => {
+  console.log('🏗️ ProjectLayout 마운트');
+  console.log('📦 ProjectLayout - projectId:', props.projectId);
+  console.log('📦 타입:', typeof props.projectId);
+});
+
+// projectId 변경 감지
+watch(() => props.projectId, (newId, oldId) => {
+  console.log(`🔄 ProjectLayout - projectId 변경: ${oldId} → ${newId}`);
+}, { immediate: true });
 
 
 </script>
