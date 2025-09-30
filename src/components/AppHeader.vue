@@ -25,9 +25,14 @@
             </li>
 
           </ul>
-          <div class="d-flex">
+          <div class="d-flex" v-if="store.state.user === ''">
             <button class="btn btn-dark btn-sm m-2" @click="handleSignUp()">회원가입</button>
             <button class="btn active btn-sm m-2" @click="handleLogin()">로그인</button>
+          </div>
+
+          <div class="d-flex" v-if="store.state.user !== ''">
+            <!-- <button class="btn btn-dark btn-sm m-2" @click="handleSignUp()">회원가입</button> -->
+            <button class="btn active btn-sm m-2" @click="handleLogout()">로그아웃</button>
           </div>
         </div>
       </div>
@@ -41,8 +46,11 @@
 <script setup>
 
 import { RouterLink, useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 
 const router = useRouter();
+
+const store = useStore();
 
 // 회원가입 페이지로 이동
 function handleSignUp() {
@@ -52,6 +60,11 @@ function handleSignUp() {
 // 로그인 페이지로 이동
 function handleLogin() {
   router.push("/login");
+}
+
+// 로그아웃
+function handleLogout() {
+  store.dispatch("removeAuth")
 }
 
 </script>
