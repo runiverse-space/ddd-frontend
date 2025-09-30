@@ -42,11 +42,12 @@
 </template>
 
 <script setup>
-import { RouterLink } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 
+const router = useRouter();
 // 회원가입 페이지로 이동
 function handleSignUp() {
-
+  router.push("/signup")
 }
 
 // 로그인 페이지로 이동

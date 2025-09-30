@@ -22,6 +22,8 @@ import knowledgeRoutes from "./knowledgeRoutes";
 import ProjectList from "@/views/projects/ProjectList.vue";
 import ProjectHome from "@/views/projects/ProjectHome.vue";
 
+import Signup from "@/views/users/Signup";
+
 /*
 부모 라우트: 
 1) "부모 라우트"의 component 내부에는 반드시 <RouterView />가 있어야 자식(children)이 렌더링 된다
@@ -80,7 +82,9 @@ const routes = [
           ...knowledgeRoutes,
         ],
       },
+      {path: "/signup", component: Signup}
     ],
+    
   },
 ];
 
