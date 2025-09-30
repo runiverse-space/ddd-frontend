@@ -5,19 +5,19 @@
     
       <aside class="sidebar">
         <button class="btn btn-dark  btn-lg col-md-12  mt-3 pt-3 fw-bold fs-4 color-white">
-         <!-- <RouterLink :to="{ name: 'ProjectHome', params: { projectId: props.projectId } }">홈</RouterLink>-->
-          <RouterLink :to="{ name: 'ProjectHome' }">홈</RouterLink>
+         <RouterLink :to="{ name: 'ProjectHome', params: { projectId: props.projectId } }">홈</RouterLink>
+          
         </button>
 
-        <button class="btn btn-dark  btn-lg col-xxl-12  mt-3  pt-3 justify-content-center fw-bold fs-4 color-white">
+        <button class="btn btn-dark  btn-lg col-md-12  mt-3  pt-3 justify-content-center fw-bold fs-4 color-white">
         <RouterLink :to="{ name: 'ScheduleHome', params: { projectId: props.projectId } }">일정</RouterLink>
         </button>
 
-        <button class="btn btn-dark  btn-lg col-xxl-12 mt-3  pt-3 fw-bold fs-4 color-white">
+        <button class="btn btn-dark  btn-lg col-md-12 mt-3 pt-3 fw-bold fs-4 color-white">
         <RouterLink :to="{ name: 'RetrospecHome', params: { projectId: props.projectId } }">회고</RouterLink>
         </button>
 
-        <button class="btn btn-dark  btn-lg col-xxl-12 mt-3  pt-3 fw-bold fs-4 color-white">
+        <button class="btn btn-dark  btn-lg col-md-12 mt-3 pt-3 fw-bold fs-4 color-white">
         <RouterLink :to="{ name: 'KnowledgeHome', params: { projectId: props.projectId } }">지식창고</RouterLink>
         </button>
       </aside>
