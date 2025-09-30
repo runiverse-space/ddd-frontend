@@ -10,6 +10,7 @@ import KnowledgeRoutes from './KnowledgeRoutes'
 import RetrospecRoutes from './RetrospecRoutes'
 import ProjectList from '@/views/projects/ProjectList.vue'
 import ProjectHome from '@/views/projects/ProjectHome.vue'
+import Signup from '@/views/users/Signup'
 
 
 /*
@@ -42,6 +43,10 @@ const routes = [
     children: [
     
       { path: "", name: "Home", component: Home },
+
+      { path: "signup", name: "Signup", component: Signup },
+
+      // { path: "login", name: "Login", component: Home },
       
       { path: "explore", name: "Explore", component: Explore },
       
