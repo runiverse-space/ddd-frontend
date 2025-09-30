@@ -1,12 +1,7 @@
 <!--컴포넌트의 UI-->
 <template>
-  <div class="card">
-    <div class="card-header">
-      HomeView
-    </div>
-    <div class="card-body">
-     
-    </div>
+  <div>
+    탐색
   </div>
 </template>
 
