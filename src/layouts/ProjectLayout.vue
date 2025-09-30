@@ -40,18 +40,6 @@ import { RouterLink } from 'vue-router';
 
 const props = defineProps(['projectId']);
 
-// 마운트 시 확인
-onMounted(() => {
-  console.log('🏗️ ProjectLayout 마운트');
-  console.log('📦 ProjectLayout - projectId:', props.projectId);
-  console.log('📦 타입:', typeof props.projectId);
-});
-
-// projectId 변경 감지
-watch(() => props.projectId, (newId, oldId) => {
-  console.log(`🔄 ProjectLayout - projectId 변경: ${oldId} → ${newId}`);
-}, { immediate: true });
-
 
 </script>
 <!--컴포넌트의 스타일 정의-->
