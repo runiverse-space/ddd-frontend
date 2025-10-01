@@ -10,7 +10,7 @@ function knowledgeCreate(formData){
 }
 
 function knowledgeUpdate(formData){
-  return axios.post("/api/knowledge/update", formData);
+  return axios.put("/api/knowledge/update", formData);
 }
 
 function knowledgeAttachDownload(knowledgeId){
@@ -21,6 +21,11 @@ function knowledgeDetail(knowledgeId){
   return axios.get("/api/knowledge/detail", {params:{knowledgeId}});
 }
 
+function knowledgeDelete(knowledgeId){
+   return axios.delete("/api/knowledge/delete", {params:{knowledgeId}});
+}
+
+
 
 
 
@@ -29,5 +34,6 @@ export default{
   knowledgeCreate,
   knowledgeUpdate,
   knowledgeAttachDownload,
-  knowledgeDetail
+  knowledgeDetail,
+  knowledgeDelete
 }
