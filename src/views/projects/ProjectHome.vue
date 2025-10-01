@@ -80,7 +80,7 @@ async function loadProjectMembers() {
 
     try {
         console.log(`프로젝트 ${props.projectId}의 멤버 목록 조회 시작`);
-        const memberResponse = await projectApi.getProjectMembers(props.projectId);
+        const memberResponse = await projectApi.getProjectMembersList(props.projectId);
         console.log("멤버 목록:", memberResponse.data);
         if (memberResponse.data.result === 'success') {
             memberList.value = memberResponse.data.data || [];
@@ -101,7 +101,7 @@ async function loadSchedule() {
 
     try {
         console.log("스케쥴 조회 시작")
-        const response = await projectApi.getProjectSchedules(props.projectId);
+        const response = await projectApi.getProjectSchedulesList(props.projectId);
         scheduleList.value = response.data;
         if (response.data.result === 'success') {
             scheduleList.value = response.data.data || [];
