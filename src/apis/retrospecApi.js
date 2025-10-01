@@ -1,5 +1,12 @@
 import axios from "axios";
+import "./axiosConfig";
 
-export default{
-  
+function getRetrospecList(projectId) {
+  return axios.get(`/api/retrospec/project/${projectId}`);
 }
+
+function retrospecCreate(data) {
+  return axios.post(`/api/retrospec`, data);
+}
+
+export default { getRetrospecList, retrospecCreate };
