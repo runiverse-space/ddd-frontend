@@ -1,10 +1,10 @@
 <!--컴포넌트의 UI-->
 <template>
-  <!-- 기본 레이아웃: 홈/탐색/커뮤니티에서 공통 사용 -->
+    <!-- 기본 레이아웃: 홈/탐색/커뮤니티에서 공통 사용 -->
     <div class="default-layout">
         <AppHeader />
 
-        <main>
+        <main :class="['page-body', $route.meta.noPadding ? 'no-padding' : '']">
             <!-- child route를 이 위치에 렌더링 (Home/Explore/community) -->
             <RouterView />
             <!-- 홈/탐색/커뮤니티 내용 표시-->
@@ -20,7 +20,21 @@ import { RouterView } from 'vue-router';
 
 
 </script>
+
 <!--컴포넌트의 스타일 정의-->
 <style scoped>
- 
+.page-body {
+    padding: 40px 40px;
+    /* 상하좌우 여백 */
+    width: 100%;
+    /* 중앙 정렬할 경우 */
+    margin: 0 auto;
+}
+
+.page-body.no-padding {
+    padding: 0;
+    /* 홈에서는 좌우 여백 제거 */
+    max-width: 100%;
+    /* 전체 폭 사용 */
+}
 </style>
