@@ -51,6 +51,13 @@ const props = defineProps(['projectId']);
   padding: 20px;
 }
 
+.project-layout main {
+  flex: 1;
+  /* 남은 공간 모두 차지 */
+  max-width: 1200px;
+  /* 필요시 최대 폭 제한 */
+}
+
 .sidebar {
   width: 160px;
   /* 사이드바 너비 */
