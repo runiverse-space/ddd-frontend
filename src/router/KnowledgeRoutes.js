@@ -14,14 +14,14 @@ const routes = [
   },
 
   {
-    path: "KnowledgUpdate",
-    name: "KnowledgeWrite",
-    component: () => import("@/views/projects/Knowledge/KnowledgUpdate.vue"),
+    path: "KnowledgeUpdate",
+    name: "KnowledgeUpdate",
+    component: () => import("@/views/projects/Knowledge/KnowledgeUpdate.vue"),
     props: true,
   },
     {
     path: "KnowledgeDetail",
-    name: "KnowledgeWrite",
+    name: "KnowledgeDetail",
     component: () => import("@/views/projects/Knowledge/KnowledgeDetail.vue"),
     props: true,
   },
