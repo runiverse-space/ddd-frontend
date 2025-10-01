@@ -78,7 +78,7 @@ async function loadAllProjectMembers(){
     for( const project of projectList.value){
         try {
             const memberResponse = await projectApi.getProjectMembers(project.projectId);
-            project.members = memberResponse.data;
+            project.members = memberResponse.data.data;
             console.log(`프로젝트 ${project.projectId}의 멤버:`, project.members);
         
         
