@@ -3,14 +3,14 @@
   <div>
     <label class="form-label">{{ props.label }}</label>
     <div class="d-flex flex-wrap gap-2">
-      <button v-for="tag in availableTags" :key="tag" type="button" class="btn btn-sm" :class="selectedTags.includes(tag) ? 'btn-primary' : 'btn-outline-primary'" @click="toggleTag(tag)">
+      <button v-for="tag in availableTags" :key="tag" type="button" class="btn btn-sm" :class="selectedTagList.includes(tag) ? 'btn-primary' : 'btn-outline-primary'" @click="toggleTag(tag)">
         {{ tag.tagName }}
       </button>
     </div>
 
     <!-- <div class="mt-2">
       <small class="text-muted">
-        선택된 태그: <span v-if="selectedTags.length">{{ selectedTags.join(', ') }}</span>
+        선택된 태그: <span v-if="selectedTagList.length">{{ selectedTagList.join(', ') }}</span>
         <span v-else>없음</span>
       </small>
     </div> -->
@@ -22,8 +22,8 @@ import { ref, watch } from "vue";
 import tagApi from "@/apis/tagApi";
 
 let availableTags = ref(null);
-let selectedTags = ref([]);
-console.log(selectedTags);
+let selectedTagList = ref([]);
+console.log(selectedTagList);
 const props = defineProps(["label"]);
 
 // const tags = await tagApi.getTags("USER");
@@ -41,21 +41,21 @@ getUserTags();
 // const emit = defineEmits(["handleTagEvent"]);
 
 // 내부 상태
-// const selectedTags = ref([...props.modelValue]);
+// const selectedTagList = ref([...props.modelValue]);
 
 // 태그 토글 함수
 function toggleTag (tag) {
-  // console.log(structuredClone(selectedTags));
-  if (selectedTags.value.includes(tag)) {
-    selectedTags.value = selectedTags.value.filter((t) => t !== tag);
+  // console.log(structuredClone(selectedTagList));
+  if (selectedTagList.value.includes(tag)) {
+    selectedTagList.value = selectedTagList.value.filter((t) => t !== tag);
   } else {
-    selectedTags.value.push(tag);
+    selectedTagList.value.push(tag);
   }
   // emit("handleTagEvent", tag)
 }
 
 // 부모와 양방향 데이터 동기화
-watch(selectedTags, (newLength, oldLength) => {
+watch(selectedTagList, (newLength, oldLength) => {
     // emit("update:modelValue", newVal);
     console.log(structuredClone(newLength));
   }, {deep: true}
