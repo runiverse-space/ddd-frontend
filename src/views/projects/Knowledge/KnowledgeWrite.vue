@@ -83,7 +83,7 @@ async function handleSubmit() {
   }
 
   try{
-    const response= await knowledgeApi.createKnowledge(formData);
+    const response= await knowledgeApi.knowledgeCreate(formData);
     console.log(response);
     router.back();
   }catch(error){
