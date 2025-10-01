@@ -4,20 +4,27 @@ import usersApi from '@/apis/usersApi';
 
 const store = createStore({
   state: {
-    user: "",
+    userId: "",
+    userLoginId: "",
     jwt: ""
   },
   getters: {
-    getUser(state, getters, rootState, rootGetters) {
-      return state.user;
+    getUserId(state, getters, rootState, rootGetters) {
+      return state.userId;
+    },
+    getUserLoginId(state, getters, rootState, rootGetters) {
+      return state.userLoginId;
     },
     getJwt(state, getters, rootState, rootGetters) {
       return state.jwt;
     }
   },
   mutations: {
-    setUser(state, payload) {
-      state.user = payload;
+    setUserId(state, payload) {
+      state.userId = payload;
+    },
+    setUserLoginId(state, payload) {
+      state.userLoginId = payload;
     },
     setJwt(state, payload) {
       state.jwt = payload;
@@ -25,10 +32,12 @@ const store = createStore({
   },
   actions: {
     saveAuth(context, payload) {
-      context.commit("setUser", payload.userId);
+      context.commit("setUserId", payload.userId);
+      context.commit("setUserLoginId", payload.userLoginId);
       context.commit("setJwt", payload.jwt);
 
-      localStorage.setItem("user", payload.userId);
+      localStorage.setItem("userId", payload.userId);
+      localStorage.setItem("userLoginId", payload.userLoginId);
       localStorage.setItem("jwt", payload.jwt);
 
       // 헤더에 Authorization 정보 추가
@@ -36,10 +45,12 @@ const store = createStore({
     },
 
     removeAuth(context, payload) {
-      context.commit("setUser", "");
+      context.commit("setUserId", "");
+      context.commit("setUserLoginId", "");
       context.commit("setJwt", "");
 
-      localStorage.removeItem("user");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("userLoginId");
       localStorage.removeItem("jwt");
 
       // 헤더에 Authorization 정보 제거
@@ -48,11 +59,13 @@ const store = createStore({
 
     loadAuth(context, payload) {
       // 로컬 스토리지의 값 얻기
-      const user = localStorage.getItem("user") || "";
+      const userId = localStorage.getItem("userId") || "";
+      const userLoginId = localStorage.getItem("userLoginId") || "";
       const jwt = localStorage.getItem("jwt") || "";
       
       // 전역 상태값으로 저장
-      context.commit("setUser", user);
+      context.commit("setUserId", userId);
+      context.commit("setUserLoginId", userLoginId);
       context.commit("setJwt", jwt);
 
       // Axios의 공통헤더로 Authorization을 주기
