@@ -53,7 +53,7 @@
 
 <script setup>
 import projectApi from '@/apis/projectApi';
-import userprojectroleApi from '@/apis/userprojectroleApi';
+//import userprojectroleApi from '@/apis/userprojectroleApi';
 import { onMounted, ref } from 'vue';
 
 // 라우터에서 넘겨준 projectId 받기
@@ -77,7 +77,7 @@ async function loadAllProjectMembers(){
     console.log("모든 프로젝트의 멤버 목록 조회 시작")
     for( const project of projectList.value){
         try {
-            const memberResponse = await userprojectroleApi.getMemberList(project.projectId);
+            const memberResponse = await projectApi.getProjectMembers(project.projectId);
             project.members = memberResponse.data;
             console.log(`프로젝트 ${project.projectId}의 멤버:`, project.members);
         
