@@ -14,7 +14,7 @@ function knowledgeUpdate(formData){
 }
 
 function knowledgeAttachDownload(knowledgeId){
-  return axios.get("/api/knowledge/attachdownload", {params:{knowledgeId}});
+  return axios.get("/api/knowledge/attachdownload", {params:{knowledgeId},responseType:"blob"});
 }
 
 function knowledgeDetail(knowledgeId){
