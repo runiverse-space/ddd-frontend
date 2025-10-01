@@ -24,25 +24,15 @@ const store = createStore({
     }
   },
   actions: {
-    async loginAction(context, payload) {
-      try {
-        const data = payload;
-        const response = await usersApi.usersLogin(data);
-        const result = response.data;
-        console.log(result);
-        if (result.result === "success") {
-          context.commit("setUser", result.userId);
-          context.commit("setJwt", result.jwt);
+    saveAuth(context, payload) {
+      context.commit("setUser", payload.userId);
+      context.commit("setJwt", payload.jwt);
 
-          localStorage.setItem("user", result.userId);
-          localStorage.setItem("jwt", result.jwt);
+      localStorage.setItem("user", payload.userId);
+      localStorage.setItem("jwt", payload.jwt);
 
-          // 헤더에 Authorization 정보 추가
-          axiosConfig.addAuthHeader(result.jwt);
-        }
-      } catch (error) {
-        console.log(error);
-      }
+      // 헤더에 Authorization 정보 추가
+      axiosConfig.addAuthHeader(payload.jwt);
     },
 
     removeAuth(context, payload) {

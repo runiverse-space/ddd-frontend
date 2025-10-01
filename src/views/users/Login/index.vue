@@ -6,12 +6,12 @@
     <!-- 로그인 폼 -->
     <form class="w-50" @submit.prevent="handleSubmit()">
       <div class="form-floating mb-3">
-        <input type="text" class="form-control" id="loginId" v-model="loginForm.userLoginId"/>
+        <input type="text" class="form-control" id="loginId" v-model="loginForm.userLoginId" />
         <label for="loginId">아이디</label>
       </div>
 
       <div class="form-floating mb-3">
-        <input type="password" class="form-control" id="loginPw" v-model="loginForm.userPassword"/>
+        <input type="password" class="form-control" id="loginPw" v-model="loginForm.userPassword" />
         <label for="loginPw">비밀번호</label>
       </div>
 
@@ -42,8 +42,17 @@ const loginForm = ref({
 });
 
 async function handleSubmit() {
-  const data = structuredClone(loginForm.value);
-  console.log(data);
-  store.dispatch("loginAction", data);
+  try {
+    const data = structuredClone(loginForm.value);
+    const response = await usersApi.usersLogin(data);
+    const result = response.data;
+    if (result.result === "success") {
+      console.log(result);
+      store.dispatch("saveAuth", result);
+      router.push("/");
+    }
+  } catch (error) {
+    console.log(error);
+  }
 }
 </script>
