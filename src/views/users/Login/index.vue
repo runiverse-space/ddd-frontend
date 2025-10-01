@@ -126,7 +126,7 @@ async function handleSubmit() {
 }
 
 .login-btn:hover {
-  background: #000;
+  background: #6759F4;
 }
 
 .login-links {
