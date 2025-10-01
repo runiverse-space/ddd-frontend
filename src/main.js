@@ -1,12 +1,14 @@
-import { createApp } from 'vue'
-import App from './App.vue'
-import router from './router'
+import { createApp } from "vue";
+import App from "./App.vue";
+import router from "./router";
 
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.min.js';
-import store from './store'
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/js/bootstrap.min.js";
+import store from "./store";
+import "./assets/fonts.css";
+import "./assets/main.css";
 
 // 페이지를 처음 열 때 로그인 정보 불러옴
 store.dispatch("loadAuth");
 
-createApp(App).use(store).use(router).mount('#app')
+createApp(App).use(store).use(router).mount("#app");
