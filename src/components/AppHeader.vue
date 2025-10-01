@@ -25,12 +25,12 @@
             </li>
 
           </ul>
-          <div class="d-flex" v-if="store.state.user === ''">
+          <div class="d-flex" v-if="store.state.userId === ''">
             <button class="btn btn-dark btn-sm m-2" @click="handleSignUp()">회원가입</button>
             <button class="btn active btn-sm m-2" @click="handleLogin()">로그인</button>
           </div>
 
-          <div class="d-flex" v-if="store.state.user !== ''">
+          <div class="d-flex" v-if="store.state.userId !== ''">
             <!-- <button class="btn btn-dark btn-sm m-2" @click="handleSignUp()">회원가입</button> -->
             <button class="btn disabled btn-sm m-2" @click="handleEditUser()">내 정보 수정</button>
             <button class="btn active btn-sm m-2" @click="handleLogout()">로그아웃</button>
