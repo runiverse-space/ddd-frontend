@@ -32,6 +32,7 @@
 
           <div class="d-flex" v-if="store.state.user !== ''">
             <!-- <button class="btn btn-dark btn-sm m-2" @click="handleSignUp()">회원가입</button> -->
+            <button class="btn disabled btn-sm m-2" @click="handleEditUser()">내 정보 수정</button>
             <button class="btn active btn-sm m-2" @click="handleLogout()">로그아웃</button>
           </div>
         </div>
@@ -60,6 +61,11 @@ function handleSignUp() {
 // 로그인 페이지로 이동
 function handleLogin() {
   router.push("/login");
+}
+
+// 내 정보 수정 페이지로 이동
+function handleEditUser() {
+  
 }
 
 // 로그아웃
