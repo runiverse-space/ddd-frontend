@@ -9,7 +9,7 @@ function usersLogin(loginForm) {
   return axios.post("/api/users/login", loginForm);
 }
 
-function usersInfo(userId) {
+function usersDetail(userId) {
   return axios.get("/api/users/detail/id", {
     params: {userId},
   });
@@ -22,7 +22,7 @@ function ufAttachDownload(userId) {
 const usersApi = {
   usersCreate,
   usersLogin,
-  usersInfo,
+  usersDetail,
   ufAttachDownload
 };
 
