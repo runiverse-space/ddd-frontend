@@ -15,6 +15,8 @@
         <label for="loginPw">비밀번호</label>
       </div>
 
+      <span v-if="loginFail" class="text-danger">로그인 정보가 맞지 않습니다</span>
+
       <!-- 로그인 버튼 -->
       <button type="submit" class="btn btn-dark w-100 py-2 mb-3">로그인</button>
 
@@ -36,6 +38,8 @@ const router = useRouter();
 
 const store = useStore();
 
+let loginFail = ref(false);
+
 const loginForm = ref({
   userLoginId: "",
   userPassword: ""
@@ -48,8 +52,12 @@ async function handleSubmit() {
     const result = response.data;
     if (result.result === "success") {
       console.log(result);
+      loginFail.value = false;
       store.dispatch("saveAuth", result);
       router.push("/");
+    } else {
+      console.log(result);
+      loginFail.value = true;
     }
   } catch (error) {
     console.log(error);
