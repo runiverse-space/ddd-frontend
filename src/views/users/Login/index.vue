@@ -1,28 +1,26 @@
 <template>
-  <div class="container d-flex flex-column justify-content-center align-items-center vh-100">
+  <div class="login-container">
     <!-- 로고 -->
-    <h1 class="fw-bold mb-5">&lt;DDD/&gt;</h1>
+    <div class="logo-box">
+      <img src="@/assets/ddd.png" alt="DDD 로고" class="logo mb-4" />
+    </div>
 
     <!-- 로그인 폼 -->
-    <form class="w-50" @submit.prevent="handleSubmit()">
-      <div class="form-floating mb-3">
-        <input type="text" class="form-control" id="loginId" v-model="loginForm.userLoginId" />
-        <label for="loginId">아이디</label>
-      </div>
+    <form class="login-form" @submit.prevent="handleSubmit()">
+      <input type="text" placeholder="아이디" id="loginId" v-model="loginForm.userLoginId" class="login-input" />
+      <input type="password" placeholder="비밀번호" id="loginPw" v-model="loginForm.userPassword" class="login-input" />
 
-      <div class="form-floating mb-3">
-        <input type="password" class="form-control" id="loginPw" v-model="loginForm.userPassword" />
-        <label for="loginPw">비밀번호</label>
-      </div>
+      <span v-if="loginFail" class="error-msg">로그인 정보가 맞지 않습니다</span>
 
-      <span v-if="loginFail" class="text-danger">로그인 정보가 맞지 않습니다</span>
-
-      <!-- 로그인 버튼 -->
-      <button type="submit" class="btn btn-dark w-100 py-2 mb-3">로그인</button>
+      <button type="submit" class="login-btn">로그인</button>
 
       <!-- 하단 링크 -->
-      <div class="text-center small text-muted">
-        <RouterLink to="/signup" class="text-muted text-decoration-none">회원가입</RouterLink>
+      <div class="login-links">
+        <RouterLink to="/find-password" class="link">비밀번호 찾기</RouterLink>
+        <span>|</span>
+        <RouterLink to="/find-id" class="link">아이디 찾기</RouterLink>
+        <span>|</span>
+        <RouterLink to="/signup" class="link">회원가입</RouterLink>
       </div>
     </form>
   </div>
@@ -35,7 +33,6 @@ import { RouterLink, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 
 const router = useRouter();
-
 const store = useStore();
 
 let loginFail = ref(false);
@@ -51,12 +48,10 @@ async function handleSubmit() {
     const response = await usersApi.usersLogin(data);
     const result = response.data;
     if (result.result === "success") {
-      console.log(result);
       loginFail.value = false;
       store.dispatch("saveAuth", result);
       router.push("/");
     } else {
-      console.log(result);
       loginFail.value = true;
     }
   } catch (error) {
@@ -64,3 +59,90 @@ async function handleSubmit() {
   }
 }
 </script>
+
+<style scoped>
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* 폼은 중앙 */
+  justify-content: center;
+  min-height: 70vh;
+  background: #fff;
+}
+
+.logo-box {
+  width: 320px;
+  /* 폼과 동일 너비 */
+  display: flex;
+  justify-content: flex-start;
+  /* 왼쪽 정렬 */
+  margin-left: -10px;
+  margin-bottom: 40px;
+}
+
+.logo {
+  width: 180px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 380px;
+}
+
+.login-input {
+  width: 100%;
+  height: 50px;
+  padding: 0 15px;
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 15px;
+  outline: none;
+}
+
+.login-input:focus {
+  border-color: #000;
+}
+
+.error-msg {
+  color: #BB0003;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.login-btn {
+  width: 100%;
+  height: 55px;
+  background: #111;
+  color: #fff;
+  font-size: 16px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 50px;
+}
+
+.login-btn:hover {
+  background: #000;
+}
+
+.login-links {
+  display: flex;
+  gap: 25px;
+  justify-content: center;
+  font-size: 11px;
+  color: #aaa;
+}
+
+.login-links .link {
+  color: #aaa;
+  text-decoration: none;
+}
+
+.login-links .link:hover {
+  text-decoration: underline;
+}
+</style>
