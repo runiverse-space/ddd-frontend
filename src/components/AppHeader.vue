@@ -1,100 +1,155 @@
-<!--컴포넌트의 UI-->
 <template>
-  <!-- 상단 공통 헤더 -->
   <header class="header">
-    <nav class="navbar navbar-expand-lg bg-body-tertiary">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="#">&lt;DDD/&gt;</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
-          aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item">
-              <RouterLink class="nav-link active" aria-current="page" to="/">홈</RouterLink>
-            </li>
-            <li class="nav-item">
-              <RouterLink class="nav-link active" aria-current="page" to="/explore">탐색</RouterLink>
-            </li>
-            <li class="nav-item">
-              <RouterLink class="nav-link active" aria-current="page" to="/community">커뮤니티</RouterLink>
-            </li>
-            <li class="nav-item">
-              <RouterLink class="nav-link active" aria-current="page" to="/project">프로젝트</RouterLink>
-            </li>
-
-          </ul>
-          <div class="d-flex" v-if="store.state.userId === ''">
-            <button class="btn btn-dark btn-sm m-2" @click="handleSignUp()">회원가입</button>
-            <button class="btn active btn-sm m-2" @click="handleLogin()">로그인</button>
-          </div>
-
-          <div class="d-flex" v-if="store.state.userId !== ''">
-            <!-- <button class="btn btn-dark btn-sm m-2" @click="handleSignUp()">회원가입</button> -->
-            <button class="btn disabled btn-sm m-2" @click="handleEditUser()">내 정보 수정</button>
-            <button class="btn active btn-sm m-2" @click="handleLogout()">로그아웃</button>
-          </div>
-        </div>
+    <div class="header-container">
+      <!-- 왼쪽: 로고 -->
+      <div class="logo">
+        <RouterLink to="/">
+          <img src="@/assets/ddd.png" alt="DDD Logo" />
+        </RouterLink>
       </div>
 
-      
-    </nav>
+      <!-- 가운데: 메뉴 -->
+      <nav class="nav-center">
+        <RouterLink to="/">홈</RouterLink>
+        <RouterLink to="/explore">탐색</RouterLink>
+        <RouterLink to="/community">커뮤니티</RouterLink>
+        <RouterLink to="/project">프로젝트</RouterLink>
+      </nav>
+
+      <!-- 오른쪽: 버튼 -->
+      <div class="auth-buttons" v-if="store.state.userId === ''">
+        <button class="btn signup" @click="handleSignUp()">회원가입</button>
+        <button class="btn login" @click="handleLogin()">로그인</button>
+      </div>
+
+      <div class="auth-buttons" v-if="store.state.userId !== ''">
+        <button class="btn edit" @click="handleEditUser()">내 정보 수정</button>
+        <button class="btn logout" @click="handleLogout()">로그아웃</button>
+      </div>
+    </div>
   </header>
 </template>
 
-<!--컴포넌트의 초기화 또는 이벤트 처리-->
 <script setup>
-
-import { RouterLink, useRouter } from 'vue-router';
-import { useStore } from 'vuex';
+import { RouterLink, useRouter } from "vue-router";
+import { useStore } from "vuex";
 
 const router = useRouter();
-
 const store = useStore();
 
-// 회원가입 페이지로 이동
 function handleSignUp() {
   router.push("/signup");
 }
 
-// 로그인 페이지로 이동
 function handleLogin() {
   router.push("/login");
 }
 
-// 내 정보 수정 페이지로 이동
-function handleEditUser() {
-  
-}
-
-// 로그아웃
 function handleLogout() {
-  store.dispatch("removeAuth")
+  store.dispatch("removeAuth");
 }
-
 </script>
-<!--컴포넌트의 스타일 정의-->
 
-<!--<style scoped>
-
-
+<style scoped>
 .header {
-  /* 헤더 배경색 */
-  background: #f8f8f8;
-  /* 안쪽 여백 */
-  padding: 15px;
-  /* 시각적 분리 */
+  background: #fff;
   border-bottom: 1px solid #ddd;
+  padding: 20px 40px;
+  /* 헤더 위아래 여백 */
 }
 
-nav {
-  /* 가로 레이아웃 */
+.header-container {
   display: flex;
-  /* 링크 사이 간격 */
-  gap: 50px;
-  /* 중앙 정렬 */
-  justify-content: center;
+  align-items: center;
+  justify-content: space-between;
 }
 
-</style>-->
+/* 로고 */
+.logo {
+  text-decoration: none;
+  /* 밑줄 제거 */
+  cursor: pointer;
+  /* 마우스 오버 시 손가락 모양 */
+}
+
+.logo img {
+  height: 24px;
+  /* 로고 실제 크기 */
+  display: block;
+  /* 이미지 밑 여백 제거 */
+}
+
+/* 가운데 메뉴 */
+.nav-center {
+  display: flex;
+  gap: 40px;
+  font-weight: 600;
+}
+
+.nav-center a {
+  text-decoration: none;
+  color: #000;
+}
+
+.nav-center a:hover {
+  color: #6759F4;
+}
+
+/* 버튼 공통 */
+.auth-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 20px;
+  border-radius: 20px;
+  /* 둥근 모양 */
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  font-weight: 500;
+}
+
+/* 버튼별 색상 */
+.signup {
+  background: #f1f1f1;
+  color: #000;
+}
+
+.login {
+  background: #222;
+  color: #fff;
+}
+
+.edit {
+  background: #3498db;
+  color: #fff;
+}
+
+.logout {
+  background: #e74c3c;
+  color: #fff;
+}
+
+/* hover 효과 */
+.signup:hover {
+  background: #e0e0e0;
+}
+
+.login:hover {
+  background: #6759F4;
+  color: #fff;
+}
+
+.edit:hover {
+  background: #2980b9;
+}
+
+.logout:hover {
+  background: #c0392b;
+}
+</style>
