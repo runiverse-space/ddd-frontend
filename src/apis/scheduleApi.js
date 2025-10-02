@@ -2,7 +2,7 @@ import axios from "axios";
 import "./axiosConfig";
 
 function getSchedule(scheduleId) {
-  return axios.get("/api/schedule/detail");
+  return axios.get("/api/schedule/detail", {params: {scheduleId}});
 }
 
 function getProjectScheduleList(projectId){
