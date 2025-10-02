@@ -5,7 +5,7 @@
     <h3 v-if="projectInfo">{{ projectInfo.projectTitle }} - 지식 창고</h3>
     <p v-else>지식 창고</p>
      
-
+    <p><RouterLink class="btn btn-dark btn-lg" to="KnowledgeWrite">글쓰기</RouterLink></p>
 
     <div v-if="knowledgeList.length > 0" class="masonry-grid">
 
