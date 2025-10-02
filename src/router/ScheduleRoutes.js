@@ -13,12 +13,12 @@ const routes = [
     props: true,
   },
 
-  {
-    path: "schedule/:scheduleId/",
-    name: "ScheduleDetail",
-    component: () => import("@/views/projects/Schedule/ScheduleDetail.vue"),
-    props: true,
-  },
+  // {
+  //   path: "schedule/:scheduleId/",
+  //   name: "ScheduleDetail",
+  //   component: () => import("@/views/projects/Schedule/ScheduleDetail.vue"),
+  //   props: true,
+  // },
 
   {
     path: "schedule/:scheduleId/update",
