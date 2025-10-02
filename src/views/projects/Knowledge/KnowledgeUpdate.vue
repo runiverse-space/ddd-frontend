@@ -9,27 +9,29 @@
         </div>
         <div class="mb-3">
           <label for="knowledgeContent" class="form-label">내용</label>
-          <textarea class="form-control"  rows="3" v-model="knowledge.knowledgeContent"></textarea>
+          <textarea class="form-control"   style="width: 100rem; height: 200px; resize: none;" rows="3" v-model="knowledge.knowledgeContent"></textarea>
         </div>
         <div class="mb-3">
+          <LinkIcon class="need-icon"/>
           <label for="knowledgeUrl" class="form-label">URL</label>
           <input type="text" class="form-control"  v-model="knowledge.knowledgeUrl">
         </div>
         <div class="input-group mb-3">
           <div>
             <img v-if="knowledge.kfAttachoname!==null"
-                  width="200" height="150"
+                  style="width: 100%; height: auto; border-radius: 8px; object-fit: cover; max-height: 400px;"
                   :src="`${axios.defaults.baseURL}/api/knowledge/attachdownload?knowledgeId=${knowledge.knowledgeId}`"            
             />
           </div>
 
-
+        </div>
+        <div class="input-group mb-3 row">
           <div>
-          <input type="file" class="form-control" ref="kfAttach">
+            <ArchiveBoxArrowDownIcon class="need-icon" />
+            <label for="kfAttach">파일첨부</label>
           </div>
-
-          <div>
-          <label class="input-group-text" for="kfAttach">Upload</label>
+          <div class="mt-1">
+            <input type="file" class="form-control" ref="kfAttach">
           </div>
         </div>
 
@@ -53,6 +55,7 @@ import knowledgeApi from '@/apis/knowledgeApi';
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
+import { ArchiveBoxArrowDownIcon, LinkIcon } from '@heroicons/vue/24/outline';
 
 
 const route=useRoute();
@@ -113,4 +116,8 @@ getKnowledgeList(knowledgeId);
 </script>
 
 <style scoped>
+.need-icon {
+  width: 24px;
+  height: 24px;
+}
 </style>
