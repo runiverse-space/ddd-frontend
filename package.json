@@ -8,6 +8,8 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@heroicons/vue": "^2.2.0",
+    "@toast-ui/editor": "^3.2.2",
     "axios": "^1.12.2",
     "bootstrap": "^5.3.3",
     "core-js": "^3.8.3",
