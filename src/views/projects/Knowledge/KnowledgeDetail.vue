@@ -1,37 +1,124 @@
 <template>
-  <div class="row">
-
-    <div>
-      <div class="card" style="width: 18rem;">
-        <div class="card-body">
-          <div class="container-fluid">
-            <div class="row">
-              <div class="col-md-6">
-                <h5 class="card-title">{{ knowledge.knowledgeTitle }}</h5>
-                <p class="card-text">{{ knowledge.knowledgeContent }}</p>
-                <p class="card-text">{{ knowledge.knowledgeUrl }}</p>
+  <div class="container-fluid mt-4">
+    <div class="row" style="max-width: 1200px; margin: 0 auto;">
+      <!-- ✅ 왼쪽: 큰 카드 (항상 가로 배치) -->
+      <div class="col-7">
+        <!-- ✅ col-md-7 → col-7로 변경 (항상 7칸 차지) -->
+        <div class="card" style="height: 100%;">
+          <div class="card-body" style="padding: 2rem;">
+            
+            <!-- 제목 -->
+            <h5 class="card-title mb-3" style="font-size: 1.5rem; font-weight: bold;">
+              {{ knowledge.knowledgeTitle }}
+            </h5>
+            
+            <!-- 내용 -->
+            <div class="mb-3">
+              <p class="card-text" style="white-space: pre-wrap; line-height: 1.6;">
+                {{ knowledge.knowledgeContent }}
+              </p>
+            </div>
+            
+            <!-- URL -->
+            <div class="mb-3" v-if="knowledge.knowledgeUrl">
+              <div class="d-flex align-items-center">
+                <LinkIcon class="need-icon"/>
+                <span style="font-weight: 500; margin-right: 8px;"> URL</span>
+                <a :href="knowledge.knowledgeUrl" 
+                   target="_blank" 
+                   class="text-decoration-none"
+                   style="color: #0066cc; word-break: break-all;">
+                  {{ knowledge.knowledgeUrl }}
+                </a>
+              </div>
+            </div>
+            
+            <!-- 이미지 -->
+            <div class="mb-3" v-if="kfAttach != null">
+              <img 
+                :src="kfAttach" 
+                alt="첨부 이미지"
+                style="width: 100%; height: auto; border-radius: 8px; object-fit: cover; max-height: 400px;"
+              />
+            </div>
+            
+            <hr style="margin: 1.5rem 0; border-color: #e0e0e0;">
+            
+            <!-- 버튼 -->
+            <div class="d-flex justify-content-end gap-2">
+              <button class="btn btn-outline-dark btn-sm" @click="moveKnowledgeList">
+                목록
+              </button>
+              
+              <span v-if="store.state.userId == knowledge.userId">
+                <button class="btn btn-dark btn-sm" @click="updateKnowledge">
+                  수정
+                </button>
+                <button class="btn btn-danger btn-sm" @click="deleteKnowledge">
+                  삭제
+                </button>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- ✅ 오른쪽: 작은 카드 3개 (항상 가로 배치) -->
+      <div class="col-5">
+        <!-- ✅ col-md-5 → col-5로 변경 (항상 5칸 차지) -->
+        <h4> <SparklesIcon class="need-icon"/>이런 주제는 어떠신가요?</h4>
+        <span class="p-2 mb-5">등록된 태그와 관련있는 글을 추천해드립니다.</span>
+        <!-- 첫 번째 작은 카드 -->
+        <div class="card mb-3 mt-3" style="border: 1px solid #e0e0e0;">
+          <div class="card-body p-3">
+            <div class="d-flex align-items-center gap-3">
+              <!-- 썸네일 이미지 -->
+              <div style="flex-shrink: 0;">
+                <div style="width: 100px; height: 100px; background-color: #8b9196; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white;">
+                  이미지
+                </div>
+              </div>
+              <!-- 텍스트 -->
+              <div style="flex: 1;">
+                <p class="mb-0" style="font-size: 0.9rem; color: #666;">#프로젝트 주제</p>
               </div>
             </div>
           </div>
-          <div class="col-md-6">
-            <img width="200" height="150" v-if="kfAttach != null" :src="kfAttach" />
-            <hr />
+        </div>
+        
+        <!-- 두 번째 작은 카드 -->
+        <div class="card mb-3" style="border: 1px solid #e0e0e0;">
+          <div class="card-body p-3">
+            <div class="d-flex align-items-center gap-3">
+              <div style="flex-shrink: 0;">
+                <div style="width: 100px; height: 100px; background-color: #8b9196; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white;">
+                  이미지
+                </div>
+              </div>
+              <div style="flex: 1;">
+                <p class="mb-0" style="font-size: 0.9rem; color: #666;">#프로젝트 주제</p>
+              </div>
+            </div>
           </div>
-
         </div>
-        <div class="mt-3">
-          <button class="btn btn-dark btn-sm me-2" @click="moveKnowledgeList">목록</button>
-          <span>
-            <!--  <span v-if="store.state.user === knowledge.userId">  글쓴사람만 수정삭제 가능  -->
-            <button class="btn btn-dark btn-sm me-2" @click="updateKnowledge">수정</button>
-            <button class="btn btn-dark btn-sm me-2" @click="deleteKnowledge">삭제</button>
-          </span>
+        
+        <!-- 세 번째 작은 카드 -->
+        <div class="card mb-3" style="border: 1px solid #e0e0e0;">
+          <div class="card-body p-3">
+            <div class="d-flex align-items-center gap-3">
+              <div style="flex-shrink: 0;">
+                <div style="width: 100px; height: 100px; background-color: #8b9196; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white;">
+                  이미지
+                </div>
+              </div>
+              <div style="flex: 1;">
+                <p class="mb-0" style="font-size: 0.9rem; color: #666;">#프로젝트 주제</p>
+              </div>
+            </div>
+          </div>
         </div>
-
-
       </div>
     </div>
-
   </div>
 </template>
 
@@ -39,14 +126,18 @@
 <!--컴포넌트의 초기화 또는 이벤트 처리-->
 <script setup>
 import knowledgeApi from '@/apis/knowledgeApi';
+import { LinkIcon, SparklesIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-const props =defineProps(['projectId']);
+import { useStore } from 'vuex';
+const props = defineProps(['projectId']);
 
+const store = useStore();
 const route = useRoute();
 const router = useRouter();
 const knowledgeId = route.query.knowledgeId;
-console.log("-----------", knowledgeId);
+//console.log(knowledgeId);
+//console.log("---------", store.state.userId);
 
 const knowledge = ref({
   knowledgeId: "",
@@ -54,7 +145,9 @@ const knowledge = ref({
   knowledgeContent: "",
   knowledgeUrl: "",
   kfAttachoname: "",
-  kfAttachtype: ""
+  kfAttachtype: "",
+  userId: "",
+  projectId: ""
 
 })
 
@@ -64,23 +157,26 @@ const kfAttach = ref(null);
 async function getKnowledge(knowledgeId) {
   try {
     const response = await knowledgeApi.knowledgeDetail(knowledgeId);
-    console.log('요청 URL', response.knowledgeId);
-    knowledge.value = response.data.data;
-    console.log(knowledge.value);
+    console.log('요청 URL:', response.data);
 
-     if (knowledge.value.kfAttachoname != null) {
-      knowledgeAttachDownload(knowledgeId);//밑에  코드가 없으니까 await를 안써도된다. 기다릴 필요가 없으니까..awati를 붙일때는 밑에서 받아서 뭔가를 할때만 붙이면된다.
+    if (response.data.result === 'success') {
+      knowledge.value = response.data.data;
+      console.log(knowledge.value);
+      console.log(knowledge.value.userId);
+
+
+      if (knowledge.value.kfAttachoname != null) {
+        knowledgeAttachDownload(knowledgeId);
+      }
+      console.log("지식창고 개별 getKnowledge 게시물 가져오기 성공");
+    } else {
+      console.log("지식 창고 개별 페이지 조회 실패");
     }
-    //  if(knowledge.value.result==='success'){
-    //    들어오면 여기로 옮겨야한다.
-    //  }else{
-    //   console.log("지식 창고 개별 페이지 조회 실패");
-    //  }
 
   } catch (error) {
     console.log(error);
   }
-console.log("지식창고 개별 getKnowledge 게시물 가져오기 성공");
+
 }
 
 /*
@@ -90,12 +186,12 @@ getKnowledge(knowledgeId);
 
 
 
-async function knowledgeAttachDownload(knowledgeId){
+async function knowledgeAttachDownload(knowledgeId) {
   try {
     const response = await knowledgeApi.knowledgeAttachDownload(knowledgeId);
     const blob = response.data;
     kfAttach.value = URL.createObjectURL(blob);
-    console.log('knowlege첨부파일확인용: ',kfAttach.value);
+    console.log('knowlege첨부파일확인용: ', kfAttach.value);
   } catch (error) {
     console.log(error);
   }
@@ -114,16 +210,40 @@ function updateKnowledge() {
 }
 
 async function deleteKnowledge() {
-   try {
-    const response =await knowledgeApi.knowledgeDelete(knowledgeId);
-    if(response.data.result ==="success"){
+  try {
+    const response = await knowledgeApi.knowledgeDelete(knowledgeId);
+    if (response.data.result === "success") {
       router.back();
     }
-    
+
   } catch (error) {
     console.log(error);
   }
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.card {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  
+}
+.card-title {
+  color: #333;
+}
+
+.card-text {
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.btn {
+  min-width: 70px;
+ 
+}
+
+
+.need-icon {
+  width: 24px;
+  height: 24px;
+}
+</style>
