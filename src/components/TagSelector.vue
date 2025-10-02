@@ -55,9 +55,9 @@ function toggleTag (tag) {
 }
 
 // 부모와 양방향 데이터 동기화
-watch(selectedTagList, (newLength, oldLength) => {
+watch(selectedTagList, (newTagList, oldTagList) => {
     // emit("update:modelValue", newVal);
-    console.log(structuredClone(newLength));
+    console.log(structuredClone(newTagList));
   }, {deep: true}
 );
 
