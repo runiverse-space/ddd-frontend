@@ -54,7 +54,7 @@ const props = defineProps(['projectId']);
 .project-layout main {
   flex: 1;
   /* 남은 공간 모두 차지 */
-  max-width: 1200px;
+  max-width: 1600px;
   /* 필요시 최대 폭 제한 */
 }
 
