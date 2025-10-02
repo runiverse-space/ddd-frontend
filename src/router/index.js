@@ -1,18 +1,21 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from "vue-router";
 
-import DefaultLayout from '@/layout/DefaultLayout.vue'
-import Home from '@/views/Home.vue'
-import Explore from '@/views/Explore.vue'
-import Community from '@/views/Community.vue'
-import ProjectLayout from'@/layout/ProjectLayout.vue'
-import ScheduleRoutes from './ScheduleRoutes'
-import KnowledgeRoutes from './KnowledgeRoutes'
-import RetrospecRoutes from './RetrospecRoutes'
-import ProjectList from '@/views/projects/ProjectList.vue'
-import ProjectHome from '@/views/projects/ProjectHome.vue'
-import Signup from '@/views/users/Signup'
-import Login from '@/views/users/Login'
+import DefaultLayout from "@/layout/DefaultLayout.vue";
+import ProjectLayout from "@/layout/ProjectLayout.vue";
 
+import Home from "@/views/Home.vue";
+import Explore from "@/views/Explore.vue";
+import Community from "@/views/Community.vue";
+
+import ScheduleRoutes from "./ScheduleRoutes";
+import KnowledgeRoutes from "./KnowledgeRoutes";
+import RetrospecRoutes from "./RetrospecRoutes";
+
+import ProjectList from "@/views/projects/ProjectList.vue";
+import ProjectHome from "@/views/projects/ProjectHome.vue";
+
+import Signup from "@/views/users/Signup";
+import Login from "@/views/users/Login";
 
 /*
 부모 라우트: 
@@ -32,34 +35,19 @@ import Login from '@/views/users/Login'
   - 즉, <ProjectLayout projectId="123" /> 처럼 주입되므로 컴포넌트에서는 defineProps(['projectId']) 로 간단히 사용할 수 있다
 */
 
-
-
 const routes = [
   {
-   
     path: "/",
-   
     component: DefaultLayout,
-    
     children: [
-    
-      { path: "", name: "Home", component: Home },
-
+      { path: "", name: "Home", component: Home, meta: { noPadding: true } },
       { path: "signup", name: "Signup", component: Signup },
-
       { path: "login", name: "Login", component: Login },
-      
       { path: "explore", name: "Explore", component: Explore },
-      
       { path: "community", name: "Community", component: Community },
-    
       { path: "project", name: "ProjectList", component: ProjectList },
-      
-     
-      
       {
         path: "project/:projectId",
-        // 레이아웃은 ProjectLayout (좌측 사이드바 + 우측 본문)
         component: ProjectLayout,
         // props: true는 URL 파라미터(:projectId)를 자동으로 컴포넌트의 props로 전달한다
         // ProjectLayout.vue 에서 const props = defineProps(['projectId']) 로 사용
@@ -74,7 +62,6 @@ const routes = [
             // ProjectHome.vue 에서도 const props = defineProps(['projectId'])
             props: true,
           },
-          // 일정/회고/지식창고 등 프로젝트 하위 섹션 라우트를 모듈에서 불러온다(export)
           ...ScheduleRoutes,
           ...RetrospecRoutes,
           ...KnowledgeRoutes,
@@ -83,7 +70,6 @@ const routes = [
     ],
   },
 ];
-
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),

@@ -41,7 +41,7 @@
 import knowledgeApi from '@/apis/knowledgeApi';
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-
+const props =defineProps(['projectId']);
 
 const route = useRoute();
 const router = useRouter();
@@ -110,7 +110,7 @@ function moveKnowledgeList() {
 }
 
 function updateKnowledge() {
-  router.push(`KnowledgeUpdate?knowledgeId=${knowledgeId}`);
+  router.push(`/project/${props.projectId}/KnowledgeUpdate?knowledgeId=${knowledgeId}`);
 }
 
 async function deleteKnowledge() {
