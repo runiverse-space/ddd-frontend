@@ -7,9 +7,16 @@ const routes = [
   },
 
   {
-    path: "schedule/new",
+    path: "schedule/write",
     name: "ScheduleWrite",
     component: () => import("@/views/projects/Schedule/ScheduleWrite.vue"),
+    props: true,
+  },
+
+  {
+    path: "schedule/:scheduleId/",
+    name: "ScheduleDetail",
+    component: () => import("@/views/projects/Schedule/ScheduleDetail.vue"),
     props: true,
   },
 
