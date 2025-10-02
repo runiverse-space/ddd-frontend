@@ -6,52 +6,89 @@
         <!-- ✅ col-md-7 → col-7로 변경 (항상 7칸 차지) -->
         <div class="card" style="height: 100%;">
           <div class="card-body" style="padding: 2rem;">
-            
+
             <!-- 제목 -->
             <h5 class="card-title mb-3" style="font-size: 1.5rem; font-weight: bold;">
               {{ knowledge.knowledgeTitle }}
             </h5>
-            
+
             <!-- 내용 -->
             <div class="mb-3">
               <p class="card-text" style="white-space: pre-wrap; line-height: 1.6;">
                 {{ knowledge.knowledgeContent }}
               </p>
             </div>
-            
+
             <!-- URL -->
             <div class="mb-3" v-if="knowledge.knowledgeUrl">
               <div class="d-flex align-items-center">
-                <LinkIcon class="need-icon"/>
+                <LinkIcon class="need-icon" />
                 <span style="font-weight: 500; margin-right: 8px;"> URL</span>
-                <a :href="knowledge.knowledgeUrl" 
-                   target="_blank" 
-                   class="text-decoration-none"
-                   style="color: #0066cc; word-break: break-all;">
+                <a :href="knowledge.knowledgeUrl" target="_blank" class="text-decoration-none" style="color: #0066cc; word-break: break-all;">
                   {{ knowledge.knowledgeUrl }}
                 </a>
               </div>
             </div>
-            
+
             <!-- 이미지 -->
             <div class="mb-3" v-if="kfAttach != null">
-              <img 
-                :src="kfAttach" 
-                alt="첨부 이미지"
-                style="width: 100%; height: auto; border-radius: 8px; object-fit: cover; max-height: 400px;"
-              />
+              <img :src="kfAttach" alt="첨부 이미지" style="width: 100%; height: auto; border-radius: 8px; object-fit: cover; max-height: 400px;" />
             </div>
-            
+
             <hr style="margin: 1.5rem 0; border-color: #e0e0e0;">
-            
+
+            <hr style="margin: 1.5rem 0; border-color: #e0e0e0;">
+
+
+
+            <!-- ✅ 이전/다음 글 네비게이션 -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <!-- 이전 글 -->
+              <div style="flex: 1;">
+                <router-link v-if="prevKnowledge" :to="`/project/${projectId}/KnowledgeDetail?knowledgeId=${prevKnowledge.knowledgeId}`" class="text-decoration-none" style="color: #333;">
+                  <div class="d-flex align-items-center">
+                    <ArrowLeftCircleIcon class="need-icon"/>
+                    <div>
+                      <div style="font-size: 0.75rem; color: #999;">이전 글</div>
+                      <div style="font-size: 0.9rem; font-weight: 500;">{{ prevKnowledge.knowledgeTitle }}</div>
+                    </div>
+                  </div>
+                </router-link>
+                <div v-else style="color: #ccc;">
+                  <div style="font-size: 0.75rem;">이전 글</div>
+                  <div style="font-size: 0.9rem;">이전 글이 없습니다</div>
+                </div>
+              </div>
+
+
+              <!-- 다음 글 -->
+              <div style="flex: 1; text-align: right;">
+                <router-link v-if="nextKnowledge" :to="`/project/${projectId}/KnowledgeDetail?knowledgeId=${nextKnowledge.knowledgeId}`" class="text-decoration-none" style="color: #333;">
+                  <div class="d-flex align-items-center justify-content-end">
+                    <div>
+                      <div style="font-size: 0.75rem; color: #999;">다음 글</div>
+                      <div style="font-size: 0.9rem; font-weight: 500;">{{ nextKnowledge.knowledgeTitle }}</div>
+                    </div>
+                    <ArrowRightCircleIcon class="need-icon"/>
+                  </div>
+                </router-link>
+                <div v-else style="color: #ccc;">
+                  <div style="font-size: 0.75rem;">다음 글</div>
+                  <div style="font-size: 0.9rem;">다음 글이 없습니다</div>
+                </div>
+              </div>
+            </div>
+
+
+
             <!-- 버튼 -->
             <div class="d-flex justify-content-end gap-2">
               <button class="btn btn-outline-dark btn-sm" @click="moveKnowledgeList">
                 목록
               </button>
-              
+
               <span v-if="store.state.userId == knowledge.userId">
-                <button class="btn btn-dark btn-sm" @click="updateKnowledge">
+                <button class="btn btn-dark btn-sm me-1" @click="updateKnowledge">
                   수정
                 </button>
                 <button class="btn btn-danger btn-sm" @click="deleteKnowledge">
@@ -62,11 +99,13 @@
           </div>
         </div>
       </div>
-      
+
       <!-- ✅ 오른쪽: 작은 카드 3개 (항상 가로 배치) -->
       <div class="col-5">
         <!-- ✅ col-md-5 → col-5로 변경 (항상 5칸 차지) -->
-        <h4> <SparklesIcon class="need-icon"/>이런 주제는 어떠신가요?</h4>
+        <h4>
+          <SparklesIcon class="need-icon" />이런 주제는 어떠신가요?
+        </h4>
         <span class="p-2 mb-5">등록된 태그와 관련있는 글을 추천해드립니다.</span>
         <!-- 첫 번째 작은 카드 -->
         <div class="card mb-3 mt-3" style="border: 1px solid #e0e0e0;">
@@ -85,7 +124,7 @@
             </div>
           </div>
         </div>
-        
+
         <!-- 두 번째 작은 카드 -->
         <div class="card mb-3" style="border: 1px solid #e0e0e0;">
           <div class="card-body p-3">
@@ -101,7 +140,7 @@
             </div>
           </div>
         </div>
-        
+
         <!-- 세 번째 작은 카드 -->
         <div class="card mb-3" style="border: 1px solid #e0e0e0;">
           <div class="card-body p-3">
@@ -126,7 +165,7 @@
 <!--컴포넌트의 초기화 또는 이벤트 처리-->
 <script setup>
 import knowledgeApi from '@/apis/knowledgeApi';
-import { LinkIcon, SparklesIcon } from '@heroicons/vue/24/outline';
+import { ArrowLeftCircleIcon, ArrowRightCircleIcon, LinkIcon, SparklesIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
@@ -136,8 +175,8 @@ const store = useStore();
 const route = useRoute();
 const router = useRouter();
 const knowledgeId = route.query.knowledgeId;
-//console.log(knowledgeId);
-//console.log("---------", store.state.userId);
+const prevKnowledge = ref(null);
+const nextKnowledge = ref(null);
 
 const knowledge = ref({
   knowledgeId: "",
@@ -163,6 +202,10 @@ async function getKnowledge(knowledgeId) {
       knowledge.value = response.data.data;
       console.log(knowledge.value);
       console.log(knowledge.value.userId);
+
+      prevKnowledge.value = response.data.prevKnowledge;
+      nextKnowledge.value = response.data.nextKnowledge;
+
 
 
       if (knowledge.value.kfAttachoname != null) {
@@ -199,6 +242,9 @@ async function knowledgeAttachDownload(knowledgeId) {
 
 
 
+
+
+
 //여기에서 router.push( ) update로 가는 쿼리문/ knowledgeId가 넘어갈거다.
 
 function moveKnowledgeList() {
@@ -225,8 +271,9 @@ async function deleteKnowledge() {
 <style scoped>
 .card {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  
+
 }
+
 .card-title {
   color: #333;
 }
@@ -238,7 +285,7 @@ async function deleteKnowledge() {
 
 .btn {
   min-width: 70px;
- 
+
 }
 
 
