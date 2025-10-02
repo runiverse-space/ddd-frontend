@@ -20,25 +20,28 @@
           <!-- 시작 일시 -->
           <div class="mb-3">
             <label class="form-label">시작 일시 <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" placeholder="시작 일시를 입력합니다" v-model="schedule.scheduleStartDate" />
+            <input type="text" class="form-control" placeholder="yyyy-mm-dd" v-model="schedule.scheduleStartDate" />
           </div>
 
           <!-- 종료 일시 -->
           <div class="mb-3">
             <label class="form-label">종료 일시 <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" placeholder="종료 일시를 입력합니다" v-model="schedule.scheduleEndDate" />
+            <input type="text" class="form-control" placeholder="yyyy-mm-dd" v-model="schedule.scheduleEndDate" />
           </div>
 
           <!-- 초기 상태 설정 -->
           <div class="mb-3">
             <label class="form-label">초기 상태 설정</label>
-            <input type="text" class="form-control" placeholder="초기 상태를 설정하세요" v-model="schedule.scheduleStatus" />
+            <select class="form-select" v-model="schedule.scheduleStatus">
+              <option value="NOT STARTED">시작되지 않음</option>
+              <option value="IN PROGRESS">진행 중</option>
+              <option value="DONE">완료됨</option>
+            </select>
           </div>
 
           <!-- 추가 가능한 사용자(프로젝트 멤버) 조회 -->
           <p v-for="projectMember in projectMemberList" :key="projectMember">
-            <button type="button" class="btn btn-sm" :class="scheduleMemberList.includes(projectMember.userId) ? 'btn-primary' : 'btn-outline-primary'" 
-            @click="toggleScheduleMember(projectMember)">
+            <button type="button" class="btn btn-sm" :class="scheduleMemberList.includes(projectMember.userId) ? 'btn-primary' : 'btn-outline-primary'" @click="toggleScheduleMember(projectMember)">
               {{ projectMember.userLoginId }} {{ projectMember.userName }}
             </button>
           </p>
@@ -79,7 +82,7 @@ const schedule = ref({
   scheduleContent: "",
   scheduleStartDate: "",
   scheduleEndDate: "",
-  scheduleStatus: "",
+  scheduleStatus: "NOT STARTED",
 });
 
 const scheduleMemberList = ref([]);
@@ -138,8 +141,8 @@ function toggleScheduleMember(scheduleMember) {
 }
 
 watch(scheduleMemberList, (newScheduleMemberList, oldScheduleMemberList) => {
-    console.log("선택된 멤버:", structuredClone(newScheduleMemberList));
-  }, {deep: true}
+  console.log("선택된 멤버:", structuredClone(newScheduleMemberList));
+}, { deep: true }
 );
 
 function handleCancel() {
