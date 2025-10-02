@@ -40,18 +40,18 @@
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
-import { defineProps } from 'vue';
+
 import knowledgeApi from '@/apis/knowledgeApi';
 
 // const props = defineProps(["projectId"]);
-//잠시 하드 코딩타입입니다. const store = useStore();
+const store = useStore();
 const router = useRouter();
 const route = useRoute();
-// 잠시 하드 코딩타입입니다. const projectId = route.params.projectId;
+const projectId = route.params.projectId;
 
 //** 테스트용 하드코딩 (위 주석 해제하고 이 줄들 삭제)
-const userId = 45;
-const projectId = 58;
+// const userId = 45;
+// const projectId = 58;
 
 const knowledge = ref({
   knowledgeTitle:"",
@@ -72,8 +72,8 @@ async function handleSubmit() {
   formData.append("knowledgeTitle",knowledge.value.knowledgeTitle);
   formData.append("knowledgeContent",knowledge.value.knowledgeContent);
   formData.append("knowledgeUrl",knowledge.value.knowledgeUrl);
-  // formData.append("userId",store.state.user);
-  formData.append("userId",userId);
+  formData.append("userId",store.state.userId);
+  //formData.append("userId",userId);
   formData.append("projectId",projectId);// projectId는 처음부터 전달되어서 들어와야하는데 이거를 
   
   console.log("formdata: ",formData);
