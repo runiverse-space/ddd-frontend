@@ -28,7 +28,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="project in projectList" :key="project.projectId">
+                <tr v-for="project in myProjectList" :key="project.projectId">
                     <!-- 프로젝트명 -->
                     <td>
                         <router-link :to="{ name: 'ProjectHome', params: { projectId: project.projectId } }"
@@ -70,16 +70,36 @@ import { ClockIcon } from '@heroicons/vue/24/outline'
 import projectApi from '@/apis/projectApi'
 import usersApi from '@/apis/usersApi'
 import RecentProjects from './project/RecentProjects.vue'
+import { useStore } from 'vuex'
 
 // 라우터에서 넘겨준 projectId 받기
 const props = defineProps(['projectId'])
 
 const projectList = ref([]);
 
+const myProjectList = ref([]);
+
+const store = useStore();
+
 async function loadProjects() {
     try {
         const response = await projectApi.getProjectList();
         projectList.value = response.data;
+        // console.log("~~~", response.data);
+        console.log("~~~", projectList.value);
+        // let tmp;
+        // const tmp2 = [];
+        projectList.value.forEach(async project => {
+            // console.log("프로젝트 멤버 목록", (await projectApi.getProjectMembersList(project.projectId)).data.data);
+            const tmp = (await projectApi.getProjectMembersList(project.projectId)).data.data;
+            console.log("tmp", tmp);
+            const tmp2 = tmp.map(item => item.userId);
+            console.log("tmp2", tmp2);
+            if (tmp2.includes(store.state.userId)) {
+                myProjectList.value.push(project);
+            }
+        })
+        console.log("myProjectList:", myProjectList.value);
     } catch (error) {
         console.log('프로젝트 목록 조회 실패');
     }
