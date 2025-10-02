@@ -24,7 +24,7 @@
         <div class="row">
           <div class="col-sm-12 d-flex justify-content-center">
             <input type="submit" class="btn btn-dark btn-sm me-2" value="등록하기" />
-            <input type="submit" class="btn btn-dark btn-sm me-2" value="취소" @click="handleCancel" />
+            <input type="button" class="btn btn-dark btn-sm me-2" value="취소" @click="handleCancel" />
           </div>
         </div>
 
@@ -53,6 +53,9 @@ const projectId = route.params.projectId;
 // const userId = 45;
 // const projectId = 58;
 
+
+
+
 const knowledge = ref({
   knowledgeTitle:"",
   knowledgeContent:"",
@@ -67,7 +70,7 @@ const kfAttach =ref(null);
 
 //멀티 파트 객체 생성
 async function handleSubmit() {
-
+  console.log('-------------userId를 확인한다',store.state.userId);
   const formData = new FormData();
   formData.append("knowledgeTitle",knowledge.value.knowledgeTitle);
   formData.append("knowledgeContent",knowledge.value.knowledgeContent);
@@ -84,6 +87,7 @@ async function handleSubmit() {
 
   try{
     const response= await knowledgeApi.knowledgeCreate(formData);
+
     console.log(response);
     router.back();
   }catch(error){
