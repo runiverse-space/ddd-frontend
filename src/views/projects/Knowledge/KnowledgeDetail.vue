@@ -45,7 +45,7 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
               <!-- 이전 글 -->
               <div style="flex: 1;">
-                <router-link v-if="prevKnowledge" :to="`/project/${projectId}/KnowledgeDetail?knowledgeId=${prevKnowledge.knowledgeId}`" class="text-decoration-none" style="color: #333;">
+                <RouterLink v-if="prevKnowledge" :to="`/project/${projectId}/KnowledgeDetail?knowledgeId=${prevKnowledge.knowledgeId}`" class="text-decoration-none" style="color: #333;">
                   <div class="d-flex align-items-center">
                     <ArrowLeftCircleIcon class="need-icon"/>
                     <div>
@@ -53,7 +53,7 @@
                       <div style="font-size: 0.9rem; font-weight: 500;">{{ prevKnowledge.knowledgeTitle }}</div>
                     </div>
                   </div>
-                </router-link>
+                </RouterLink>
                 <div v-else style="color: #ccc;">
                   <div style="font-size: 0.75rem;">이전 글</div>
                   <div style="font-size: 0.9rem;">이전 글이 없습니다</div>
@@ -63,7 +63,7 @@
 
               <!-- 다음 글 -->
               <div style="flex: 1; text-align: right;">
-                <router-link v-if="nextKnowledge" :to="`/project/${projectId}/KnowledgeDetail?knowledgeId=${nextKnowledge.knowledgeId}`" class="text-decoration-none" style="color: #333;">
+                <RouterLink v-if="nextKnowledge" :to="`/project/${projectId}/KnowledgeDetail?knowledgeId=${nextKnowledge.knowledgeId}`" class="text-decoration-none" style="color: #333;">
                   <div class="d-flex align-items-center justify-content-end">
                     <div>
                       <div style="font-size: 0.75rem; color: #999;">다음 글</div>
@@ -71,7 +71,7 @@
                     </div>
                     <ArrowRightCircleIcon class="need-icon"/>
                   </div>
-                </router-link>
+                </RouterLink>
                 <div v-else style="color: #ccc;">
                   <div style="font-size: 0.75rem;">다음 글</div>
                   <div style="font-size: 0.9rem;">다음 글이 없습니다</div>
@@ -166,8 +166,8 @@
 <script setup>
 import knowledgeApi from '@/apis/knowledgeApi';
 import { ArrowLeftCircleIcon, ArrowRightCircleIcon, LinkIcon, SparklesIcon } from '@heroicons/vue/24/outline';
-import { ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, watch } from 'vue';
+import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 const props = defineProps(['projectId']);
 
@@ -206,7 +206,10 @@ async function getKnowledge(knowledgeId) {
       prevKnowledge.value = response.data.prevKnowledge;
       nextKnowledge.value = response.data.nextKnowledge;
 
-
+      console.log(prevKnowledge.value);
+      console.log(nextKnowledge.value);
+      
+      kfAttach.value = null;
 
       if (knowledge.value.kfAttachoname != null) {
         knowledgeAttachDownload(knowledgeId);
@@ -240,7 +243,13 @@ async function knowledgeAttachDownload(knowledgeId) {
   }
 }
 
-
+watch(()=>route.query.knowledgeId,(newKnowledgeId,oldKnowledgeId)=>{
+  getKnowledge(newKnowledgeId);
+},
+{
+   immediate: true  // 컴포넌트 마운트 시 즉시 실행
+}
+)
 
 
 
