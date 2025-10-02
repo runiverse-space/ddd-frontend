@@ -45,7 +45,7 @@
           </div>
 
           <!-- 기술 스택 선택 -->
-          <TagSelector label="사용 기술 스택" @tagEvent="handleTagEvent"/>
+          <TagSelector label="사용 기술 스택" @tagEvent="handleTagEvent()"/>
 
           <!-- 태그 -->
 
