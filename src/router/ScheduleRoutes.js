@@ -12,6 +12,13 @@ const routes = [
     component: () => import("@/views/projects/Schedule/ScheduleWrite.vue"),
     props: true,
   },
+
+  {
+    path: "schedule/:scheduleId/update",
+    name: "ScheduleUpdate",
+    component: () => import("@/views/projects/Schedule/ScheduleUpdate.vue"),
+    props: true
+  }
 ];
 
 export default routes;

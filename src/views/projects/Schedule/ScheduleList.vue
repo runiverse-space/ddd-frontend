@@ -22,7 +22,7 @@
           <td>{{ formatDate(schedule.scheduleEndDate) }}</td>
           <td>{{ schedule.scheduleStatus }}</td>
           <td><span v-for="user in schedule.users" :key="user.userId">{{ user.userName }}&nbsp;&nbsp;</span></td>
-          <td><button class="btn btn-warning btn-sm" @click="handleUpdate()">수정</button></td>
+          <td><button class="btn btn-warning btn-sm" @click="handleUpdate(schedule.scheduleId)">수정</button></td>
         </tr>
 
       </tbody>
@@ -73,24 +73,23 @@ async function loadScheduleMember(scheduleId) {
   try {
     const response = await scheduleApi.getScheduleMemberList(scheduleId);
     const result = response.data;
-    // console.log(result.users);
-    return result.users;
+    return result.data;
   } catch (error) {
     console.log(error);
-  }
-}
-
-async function handleUpdate() {
-  try {
-    1;
-  } catch (error) {
-    console.log(error)
   }
 }
 
 async function handleWrite() {
   try {
     router.push(`/project/${route.params.projectId}/schedule/new`);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+async function handleUpdate(scheduleId) {
+  try {
+    router.push(`/project/${props.projectId}/schedule/${scheduleId}/update`);
   } catch (error) {
     console.log(error);
   }

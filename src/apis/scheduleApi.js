@@ -17,9 +17,14 @@ function scheduleCreate(schedule) {
   return axios.post("/api/schedule/create", schedule);
 }
 
+function scheduleUpdate(schedule) {
+  return axios.put("/api/schedule/update", schedule);
+}
+
 export default{
   getSchedule,
   getProjectScheduleList,
   getScheduleMemberList,
-  scheduleCreate
+  scheduleCreate,
+  scheduleUpdate
 }
