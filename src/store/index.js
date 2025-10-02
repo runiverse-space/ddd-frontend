@@ -32,7 +32,7 @@ const store = createStore({
   },
   actions: {
     saveAuth(context, payload) {
-      context.commit("setUserId", payload.userId);
+      context.commit("setUserId", Number(payload.userId));
       context.commit("setUserLoginId", payload.userLoginId);
       context.commit("setJwt", payload.jwt);
 
@@ -64,7 +64,7 @@ const store = createStore({
       const jwt = localStorage.getItem("jwt") || "";
       
       // 전역 상태값으로 저장
-      context.commit("setUserId", userId);
+      context.commit("setUserId", Number(userId));
       context.commit("setUserLoginId", userLoginId);
       context.commit("setJwt", jwt);
 
