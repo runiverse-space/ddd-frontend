@@ -3,22 +3,48 @@
   <button class="btn btn-dark btn-sm m-2" @click="handleWrite()">새 일정 작성</button>
   <div class="row">
     <!-- 상태별 칼럼 -->
-    <div v-for="status in statuses" :key="status" class="col-md-4">
-      <div class="card shadow-sm">
-        <div class="card-header text-center fw-bold">
-          {{ statusLabels[status] }}
+    <div v-for="status in statuses" :key="status" class="col-md-4 ">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header text-center fw-bold bg-light">
+          <span class="badge me-2" :class="{
+            'bg-secondary': status === 'NOT STARTED',
+            'bg-primary': status === 'IN PROGRESS',
+            'bg-success': status === 'DONE'
+          }">●{{ statusLabels[status] }}</span>
+
         </div>
 
         <!-- 드래그 가능 리스트 -->
         <VueDraggableNext v-model="schedulesByStatus[status]" group="schedules" @end="onDragEnd($event)"
-          :data-status="status" tag="ul">
-          <li v-for="schedule in schedulesByStatus[status]" :key="schedule.scheduleId">
-            <div class="border-dark">
-              <div><small>{{ formatDate(schedule.scheduleStartDate) }}~{{ formatDate(schedule.scheduleEndDate)
-              }}</small></div>
-              <a href="#" class="text-primary" @click.prevent="openModal(schedule)">{{ schedule.scheduleTitle }}</a>
+          :data-status="status" tag="div" class="p-2">
+          <div v-for="schedule in schedulesByStatus[status]" :key="schedule.scheduleId"
+            class="card m-2 shadow-sm border-0">
+            <div class="card-body p-2">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="text-muted small">
+                    <i class="bi bi-calendar-event">
+                      {{ formatDate(schedule.scheduleStartDate) }}~{{ formatDate(schedule.scheduleEndDate) }}
+                    </i>
+                  </div>
+                </div>
+
+              </div>
+              <a href="#" class="fw-bold text-decoration-none text-dark" @click.prevent="openModal(schedule)">
+                {{ schedule.scheduleTitle }}
+              </a>
+              <!-- 일정 멤버의 프로필 사진 -->
+              <div v-for="user in schedule.users" :key="user.userId" class="d-inline-block me-1">
+                <div v-if="user.profileUrl">
+                  <img :src="user.profileUrl" class="rounded-circle" width="20" height="20" />
+                </div>
+                <div v-else class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
+                  style="width: 30px; height: 30px; font-size: 14px;">
+                  {{ user.userName.charAt(0) }}
+                </div>
+              </div>
             </div>
-          </li>
+          </div>
         </VueDraggableNext>
 
       </div>
@@ -153,6 +179,8 @@ const userProjectRoleList = ref([]);
 
 const scheduleMemberList = ref([]);
 
+const scheMemberPhotoList = ref([]);
+
 const statuses = ["NOT STARTED", "IN PROGRESS", "DONE"];
 
 const statusLabels = {
@@ -186,7 +214,18 @@ async function loadSchedule() {
       schedulesByStatus["IN PROGRESS"] = [];
       schedulesByStatus["DONE"] = [];
 
-      scheduleList.value.forEach(schedule => {
+      scheduleList.value.forEach(async schedule => {
+        schedule.users = await loadScheduleMembers(schedule.scheduleId);
+        // schedu
+        for (const user of schedule.users) {
+          try {
+            const res = await usersApi.ufAttachDownload(user.userId);
+            const blob = new Blob([res.data], { type: res.headers['content-type'] });
+            user.profileUrl = URL.createObjectURL(blob);
+          } catch {
+            user.profileUrl = null; // 이미지 없으면 기본 아바타 표시 가능
+          }
+        }
         if (schedulesByStatus[schedule.scheduleStatus]) {
           schedulesByStatus[schedule.scheduleStatus].push(schedule);
         }
