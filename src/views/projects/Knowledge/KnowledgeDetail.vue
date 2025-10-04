@@ -37,9 +37,82 @@
 
             <hr style="margin: 1.5rem 0; border-color: #e0e0e0;">
 
-            <hr style="margin: 1.5rem 0; border-color: #e0e0e0;">
+
+            <!--댓글 영역 -->
+
+            <div class="mb-4">
+              <h6 class="mb-3" style="font-weight: bold; font-size: 1.1rem;">
+                댓글 개수: {{ knowledgeCommentList.length }}
+              </h6>
+
+              <!-- 댓글 목록-->
+              <div v-if="knowledgeCommentList.length > 0" class="mb-4">
+                <div v-for="comment in knowledgeCommentList" :key="comment.knowledgeCommentId" class="comment-item p-3 mb-3"
+                  style="background-color: #f8f9fa; border-radius: 8px; border-left: 3px solid #6c757d;">
+
+                  <!-- 댓글 헤더 (작성자, 날짜)-->
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                      <!-- 작성자 아이콘
+                      <div
+                        style="width: 32px; height: 32px; background-color: #6c757d; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                        {{ comment.userId ? comment.userId.substring(0, 1).toUpperCase() : 'U' }}
+                      </div>
+-->
+                      <!-- 작성자 아이디-->
+                      <span style="font-weight: 500; font-size: 0.95rem;">
+                        {{ '사용자' + comment.userId }}
+                      </span>
+                      <!-- 작성자 표시-->
+                      <span v-if="comment.userId === knowledge.userId" class="badge bg-primary" style="font-size: 0.7rem;">
+                        작성자
+                      </span>
+                    </div>
+
+                    <!-- 작성 날짜-->
+                    <span style="font-size: 0.85rem; color: #6c757d;">
+                      {{ formatDate(comment.knowledgeCommentCreatedAt) }}
+                    </span>
+                  </div>
+
+                  <!--댓글 내용-->
+                  <div style="padding-left: 40px;">
+                    <p style="margin: 0; white-space: pre-wrap; line-height: 1.6; color: #333;">
+                      {{ comment.knowledgeCommentContent }}
+                    </p>
+                  </div>
+                  <!--댓글 수정/ 삭제 본인 댓글만-->
+                  <div v-if="store.state.userId === comment.userId" class="d-flex gap-2 mt-2" style="padding-left: 40px;">
+                    <button class="btn btn-sm btn-outline-secondary" style="font-size: 0.8rem;">
+                      수정
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" style="font-size: 0.8rem;">
+                      삭제
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+               <!-- 댓글이 없을때 -->
+                   <div v-else class="text-center p-4" style="background-color: #f8f9fa; border-radius: 8px;">
+                      <p style="color: #6c757d; margin: 0;">첫 번째 댓글을 작성해보세요! 💬</p>
+                   </div>
+
+              <!--댓글 작성 영역 -->
+
+              <div class="mb-4">
+                <label for="knowledgeCommentContent" class="form-label">댓글</label>
+                <textarea class="form-control" style="width: 100%; height: 120px; resize: none;" rows="3" placeholder="댓글을 입력하세요..." v-model="knowledgeComment.knowledgeCommentContent">
+                  </textarea>
+                <div class="d-flex justify-content-end">
+                  <button class="btn btn-dark btn-sm mt-2" @click="createComment">등록</button>
+
+                </div>
+              </div>
 
 
+
+            </div>
 
             <!-- ✅ 이전/다음 글 네비게이션 -->
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -47,7 +120,7 @@
               <div style="flex: 1;">
                 <RouterLink v-if="prevKnowledge" :to="`/project/${projectId}/KnowledgeDetail?knowledgeId=${prevKnowledge.knowledgeId}`" class="text-decoration-none" style="color: #333;">
                   <div class="d-flex align-items-center">
-                    <ArrowLeftCircleIcon class="need-icon"/>
+                    <ArrowLeftCircleIcon class="need-icon" />
                     <div>
                       <div style="font-size: 0.75rem; color: #999;">이전 글</div>
                       <div style="font-size: 0.9rem; font-weight: 500;">{{ prevKnowledge.knowledgeTitle }}</div>
@@ -69,13 +142,10 @@
                       <div style="font-size: 0.75rem; color: #999;">다음 글</div>
                       <div style="font-size: 0.9rem; font-weight: 500;">{{ nextKnowledge.knowledgeTitle }}</div>
                     </div>
-                    <ArrowRightCircleIcon class="need-icon"/>
+                    <ArrowRightCircleIcon class="need-icon" />
                   </div>
                 </RouterLink>
-                <div v-else style="color: #ccc;">
-                  <div style="font-size: 0.75rem;">다음 글</div>
-                  <div style="font-size: 0.9rem;">다음 글이 없습니다</div>
-                </div>
+
               </div>
             </div>
 
@@ -158,6 +228,24 @@
         </div>
       </div>
     </div>
+
+
+    <div class="modal fade" id="fadeModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="fadeModal"> 댓글 등록 성공</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <CheckBadgeIcon class="need-icon" />
+            {{ modalMessage }}
+          </div>
+
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -165,10 +253,12 @@
 <!--컴포넌트의 초기화 또는 이벤트 처리-->
 <script setup>
 import knowledgeApi from '@/apis/knowledgeApi';
-import { ArrowLeftCircleIcon, ArrowRightCircleIcon, LinkIcon, SparklesIcon } from '@heroicons/vue/24/outline';
+import knowledgeCommentApi from '@/apis/knowledgeCommentApi';
+import { ArrowLeftCircleIcon, ArrowRightCircleIcon, CheckBadgeIcon, LinkIcon, SparklesIcon } from '@heroicons/vue/24/outline';
 import { ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
+import * as bootstrap from 'bootstrap';
 const props = defineProps(['projectId']);
 
 const store = useStore();
@@ -177,6 +267,7 @@ const router = useRouter();
 const knowledgeId = route.query.knowledgeId;
 const prevKnowledge = ref(null);
 const nextKnowledge = ref(null);
+const modalMessage = ref('');
 
 const knowledge = ref({
   knowledgeId: "",
@@ -189,6 +280,15 @@ const knowledge = ref({
   projectId: ""
 
 })
+//입력용
+const knowledgeComment = ref({
+  knowledgeId: "",
+  userId: "",
+  knowledgeCommentContent: ""
+});
+
+//목록용
+const knowledgeCommentList = ref([]);
 
 const kfAttach = ref(null);
 
@@ -208,7 +308,7 @@ async function getKnowledge(knowledgeId) {
 
       console.log(prevKnowledge.value);
       console.log(nextKnowledge.value);
-      
+
       kfAttach.value = null;
 
       if (knowledge.value.kfAttachoname != null) {
@@ -243,19 +343,114 @@ async function knowledgeAttachDownload(knowledgeId) {
   }
 }
 
-watch(()=>route.query.knowledgeId,(newKnowledgeId,oldKnowledgeId)=>{
+watch(() => route.query.knowledgeId, (newKnowledgeId, oldKnowledgeId) => {
   getKnowledge(newKnowledgeId);
 },
-{
-   immediate: true  // 컴포넌트 마운트 시 즉시 실행
-}
+  {
+    immediate: true  // 컴포넌트 마운트 시 즉시 실행
+  }
 )
 
+// getKnowledge(knowledgeId);
+getKnowledgeCommentList(knowledgeId);
 
+/*
+  여기 부터 댓글 게시판 관련 function ▼
+*/
+
+//댓글 게시판 글쓰기
+async function createComment() {
+
+  try {
+
+    knowledgeComment.value.knowledgeId = knowledgeId;
+    knowledgeComment.value.userId = store.state.userId;
+
+    const data = structuredClone(knowledgeComment.value);
+    console.log(data);
+
+    const response = await knowledgeCommentApi.knowledgeCommentCreate(data);
+    console.log("response의 값", response.data);
+
+    if (response.data !== null) {
+      knowledgeComment.value.knowledgeCommentContent = "";
+
+      showModal('댓글 등록에 성공했습니다.');
+    }
+    await getKnowledgeCommentList(knowledgeId);
+
+  } catch (error) {
+    console.log(error);
+    showModal('댓글 등록에 실패했습니다.');
+  }
+
+}
+
+//댓글 목록
+async function getKnowledgeCommentList(knowledgeId) {
+  try {
+    console.log("댓글 목록 가져오기 도전: ", knowledgeId);
+    const response = await knowledgeCommentApi.knowledgeCommentList(knowledgeId);
+    //전체 응답
+    console.log("응답 전체:", response.data);
+    if (response.data.result === 'success') {
+      // 백엔드가 commentList로 보냄
+      knowledgeCommentList.value = response.data.commentList;
+
+      console.log("댓글 조회 성공");
+      console.log("댓글 개수:", knowledgeCommentList.value.length);
+      console.log("댓글 데이터:", knowledgeCommentList.value);
+    } else {
+      knowledgeCommentList.value = [];
+    }
+
+  } catch (error) {
+    console.error("댓글 조회 에러:", error);
+    if (error.response) {
+      console.error("서버 응답:", error.response.data);
+      console.error("상태 코드:", error.response.status);
+    }
+    knowledgeCommentList.value = [];
+  }
+}
+
+// 날짜 포맷 함수
+function formatDate(dateString) {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now - date;
+
+  // 1분 미만
+  if (diff < 60000) return '방금 전';
+  // 1시간 미만
+  if (diff < 3600000) return Math.floor(diff / 60000) + '분 전';
+  // 24시간 미만
+  if (diff < 86400000) return Math.floor(diff / 3600000) + '시간 전';
+  // 7일 미만
+  if (diff < 604800000) return Math.floor(diff / 86400000) + '일 전';
+
+  // 그 외: 날짜 표시
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}.${month}.${day}`;
+}
+
+
+//모달창 만들기
+
+function showModal(message) {
+  modalMessage.value = message;
+  const modalElement = document.getElementById('fadeModal');
+  const modal = new bootstrap.Modal(modalElement);
+  modal.show();
+}
 
 
 //여기에서 router.push( ) update로 가는 쿼리문/ knowledgeId가 넘어갈거다.
-
 function moveKnowledgeList() {
   router.push("KnowledgeList");
 }
@@ -301,5 +496,14 @@ async function deleteKnowledge() {
 .need-icon {
   width: 24px;
   height: 24px;
+}
+
+.comment-item {
+  transition: all 0.2s ease;
+}
+
+.comment-item:hover {
+  background-color: #e9ecef !important;
+  transform: translateX(2px);
 }
 </style>
