@@ -262,6 +262,16 @@
             <CheckBadgeIcon class="need-icon" />
             {{ modalMessage }}
           </div>
+          
+          <div v-if="modalType ==='confirm'" class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              취소
+            </button>
+            <button type="button" class="btn btn-danger" @click="confirmAction" data-bs-dismiss="modal">
+              확인
+            </button>
+          </div>
+
 
         </div>
       </div>
@@ -290,6 +300,10 @@ const knowledgeId = route.query.knowledgeId;
 const prevKnowledge = ref(null);
 const nextKnowledge = ref(null);
 const modalMessage = ref('');
+const modalTitle = ref('알림');
+const modalType = ref('alert');  // 'alert' 또는 'confirm'
+const modalCallback = ref(null);
+
 
 const knowledge = ref({
   knowledgeId: "",
@@ -547,30 +561,62 @@ async function deleteKnowledgeComment(knowledgeCommentId) {
   //삭제하기 
   //삭제 버튼 눌렀을때 삭제 확인용 모달-> 확인 누르면 삭제함수 백엔드로 보낸다.
 
+  showModal(
+    '해당 댓글을 삭제하시겠습니까?',
+    '댓글 삭제',
+    'confirm',
+    async () => {
+      // 확인 버튼 클릭 시 실행될 함수
+      try {
+        const response = await knowledgeCommentApi.knowledgeCommentDelete(knowledgeCommentId);
 
+        console.log("---------response에 뭐가 들어오나",response.data);
+        console.log("타입:", typeof response.data);
 
-  try {
-    const response = await knowledgeCommentApi.knowledgeCommentDelete(knowledgeCommentId);
+        let result = response.data;
+        if(typeof response.data ==='string'){
+          result=JSON.parse(response.data);
+        }
 
-    console.log('삭제 요청 결과', response.data);
-    showModal('댓글이 삭제되었습니다.');
-    await getKnowledgeCommentList(knowledgeId);
-  } catch (error) {
-    console.log(error);
-    showModal('댓글 삭제에 실패했습니다.');
-  }
+         console.log("파싱된 결과:", result);
 
+        if (result.result === 'success') {
+          
+          await getKnowledgeCommentList(knowledgeId);
 
+          setTimeout(() => {
+            showModal('댓글이 삭제되었습니다.');
+          }, 300);
+
+        }
+      } catch (error) {
+        console.error("댓글 삭제 에러:", error);
+        showModal('댓글 삭제에 실패했습니다.');
+      }
+    }
+  );
 }
 
 
 //모달창 만들기
 
-function showModal(message) {
+function showModal(message, title = '알림', type = 'alert', callback = null) {
+  modalTitle.value = title;
   modalMessage.value = message;
+  modalType.value = type;
+  modalCallback.value = callback;
+
+  
   const modalElement = document.getElementById('fadeModal');
   const modal = new bootstrap.Modal(modalElement);
   modal.show();
+}
+
+//확인 버튼 클릭시 실행
+function confirmAction() {
+  if (modalCallback.value) {
+    modalCallback.value();  // 콜백 함수 실행
+  }
 }
 
 
