@@ -10,7 +10,7 @@
           <!-- 아이디 -->
           <div class="mb-3">
             <label class="form-label">아이디 <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" placeholder="이름을 입력합니다" v-model="users.userLoginId" />
+            <input type="text" class="form-control" placeholder="아이디를 입력합니다" v-model="users.userLoginId" />
           </div>
 
           <!-- 비밀번호 -->
