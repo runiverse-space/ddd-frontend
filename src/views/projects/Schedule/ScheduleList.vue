@@ -1,5 +1,5 @@
 <template>
-  <h3 class="mb-4">프로젝트 {{ props.projectId }} 일정</h3>
+  <h3 v-if="projectInfo">{{ projectInfo.projectTitle }} - 일정</h3>
   <button class="btn btn-dark btn-sm m-2" @click="handleWrite()">새 일정 작성</button>
   <div class="row">
     <!-- 상태별 칼럼 -->
@@ -157,29 +157,22 @@ import projectApi from '@/apis/projectApi';
 import scheduleApi from '@/apis/scheduleApi';
 import usersApi from '@/apis/usersApi';
 import { Modal } from 'bootstrap';
-import { reactive } from 'vue';
+import { onMounted, reactive } from 'vue';
 import { ref } from 'vue';
 import { VueDraggableNext } from 'vue-draggable-next';
 import { useRoute, useRouter } from 'vue-router';
-import { useStore } from 'vuex';
 
 const props = defineProps(['projectId']);
-
-const store = useStore();
 
 const router = useRouter();
 
 const route = useRoute();
 
 const scheduleList = ref([]);
-
+const projectInfo = ref(null);
 const projectMemberList = ref([]);
-
 const userProjectRoleList = ref([]);
-
 const scheduleMemberList = ref([]);
-
-const scheMemberPhotoList = ref([]);
 
 const statuses = ["NOT STARTED", "IN PROGRESS", "DONE"];
 
@@ -249,6 +242,18 @@ async function loadScheduleMembers(scheduleId) {
       scheduleMemberList.value = [];
     }
     return result.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+async function getProjectDetail() {
+  try {
+    const response = await projectApi.getProjectDetail(props.projectId);
+    console.log(response);
+    projectInfo.value = response.data.data;
+    console.log('프로젝트 정보', projectInfo.value);
+
   } catch (error) {
     console.log(error);
   }
@@ -368,10 +373,13 @@ async function onDragEnd(event) {
   }
 }
 
+onMounted(async () => {
+  console.log("일정 컴포넌트 마운트");
+  await getProjectDetail();
+  await loadSchedule();
+  await loadProjectMembers();
+})
 
-loadSchedule();
-
-loadProjectMembers();
 
 </script>
 <!--컴포넌트의 스타일 정의-->
