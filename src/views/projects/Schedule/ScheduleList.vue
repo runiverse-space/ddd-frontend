@@ -13,13 +13,10 @@
         <VueDraggableNext v-model="quests" @end="onDragEnd" :move="onMove" tag="ul">
           <li v-for="schedule in schedulesByStatus[status]" :key="schedule.scheduleId">
             <div class="border-dark">
-              <div><small>{{ formatDate(schedule.scheduleStartDate) }}~{{ formatDate(schedule.scheduleEndDate) }}</small></div>
-              <!-- <p>{{ schedule.scheduleEndDate }}</p> -->
+              <div><small>{{ formatDate(schedule.scheduleStartDate) }}~{{ formatDate(schedule.scheduleEndDate)
+                  }}</small></div>
               <a href="#" class="text-primary" @click.prevent="openModal(schedule)">{{ schedule.scheduleTitle }}</a>
-              <!-- <p>{{ schedule.scheduleTitle }}</p> -->
-              <button class="btn btn-warning btn-sm" @click="handleUpdate(schedule.scheduleId)">수정</button>
             </div>
-            <button v-if="!schedule.scheduleStatus" @click="deleteQuest(schedule.scheduleId)">삭제</button>
           </li>
         </VueDraggableNext>
 
@@ -28,26 +25,29 @@
   </div>
 
   <!-- 일정 상세 모달 -->
-  <div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true" ref="modalRef">
+  <div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true"
+    ref="modalRef">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="scheduleModalLabel">
             일정 상세보기
           </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+            @click="editMode = false"></button>
         </div>
         <div class="modal-body" v-if="selectedSchedule">
           <!-- 일정 제목 -->
           <div class="mb-3">
             <label class="form-label">일정명</label>
-            <input type="text" class="form-control" v-model="selectedSchedule.scheduleTitle" disabled />
+            <input type="text" class="form-control" v-model="selectedSchedule.scheduleTitle" :disabled="!editMode" />
           </div>
 
           <!-- 일정 내용 -->
           <div class="mb-3">
             <label class="form-label">일정 내용</label>
-            <textarea class="form-control" v-model="selectedSchedule.scheduleContent" rows="3" disabled></textarea>
+            <textarea class="form-control" v-model="selectedSchedule.scheduleContent" rows="3"
+              :disabled="!editMode"></textarea>
           </div>
 
           <!-- 일정 기간 -->
@@ -55,7 +55,8 @@
             <label class="form-label">일정 기간</label>
             <div class="row m-1">
               <div class="col-6">
-                <input type="text" class="form-control" :value="formatDate(selectedSchedule.scheduleStartDate)" disabled />
+                <input type="text" class="form-control" :value="formatDate(selectedSchedule.scheduleStartDate)"
+                  :disabled="!editMode" />
               </div>
               <div class="col-md-1 d-flex align-items-center justify-content-center">
                 <span>부터</span>
@@ -63,7 +64,8 @@
             </div>
             <div class="row m-1">
               <div class="col-6">
-                <input type="text" class="form-control" :value="formatDate(selectedSchedule.scheduleEndDate)" disabled />
+                <input type="text" class="form-control" :value="formatDate(selectedSchedule.scheduleEndDate)"
+                  :disabled="!editMode" />
               </div>
               <div class="col-md-1 d-flex align-items-center justify-content-center">
                 <span>까지</span>
@@ -72,27 +74,48 @@
 
           </div>
 
-          <!-- 담당자 -->
-          <div class="mb-3">
+          <!-- 담당자(읽기 모드) -->
+          <div class="mb-3" v-if="!editMode">
             <label class="form-label">담당자</label><br />
             <span v-for="user in selectedSchedule.users" :key="user.userId" class="badge bg-secondary me-1">
               {{ user.userName }}
             </span>
           </div>
 
-          <!-- 상태 -->
+          <!-- 담당자(수정 모드) -->
+          <div class="mb-3" v-if="editMode">
+            <label class="form-label">담당자 선택</label><br />
+            <span v-for="projectMember in projectMemberList" :key="projectMember.userId" style="cursor: pointer;"
+              class="badge me-1"
+              :class="scheduleMemberList.includes(projectMember.userId) ? 'bg-secondary' : 'bg-light text-dark'"
+              @click="toggleScheduleMember(projectMember)">
+              {{ projectMember.userName }}
+              ({{ projectMember.userLoginId }})
+            </span>
+          </div>
+
+          <!-- 진행 상태 -->
           <div class="mb-3">
-            <label class="form-label">일정 상태</label>
-            <input type="text" class="form-control" :value="selectedSchedule.scheduleStatus" disabled />
+            <label class="form-label">진행 상태</label>
+            <select class="form-select" v-model="selectedSchedule.scheduleStatus" :disabled="!editMode">
+              <option value="NOT STARTED">시작되지 않음</option>
+              <option value="IN PROGRESS">진행 중</option>
+              <option value="DONE">완료됨</option>
+            </select>
           </div>
         </div>
 
+        <!-- 하단 버튼 구역 -->
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="editMode=false">
             닫기
           </button>
-          <button type="button" class="btn btn-primary" @click="editSchedule(selectedSchedule.scheduleId)">
+          <button type="button" class="btn btn-primary" @click="handleEdit()" 
+          v-if="!editMode">
             수정하기
+          </button>
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @click="handleConfirm()" v-if="editMode">
+            수정확인
           </button>
         </div>
       </div>
@@ -106,21 +129,32 @@
 <script setup>
 import projectApi from '@/apis/projectApi';
 import scheduleApi from '@/apis/scheduleApi';
+import usersApi from '@/apis/usersApi';
 import { Modal } from 'bootstrap';
 import { reactive } from 'vue';
 import { ref } from 'vue';
 import { VueDraggableNext } from 'vue-draggable-next';
-import { RouterLink, useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 
 const props = defineProps(['projectId']);
 
-const scheduleList = ref([]);
+const store = useStore();
 
 const router = useRouter();
 
 const route = useRoute();
 
+const scheduleList = ref([]);
+
+const projectMemberList = ref([]);
+
+const userProjectRoleList = ref([]);
+
+const scheduleMemberList = ref([]);
+
 const statuses = ["NOT STARTED", "IN PROGRESS", "DONE"];
+
 const statusLabels = {
   "NOT STARTED": "시작되지 않음",
   "IN PROGRESS": "진행 중",
@@ -138,26 +172,26 @@ const selectedSchedule = ref(null);
 const modalRef = ref(null);
 let modalInstance = null;
 
+const editMode = ref(false);
+
 async function loadSchedule() {
   try {
-    console.log("스케쥴 조회 시작")
     const response = await projectApi.getProjectSchedulesList(route.params.projectId);
     scheduleList.value = response.data;
     if (response.data.result === 'success') {
       scheduleList.value = response.data.data || [];
-      console.log("스케줄 목록:", scheduleList.value);
+
+      // 스케줄 목록을 로드할 때마다 상태별로 초기화
+      schedulesByStatus["NOT STARTED"] = [];
+      schedulesByStatus["IN PROGRESS"] = [];
+      schedulesByStatus["DONE"] = [];
 
       scheduleList.value.forEach(schedule => {
-        // console.log("~~~", schedule);
         if (schedulesByStatus[schedule.scheduleStatus]) {
           schedulesByStatus[schedule.scheduleStatus].push(schedule);
         }
-      })
-
-      scheduleList.value.forEach(async schedule => {
-        schedule.users = await loadScheduleMember(schedule.scheduleId);
       });
-      console.log("스케쥴 로드완료");
+
     } else {
       console.error('스케줄 조회 실패:', response.data.message);
       scheduleList.value = [];
@@ -167,27 +201,44 @@ async function loadSchedule() {
   }
 }
 
-async function loadScheduleMember(scheduleId) {
+async function loadScheduleMembers(scheduleId) {
   try {
     const response = await scheduleApi.getScheduleMemberList(scheduleId);
     const result = response.data;
+    if (result.result !== "success") {
+      console.log(result.message);
+      scheduleMemberList.value = [];
+    }
     return result.data;
   } catch (error) {
     console.log(error);
   }
 }
 
-async function handleWrite() {
+async function loadProjectMembers() {
   try {
-    router.push(`schedule/write`);
+    const response = await projectApi.getProjectMembersList(props.projectId);
+    if (response.data.result === 'success') {
+      userProjectRoleList.value = response.data.data || [];
+
+      // projectMemberList에 사용자 정보 삽입
+      userProjectRoleList.value.forEach(async userProjectRole => {
+        const response = await usersApi.usersDetail(userProjectRole.userId);
+        const result = response.data;
+        projectMemberList.value.push(result.data);
+      });
+    } else {
+      console.log('멤버 조회 실패:', response.data.message);
+      projectMemberList.value = [];
+    }
   } catch (error) {
-    console.log(error);
+    console.log('멤버 목록 조회 실패:', error);
   }
 }
 
-async function handleUpdate(scheduleId) {
+async function handleWrite() {
   try {
-    router.push(`schedule/${scheduleId}/update`);
+    router.push(`schedule/write`);
   } catch (error) {
     console.log(error);
   }
@@ -205,15 +256,56 @@ function formatDate(dataString) {
   });
 }
 
-function openModal(schedule) {
+async function openModal(schedule) {
   selectedSchedule.value = schedule;
+  console.log("선택된 일정", selectedSchedule.value);
+  selectedSchedule.value.users = await loadScheduleMembers(schedule.scheduleId);
+
+  scheduleMemberList.value = selectedSchedule.value.users.map(user => user.userId);
+
+  console.groupEnd();
   if (!modalInstance) {
     modalInstance = new Modal(modalRef.value);
   }
   modalInstance.show();
 }
 
+function handleEdit() {
+  editMode.value = true;
+}
+
+async function handleConfirm() {
+  editMode.value = false;
+  console.group("handleConfirm()");
+  console.groupEnd();
+  try {
+    selectedSchedule.value.userIds = scheduleMemberList;
+    const response = await scheduleApi.scheduleUpdate(selectedSchedule.value);
+    const result = response.data;
+    if (result.result === "success") {
+      console.log("수정 완료");
+      await loadSchedule();
+      await loadScheduleMembers(selectedSchedule.value.scheduleId);
+    } else {
+      console.log(result.message);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+// 일정 멤버 토글 함수
+function toggleScheduleMember(projectMember) {
+  if (scheduleMemberList.value.includes(projectMember.userId)) {
+    scheduleMemberList.value = scheduleMemberList.value.filter((t) => t !== projectMember.userId);
+  } else {
+    scheduleMemberList.value.push(projectMember.userId);
+  }
+}
+
 loadSchedule();
+
+loadProjectMembers();
 
 </script>
 <!--컴포넌트의 스타일 정의-->
