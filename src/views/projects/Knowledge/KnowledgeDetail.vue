@@ -77,26 +77,47 @@
 
                   <!--댓글 내용-->
                   <div style="padding-left: 40px;">
-                    <p style="margin: 0; white-space: pre-wrap; line-height: 1.6; color: #333;">
+                    <!--일반 모드 -->
+                    <p v-if="editingKnowledgeCommentId !== comment.knowledgeCommentId" style="margin: 0; white-space: pre-wrap; line-height: 1.6; color: #333;">
                       {{ comment.knowledgeCommentContent }}
                     </p>
+                    <!-- 수정 모드 -->
+                    <div v-else>
+                      <textarea v-model="editingKnowledgeCommentContent" class="form-control mb-2" style="width: 100%; height: 100px; resize: none;" placeholder="댓글을 입력하세요...">
+
+                      </textarea>
+
+                    </div>
+
                   </div>
+
                   <!--댓글 수정/ 삭제 본인 댓글만-->
                   <div v-if="store.state.userId === comment.userId" class="d-flex gap-2 mt-2" style="padding-left: 40px;">
-                    <button class="btn btn-sm btn-outline-secondary" style="font-size: 0.8rem;">
+                    <!-- 일반 모드 버튼 -->
+                    <button v-if="editingKnowledgeCommentId !== comment.knowledgeCommentId" class="btn btn-sm btn-outline-secondary" style="font-size: 0.8rem;" @click="updateStart(comment)">
                       수정
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" style="font-size: 0.8rem;">
+                    <button v-if="editingKnowledgeCommentId !== comment.knowledgeCommentId" class="btn btn-sm btn-outline-danger" style="font-size: 0.8rem;"
+                      @click="deleteKnowledgeComment(comment.knowledgeCommentId)">
                       삭제
                     </button>
+
+                    <!-- 수정 모드 버튼 -->
+                    <button v-if="editingKnowledgeCommentId === comment.knowledgeCommentId" class="btn btn-sm btn-primary" style="font-size: 0.8rem;" @click="updateKnowledgeComment">
+                      수정 완료
+                    </button>
+                    <button v-if="editingKnowledgeCommentId === comment.knowledgeCommentId" class="btn btn-sm btn-secondary" style="font-size: 0.8rem;" @click="cancelUpdateKnowledgeComment">
+                    취소
+                    </button>
+
                   </div>
 
                 </div>
               </div>
-               <!-- 댓글이 없을때 -->
-                   <div v-else class="text-center p-4" style="background-color: #f8f9fa; border-radius: 8px;">
-                      <p style="color: #6c757d; margin: 0;">첫 번째 댓글을 작성해보세요! 💬</p>
-                   </div>
+              <!-- 댓글이 없을때 -->
+              <div v-else class="text-center p-4" style="background-color: #f8f9fa; border-radius: 8px;">
+                <p style="color: #6c757d; margin: 0;">첫 번째 댓글을 작성해보세요! 💬</p>
+              </div>
 
               <!--댓글 작성 영역 -->
 
@@ -259,6 +280,7 @@ import { ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import * as bootstrap from 'bootstrap';
+
 const props = defineProps(['projectId']);
 
 const store = useStore();
@@ -291,6 +313,14 @@ const knowledgeComment = ref({
 const knowledgeCommentList = ref([]);
 
 const kfAttach = ref(null);
+
+//수정용 상태 객체
+const isEditMode = ref(false);
+
+const editingKnowledgeCommentId = ref(null);
+const editingKnowledgeCommentContent = ref('');
+
+
 
 //백엔드에서 게시물 가져오기
 async function getKnowledge(knowledgeId) {
@@ -437,6 +467,100 @@ function formatDate(dateString) {
   const day = String(date.getDate()).padStart(2, '0');
 
   return `${year}.${month}.${day}`;
+}
+
+/*
+  내가 쓴 댓글 수정하기
+  상태 객체도 댓글 만드는거랑 수정용 상태객체로 나눠야함
+  같은 화면에서 함수 이동하기
+  수정 버튼 눌렀을때 수정 시작 updateStart-> 수정된 내용을 보낼 함수updateKnowledgeComment
+
+//수정용 상태 객체
+const isEditMode = ref(false);
+// 수정 모드 관리용 ref (각각 분리)
+const editingKnowledgeCommentId = ref(null);
+const editingKnowledgeCommentContent = ref('');
+
+
+  삭제 버튼 눌렀을때 삭제 확인용 모달-> 확인 누르면 삭제함수 백엔드로 보낸다.
+*/
+function updateStart(comment) {
+  console.log("수정모드 -댓글 시작", comment);
+
+  isEditMode.value = true;
+  editingKnowledgeCommentId.value = comment.knowledgeCommentId;
+  editingKnowledgeCommentContent.value = comment.knowledgeCommentContent;
+
+  console.log("수정할 댓글 ID:", editingKnowledgeCommentId.value);
+  console.log("수정할 내용:", editingKnowledgeCommentContent.value);
+
+
+}
+
+//수정 취소
+function cancelUpdateKnowledgeComment() {
+  isEditMode.value = false;
+  editingKnowledgeCommentId.value = null;
+  editingKnowledgeCommentContent.value = '';
+}
+
+
+async function updateKnowledgeComment() {
+  try {
+    console.log("댓글 수정하러 가자");
+
+    if (!editingKnowledgeCommentContent.value.trim()) {
+      showModal('수정할 내용을 입력해주세요');
+      return;
+    }
+
+
+    const data = {
+      knowledgeCommentId: editingKnowledgeCommentId.value,
+      knowledgeId: knowledgeId,
+      userId: store.state.userId,
+      knowledgeCommentContent: editingKnowledgeCommentContent.value
+    }
+
+    console.log('전송할 데이터', data);
+
+
+    const response = await knowledgeCommentApi.knowledgeCommentUpdate(data);
+    console.log("백엔드의 수정응답", response.data);
+
+    if (response.data !== null) {
+      showModal('댓글 수정이 완료되었습니다');
+      //수정 모드 종료
+      cancelUpdateKnowledgeComment();
+      await getKnowledgeCommentList(knowledgeId);
+    }
+
+
+  } catch (error) {
+    console.log(error);
+    showModal('댓글 수정에 실패했습니다.');
+  }
+
+}
+
+async function deleteKnowledgeComment(knowledgeCommentId) {
+  //삭제하기 
+  //삭제 버튼 눌렀을때 삭제 확인용 모달-> 확인 누르면 삭제함수 백엔드로 보낸다.
+
+
+
+  try {
+    const response = await knowledgeCommentApi.knowledgeCommentDelete(knowledgeCommentId);
+
+    console.log('삭제 요청 결과', response.data);
+    showModal('댓글이 삭제되었습니다.');
+    await getKnowledgeCommentList(knowledgeId);
+  } catch (error) {
+    console.log(error);
+    showModal('댓글 삭제에 실패했습니다.');
+  }
+
+
 }
 
 

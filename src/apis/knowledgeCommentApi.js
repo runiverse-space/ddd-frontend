@@ -19,8 +19,8 @@ function knowledgeCommentDetail(knowledgeCommentId){
   return axios.get("/api/knowledgecomment/detail", {params:{knowledgeCommentId}});
 }
 
-function knowledgeCommentDelete(knowledgeId){
-   return axios.delete("/api/knowledgecomment/delete", {params:{knowledgeId}});
+function knowledgeCommentDelete(knowledgeCommentId){
+   return axios.delete("/api/knowledgecomment/delete", {params:{knowledgeCommentId}});
 }
 
 // function knowledgeCommentCountByKnowledgeId(knowledgeId){
