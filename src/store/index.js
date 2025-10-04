@@ -64,7 +64,9 @@ const store = createStore({
       const jwt = localStorage.getItem("jwt") || "";
       
       // 전역 상태값으로 저장
-      context.commit("setUserId", Number(userId));
+      if (userId !== "") {
+        context.commit("setUserId", Number(userId));
+      }
       context.commit("setUserLoginId", userLoginId);
       context.commit("setJwt", jwt);
 
