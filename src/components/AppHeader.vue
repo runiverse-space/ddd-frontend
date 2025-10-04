@@ -47,6 +47,11 @@ function handleLogin() {
 
 function handleLogout() {
   store.dispatch("removeAuth");
+  router.push("/");
+}
+
+function handleEditUser() {
+  router.push("/update");
 }
 </script>
 

@@ -19,11 +19,16 @@ function ufAttachDownload(userId) {
   return axios.get("/api/users/attach-download", {params: {userId}, responseType: "blob"});
 }
 
+function usersUpdate(users) {
+  return axios.put("/api/users/update", users);
+}
+
 const usersApi = {
   usersCreate,
   usersLogin,
   usersDetail,
-  ufAttachDownload
+  ufAttachDownload,
+  usersUpdate
 };
 
 export default usersApi;

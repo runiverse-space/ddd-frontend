@@ -16,6 +16,7 @@ import ProjectHome from "@/views/projects/ProjectHome.vue";
 
 import Signup from "@/views/users/Signup";
 import Login from "@/views/users/Login";
+import Update from "@/views/users/Update";
 
 /*
 부모 라우트: 
@@ -43,6 +44,7 @@ const routes = [
       { path: "", name: "Home", component: Home, meta: { noPadding: true } },
       { path: "signup", name: "Signup", component: Signup },
       { path: "login", name: "Login", component: Login },
+      { path: "update", name: "Update", component: Update },
       { path: "explore", name: "Explore", component: Explore },
       { path: "community", name: "Community", component: Community },
       { path: "project", name: "ProjectList", component: ProjectList },
