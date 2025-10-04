@@ -10,11 +10,12 @@
         </div>
 
         <!-- 드래그 가능 리스트 -->
-        <VueDraggableNext v-model="quests" @end="onDragEnd" :move="onMove" tag="ul">
+        <VueDraggableNext v-model="schedulesByStatus[status]" group="schedules" @end="onDragEnd($event)"
+          :data-status="status" tag="ul">
           <li v-for="schedule in schedulesByStatus[status]" :key="schedule.scheduleId">
             <div class="border-dark">
               <div><small>{{ formatDate(schedule.scheduleStartDate) }}~{{ formatDate(schedule.scheduleEndDate)
-                  }}</small></div>
+              }}</small></div>
               <a href="#" class="text-primary" @click.prevent="openModal(schedule)">{{ schedule.scheduleTitle }}</a>
             </div>
           </li>
@@ -107,11 +108,10 @@
 
         <!-- 하단 버튼 구역 -->
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="editMode=false">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="editMode = false">
             닫기
           </button>
-          <button type="button" class="btn btn-primary" @click="handleEdit()" 
-          v-if="!editMode">
+          <button type="button" class="btn btn-primary" @click="handleEdit()" v-if="!editMode">
             수정하기
           </button>
           <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @click="handleConfirm()" v-if="editMode">
@@ -283,7 +283,6 @@ async function handleConfirm() {
     const response = await scheduleApi.scheduleUpdate(selectedSchedule.value);
     const result = response.data;
     if (result.result === "success") {
-      console.log("수정 완료");
       await loadSchedule();
       await loadScheduleMembers(selectedSchedule.value.scheduleId);
     } else {
@@ -302,6 +301,34 @@ function toggleScheduleMember(projectMember) {
     scheduleMemberList.value.push(projectMember.userId);
   }
 }
+
+async function onDragEnd(event) {
+  try {
+    const newStatus = event.to.dataset.status;   // 드롭된 컬럼
+
+    const movedSchedule = ref(schedulesByStatus[newStatus][event.newIndex]);
+
+    movedSchedule.value.users = await loadScheduleMembers(movedSchedule.value.scheduleId);
+    movedSchedule.value.userIds = movedSchedule.value.users.map(user => user.userId);
+
+    if (!movedSchedule.value) return;
+
+    if (movedSchedule.value.scheduleStatus !== newStatus) {
+      movedSchedule.value.scheduleStatus = newStatus;
+
+      const response = await scheduleApi.scheduleUpdate(movedSchedule.value);
+      const result = response.data;
+      if (result.result === "success") {
+        console.log("상태 업데이트 완료");
+      } else {
+        console.log("상태 업데이트 실패:", response.message);
+      }
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 
 loadSchedule();
 
