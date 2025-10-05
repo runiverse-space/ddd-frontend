@@ -17,11 +17,18 @@ function getProjectMembersList(projectId){
   return axios.get("/api/project/userprojectroles",{params:{projectId}})
 }
 
+//생성하기
+function createProject(data){
+  return axios.post("/api/project/create",data);
+}
+
+
 
 export default{
   getProjectList,
   getProjectDetail,
   getProjectSchedulesList,
-  getProjectMembersList
+  getProjectMembersList,
+  createProject
 
 }
