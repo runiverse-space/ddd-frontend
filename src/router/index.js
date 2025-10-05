@@ -16,6 +16,8 @@ import ProjectHome from "@/views/projects/ProjectHome.vue";
 
 import Signup from "@/views/users/Signup";
 import Login from "@/views/users/Login";
+import ProjectManagementLayout from "@/layout/ProjectManagementLayout.vue";
+import ProjectCreate from "@/views/projects/project/ProjectCreate.vue";
 import Update from "@/views/users/Update";
 
 /*
@@ -47,7 +49,24 @@ const routes = [
       { path: "update", name: "Update", component: Update },
       { path: "explore", name: "Explore", component: Explore },
       { path: "community", name: "Community", component: Community },
-      { path: "project", name: "ProjectList", component: ProjectList },
+      {
+        path: "project",
+        component: ProjectManagementLayout,
+        children: [
+          {
+            path: "",
+            name: "ProjectList",
+            component: ProjectList,
+          },
+
+          {
+            path: "create",
+            name: "ProjectCreate",
+            component: ProjectCreate,
+          },
+
+        ]
+      },
       {
         path: "project/:projectId",
         component: ProjectLayout,
