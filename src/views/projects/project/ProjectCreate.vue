@@ -62,7 +62,22 @@
     <!-- 6단계: 새 일정 추가 -->
     <div class="form-section">
       <p class="text-muted small">프로젝트 일정을 등록해주세요. (최대 3개 가능)</p>
-      <button class="btn btn-outline-secondary w-100">
+
+      <!-- 마일스톤 입력 필드 -->
+      <div v-for="(milestone, index) in project.projectMilestones" :key="index" class="mb-3 border rounded p-3">
+        <label class="form-label fw-semibold">마일스톤 {{ index + 1 }}</label>
+        <input type="date" class="form-control mb-2" v-model="milestone.milestoneDate" placeholder="날짜를 선택하세요" />
+        <input type="text" class="form-control" v-model="milestone.milestoneTitle" placeholder="마일스톤 내용을 입력하세요" />
+
+        <!-- 마일스톤 취소 버튼 -->
+        <button type="button" class="btn btn-outline-danger btn-sm mt-2 w-100" @click="removeMilestone(index)">
+          <i class="bi bi-trash"></i> 마일스톤 취소
+        </button>
+      </div>
+
+      <!-- 마일스톤 추가 버튼 -->
+      <button class="btn btn-outline-secondary w-100" @click="addMilestone()"
+        :disabled="project.projectMilestones.length >= 3">
         <i class="bi bi-plus"></i> 마일스톤 자리
       </button>
     </div>
@@ -116,6 +131,7 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import tagApi from '@/apis/tagApi'
+import projectMilestoneApi from '@/apis/projectMilestoneApi';
 
 
 const props = defineProps(['projectId']);
@@ -158,8 +174,19 @@ async function createProject() {
 
     const response = await projectApi.createProject(data);
 
-
     console.log("response의 값", response.data);
+
+    // 마일스톤 생성
+    const result = response.data;
+    const projectId = result.data.projectId
+    console.log(project.value.projectMilestones);
+    for (let milestone of project.value.projectMilestones) {
+      console.log(projectId);
+      milestone.projectId = projectId;
+      console.log("마일스톤 생성하기:", milestone);
+      const response = await projectMilestoneApi.createProjectMilestone(milestone);
+      console.log(response.data);
+    }
 
     router.back();
 
@@ -173,6 +200,20 @@ function handleCancel() {
   router.back();
 }
 
+// 마일스톤 추가
+function addMilestone() {
+  if (project.value.projectMilestones.length < 3) {
+    project.value.projectMilestones.push({
+      milestoneDate: '',
+      milestoneTitle: ''
+    });
+  }
+}
+
+// 마일스톤 취소
+function removeMilestone(index) {
+  project.value.projectMilestones.splice(index, 1);
+}
 
 
 // 전체 태그 테이블에서 프로젝트용 태그 조회 
