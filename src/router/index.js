@@ -4,7 +4,7 @@ import DefaultLayout from "@/layout/DefaultLayout.vue";
 import ProjectLayout from "@/layout/ProjectLayout.vue";
 
 import Home from "@/views/Home.vue";
-import Explore from "@/views/Explore.vue";
+import Explore from "@/views/explore/Explore.vue";
 import Community from "@/views/Community.vue";
 
 import ScheduleRoutes from "./ScheduleRoutes";
