@@ -4,11 +4,13 @@
 
     <h3 v-if="projectInfo">{{ projectInfo.projectTitle }} - 지식 창고</h3>
     <p v-else>지식 창고</p>
-     
-    <p><RouterLink class="btn btn-dark btn-lg" to="KnowledgeWrite">글쓰기</RouterLink></p>
+
+
 
     <div v-if="knowledgeList.length > 0" class="masonry-grid">
-
+      <div style="text-align: right;">
+        <RouterLink class="btn btn-dark btn-lg" to="KnowledgeWrite">글쓰기</RouterLink>
+      </div>
       <div class="masonry-item" v-for="item in knowledgeList" :key="item.knowledgeId">
 
         <div class="card h-100 shadow-sm hover-lift">
@@ -29,7 +31,7 @@
               </RouterLink>
             </h5>
 
-           <!-- <p>글번호: {{ item.knowledgeId }}</p>
+            <!-- <p>글번호: {{ item.knowledgeId }}</p>
             <p>글쓴이: {{ item.userId }}</p>-->
 
             <p class="card-text text-muted text-truncate-3">
@@ -37,7 +39,7 @@
             </p>
 
             <!-- URL 링크 (있을 경우) -->
-            <a v-if="item.knowledgeUrl" :href="item.knowledgeUrl"  >
+            <a v-if="item.knowledgeUrl" :href="item.knowledgeUrl">
               {{ item.knowledgeUrl }}
             </a>
 
@@ -60,26 +62,40 @@
     </div>
 
     <div v-else>
-      <p>지식 창고가 비었습니다. 첫번째 지식을 추가해주세요.</p>
+      <div class="card" style="width: 900px; height: 100px;">
+        <div class="card-body">
+          <p>지식 창고가 비었습니다.</p>
+          <p>당신의 프로젝트에 첫번째 지식을 추가해주세요.</p>
+        </div>
+      </div>
+
+      <!-- card 바로 아래에 붙어서 함께 움직임 -->
+      <div style="text-align: right; margin-top: 20px; width: 900px;">
+        <RouterLink class="btn btn-dark btn-lg" to="KnowledgeWrite">글쓰기</RouterLink>
+      </div>
+      
     </div>
 
-   
 
-    <!-- ✅ 빈 상태 모달 (alert 대체) -->
+
+
+
+
+    <!-- 빈 상태 모달 (alert 대체) 
     <div class="modal fade" id="emptyStateModal" tabindex="-1" aria-labelledby="emptyStateModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+        <div class="modal-content">-->
 
-          <!-- 모달 헤더 -->
+    <!-- 모달 헤더 
           <div class="modal-header border-0">
             <h5 class="modal-title fw-bold" id="emptyStateModalLabel">
               <i class="bi bi-inbox text-primary"></i> 지식 창고
             </h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
             </button>
-          </div>
+          </div>-->
 
-          <!-- 모달 본문 -->
+    <!-- 모달 본문 
           <div class="modal-body text-center py-5">
             <i class="bi bi-inbox fs-1 text-muted d-block mb-4" style="font-size: 5rem;"></i>
             <h5 class="mb-3">지식 창고가 비었습니다</h5>
@@ -92,7 +108,7 @@
 
         </div>
       </div>
-    </div>
+    </div>-->
 
 
 
@@ -228,21 +244,20 @@ onMounted(async () => {
 </script>
 <!--컴포넌트의 스타일 정의-->
 <style scoped>
-
 .masonry-grid {
   column-count: 3;
-  
+
   column-gap: 10px;
-  
+
   padding: 0;
 }
 
 .masonry-item {
   break-inside: avoid;
- 
+
   margin-bottom: 0.5rem;
   display: inline-block;
- 
+
   width: 100%;
 }
 
@@ -250,21 +265,21 @@ onMounted(async () => {
 @media (max-width: 1400px) {
   .masonry-grid {
     column-count: 3;
-    
+
   }
 }
 
 @media (max-width: 992px) {
   .masonry-grid {
     column-count: 2;
-   
+
   }
 }
 
 @media (max-width: 576px) {
   .masonry-grid {
     column-count: 1;
-    
+
   }
 }
 
