@@ -16,7 +16,8 @@ import ProjectHome from "@/views/projects/ProjectHome.vue";
 
 import Signup from "@/views/users/Signup.vue";
 import Login from "@/views/users/Login.vue";
-import Update from "@/views/users/Update.vue";
+// import Update from "@/views/users/Update.vue";
+import Edit from "@/views/users/Edit.vue";
 
 import ProjectManagementLayout from "@/layout/ProjectManagementLayout.vue";
 import ProjectCreate from "@/views/projects/project/ProjectCreate.vue";
@@ -29,7 +30,7 @@ const routes = [
       { path: "", name: "Home", component: Home, meta: { noPadding: true } },
       { path: "signup", name: "Signup", component: Signup },
       { path: "login", name: "Login", component: Login },
-      { path: "update", name: "Update", component: Update },
+      { path: "edit", name: "Edit", component: Edit },
       { path: "explore", name: "Explore", component: Explore },
       { path: "community", name: "Community", component: Community },
       // 로그인 필요

@@ -82,7 +82,7 @@ function handleLogout() {
 }
 
 function handleEditUser() {
-  router.push("/update");
+  router.push("/edit");
 }
 </script>
 

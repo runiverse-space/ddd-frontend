@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted, onBeforeUnmount, watch } from "vue";
 import tagApi from "@/apis/tagApi";
 import { XMarkIcon, ChevronDownIcon } from "@heroicons/vue/24/outline";
 
@@ -49,7 +49,8 @@ const props = defineProps({
 const emits = defineEmits(["update:modelValue"]);
 
 const availableTags = ref([]);
-const selectedTags = ref([...props.modelValue]);
+// const selectedTags = ref([...props.modelValue]);
+const selectedTags = ref([]);
 const isDropdownOpen = ref(false);
 const dropdownRef = ref(null);
 
@@ -82,6 +83,17 @@ function handleClickOutside(e) {
     isDropdownOpen.value = false;
   }
 }
+
+// ✅ 외부 modelValue가 변경되면 내부 selectedTags를 동기화
+watch(
+  () => props.modelValue,
+  (newVal) => {
+    if (Array.isArray(newVal)) {
+      selectedTags.value = [...newVal];
+    }
+  },
+  { immediate: true }
+);
 
 function toggleDropdown() {
   isDropdownOpen.value = !isDropdownOpen.value;

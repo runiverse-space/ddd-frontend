@@ -248,7 +248,16 @@ input {
   font-size: 1rem;
   color: #111;
   cursor: text;
+
+  /* ✅ 추가 부분 */
+  padding: 0;
+  line-height: normal;
+  height: 22px;
+  /* 높이 통일 */
+  display: flex;
+  align-items: center;
 }
+
 
 .domain-dropdown {
   border: 1px solid #ddd;
