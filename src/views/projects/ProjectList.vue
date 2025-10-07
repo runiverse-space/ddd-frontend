@@ -5,9 +5,7 @@
         <RecentProjects class="left-section" />
 
         <!-- 우측 : 초대 목록 등 -->
-        <div class="right-section">
-            <p>초대목록 InviteList <!-- 초대 목록 컴포넌트 --></p>
-        </div>
+        <InviteList class="right-section" />
     </div>
 
     <div>
@@ -71,6 +69,7 @@ import usersApi from '@/apis/usersApi'
 import RecentProjects from './project/RecentProjects.vue'
 import { useStore } from 'vuex'
 import userprojectroleApi from '@/apis/userprojectroleApi'
+import InviteList from './project/InviteList.vue'
 
 const myProjectList = ref([])
 const store = useStore()
