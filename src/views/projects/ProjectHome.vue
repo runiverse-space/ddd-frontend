@@ -26,7 +26,9 @@
 
         <!-- 우측 : 일정 -->
         <div class="right-panel">
-            <HomeSchedule :recentSchedules="recentSchedules" :todayLabel="todayLabel" />
+            <div class="sticky-schedule">
+                <HomeSchedule :recentSchedules="recentSchedules" :todayLabel="todayLabel" />
+            </div>
         </div>
     </div>
 </template>
@@ -190,12 +192,19 @@ onMounted(() => {
     /* ✅ 최소 높이 지정 (멤버 없을 때도 일정이 아래쪽으로 유지) */
 }
 
-/* 오른쪽 패널 */
+/* ✅ 오른쪽 패널 자체는 기존 유지 */
 .right-panel {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     padding: 0 10px 0 30px;
+}
+
+/* ✅ 스크롤 시 고정되는 일정 영역 */
+.sticky-schedule {
+    position: sticky;
+    top: 40px;
+    /* 위에서 20px 떨어진 위치에 고정 */
 }
 
 /* ✅ 분리선 */
