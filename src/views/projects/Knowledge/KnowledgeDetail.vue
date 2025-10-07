@@ -286,7 +286,7 @@
 import knowledgeApi from '@/apis/knowledgeApi';
 import knowledgeCommentApi from '@/apis/knowledgeCommentApi';
 import { ArrowLeftCircleIcon, ArrowRightCircleIcon, CheckBadgeIcon, LinkIcon, SparklesIcon } from '@heroicons/vue/24/outline';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import * as bootstrap from 'bootstrap';
@@ -296,14 +296,15 @@ const props = defineProps(['projectId']);
 const store = useStore();
 const route = useRoute();
 const router = useRouter();
-const knowledgeId = route.query.knowledgeId;
 const prevKnowledge = ref(null);
 const nextKnowledge = ref(null);
 const modalMessage = ref('');
 const modalTitle = ref('알림');
 const modalType = ref('alert');  // 'alert' 또는 'confirm'
 const modalCallback = ref(null);
-
+// const knowledgeId = route.query.knowledgeId;
+const knowledgeId = computed(() => route.query.knowledgeId);
+//** computed를 사용하면 route.query.knowledgeId가 변경될 때마다 자동으로 업데이트됨!
 
 const knowledge = ref({
   knowledgeId: "",
@@ -388,15 +389,22 @@ async function knowledgeAttachDownload(knowledgeId) {
 }
 
 watch(() => route.query.knowledgeId, (newKnowledgeId, oldKnowledgeId) => {
-  getKnowledge(newKnowledgeId);
+  console.log('=== knowledgeId 변경 감지 ===');
+  console.log('이전 knowledgeId:', oldKnowledgeId);
+  console.log('새로운 knowledgeId:', newKnowledgeId);
+
+  if(newKnowledgeId){
+    getKnowledge(newKnowledgeId);
+    getKnowledgeCommentList(newKnowledgeId)
+  }
+
+  
 },
   {
     immediate: true  // 컴포넌트 마운트 시 즉시 실행
   }
 )
 
-// getKnowledge(knowledgeId);
-getKnowledgeCommentList(knowledgeId);
 
 /*
   여기 부터 댓글 게시판 관련 function ▼
@@ -407,7 +415,7 @@ async function createComment() {
 
   try {
 
-    knowledgeComment.value.knowledgeId = knowledgeId;
+    knowledgeComment.value.knowledgeId = knowledgeId.value;
     knowledgeComment.value.userId = store.state.userId;
 
     const data = structuredClone(knowledgeComment.value);
@@ -421,7 +429,7 @@ async function createComment() {
 
       showModal('댓글 등록에 성공했습니다.');
     }
-    await getKnowledgeCommentList(knowledgeId);
+    await getKnowledgeCommentList(knowledgeId.value);
 
   } catch (error) {
     console.log(error);
@@ -626,7 +634,7 @@ function moveKnowledgeList() {
 }
 
 function updateKnowledge() {
-  router.push(`/project/${props.projectId}/KnowledgeUpdate?knowledgeId=${knowledgeId}`);
+  router.push(`/project/${props.projectId}/KnowledgeUpdate?knowledgeId=${knowledgeId.value}`);
 }
 
 async function deleteKnowledge() {

@@ -9,19 +9,42 @@
       </RouterLink>
 
       <!-- 프로젝트 섹션 -->
-      <div class="menu-section" >
-        <h3 class="section-title"><FolderIcon class="btn-icon"/>사이드 프로젝트</h3>
-        <div v-for="project in myProjectList" :key="project.projectId">
-        <!-- 3팀 프로젝트,윤우주팀.. -->
-        <RouterLink :to="{name :'ProjectHome',params:{projectId:project.projectId}}" 
-        class="menu-item"  @click="handleProjectClick(project.projectId)">
-         <span> {{ project.projectTitle }}</span>
-        </RouterLink>
+      <div class="menu-section">
+        <!-- 제목 줄 -->
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div 
+            class="section-title d-flex align-items-center"
+            @click="toggleProjects"
+            style="cursor: pointer;"
+          >
+            <FolderIcon 
+              class="btn-icon me-2"
+              :class="{ 'text-primary': isProjectsOpen }"
+            />
+            <span>사이드 프로젝트</span>
+          </div>
+
+          
         </div>
-      
+
+        <!-- collapse로 접히는 영역 -->
+        <div :class="['collapse', { show: isProjectsOpen }]">
+          <div 
+            v-for="project in myProjectList" 
+            :key="project.projectId"
+            class="ms-3"
+          >
+            <RouterLink 
+              :to="{ name: 'ProjectHome', params: { projectId: project.projectId } }" 
+              class="menu-item d-block py-1 px-2 text-truncate"
+              @click="handleProjectClick(project.projectId)"
+            >
+              <span>{{ project.projectTitle }}</span>
+            </RouterLink>
+          </div>
+        </div>
       </div>
     </aside>
-
     <main>
       <!-- 자식 라우트(ProjectList 또는 ProjectCreate)가 여기 렌더링됨 -->
       <RouterView />
@@ -40,29 +63,35 @@ const props = defineProps(['projectId']);
 const myProjectList = ref([]);
 
 const store = useStore();
+const userId = store.state.userId;
+const isProjectsOpen = ref(true)
+
+function toggleProjects() {
+  isProjectsOpen.value = !isProjectsOpen.value
+}
 
 
-async function loadProjectsList(){
+async function loadProjectsList() {
   console.log(`메인 사이드바 프로젝트 조회${props.projectId}`)
-  const response = await projectApi.getProjectList();
-  console.log('response의 구조 : ',response.data);
-  if(response.data!==null){
-    myProjectList.value=response.data;
-  }else{
+  const response = await projectApi.getUserProjectList(userId);
+  console.log('response의 구조 : ', response.data);
+  if (response.data !== null) {
+    myProjectList.value = response.data;
+  } else {
     console.log("프로젝트를 불러올 수가 없습니다.");
   }
-  
+
 
 }
 
 
 
-function handleProjectClick(projectId){
-  console.log('projectId:',projectId);
+function handleProjectClick(projectId) {
+  console.log('projectId:', projectId);
 }
 
 
-onMounted(async()=>{
+onMounted(async () => {
   console.log("프로젝트 메인홈 사이드바 컴포넌트 마운트");
 
   await loadProjectsList();
@@ -149,5 +178,16 @@ main {
   flex: 1;
   padding: 40px;
   max-width: 1600px;
+}
+
+.collapse {
+  overflow: hidden;
+  transition: max-height 220ms ease;
+  max-height: 0;
+}
+
+.collapse.show {
+  max-height: 600px;
+  /* 충분히 크게 설정 (또는 동적으로 계산) */
 }
 </style>
