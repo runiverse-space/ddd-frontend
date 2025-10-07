@@ -1,16 +1,29 @@
-<!--컴포넌트의 UI-->
 <template>
-  <div>
-    탐색
+  <div class="user-search">
+    <input v-model="keyword" placeholder="이름 또는 이메일 검색" @input="searchUsers" />
+    <ul v-if="users.length > 0">
+      <li v-for="user in users" :key="user.userId">
+        <img v-if="user.ufAttachdata" :src="`data:${user.ufAttachtype};base64,${user.ufAttachdata}`"
+          class="profile-img" />
+        {{ user.userName }} ({{ user.userEmail }})
+      </li>
+    </ul>
   </div>
 </template>
 
-<!--컴포넌트의 초기화 또는 이벤트 처리-->
 <script setup>
+import usersApi from "@/apis/usersApi";
+import { ref } from "vue";
 
+const keyword = ref("");
+const users = ref([]);
 
+const searchUsers = async () => {
+  if (keyword.value.trim() === "") {
+    users.value = [];
+    return;
+  }
+  const res = await usersApi.usersSearch(keyword.value);
+  users.value = res.data.data;
+};
 </script>
-<!--컴포넌트의 스타일 정의-->
-<style scoped>
- 
-</style>
