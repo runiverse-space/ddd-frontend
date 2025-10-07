@@ -41,6 +41,11 @@ const tagApi = {
   getKnowledgeTags(knowledgeId) {
     return axios.get(`/api/knowledgeTag/${knowledgeId}`);
   },
+
+  // 태그 검색
+  searchTags(keyword) {
+    return axios.get(`/api/tags/search`, { params: { keyword } });
+  },
 };
 
 export default tagApi;
