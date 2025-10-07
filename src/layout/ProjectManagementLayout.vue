@@ -40,11 +40,11 @@ const props = defineProps(['projectId']);
 const myProjectList = ref([]);
 
 const store = useStore();
-
+const userId = store.state.userId;
 
 async function loadProjectsList(){
   console.log(`메인 사이드바 프로젝트 조회${props.projectId}`)
-  const response = await projectApi.getProjectList();
+  const response = await projectApi.getUserProjectList(userId);
   console.log('response의 구조 : ',response.data);
   if(response.data!==null){
     myProjectList.value=response.data;
