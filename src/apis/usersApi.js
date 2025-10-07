@@ -27,6 +27,12 @@ function usersDetailByEmail(userEmail) {
   });
 }
 
+function usersSearchByEmail(userEmail){
+  return axios.get("/api/users/search/email",{params:{userEmail}});
+}
+
+
+
 function ufAttachDownload(userId) {
   return axios.get("/api/users/attach-download", {
     params: { userId },
