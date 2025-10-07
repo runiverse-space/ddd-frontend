@@ -6,7 +6,7 @@
 
         <!-- 우측 : 초대 목록 등 -->
         <div class="right-section">
-            <InviteList /> <!-- 초대 목록 컴포넌트 -->
+           <p>초대목록 InviteList <!-- 초대 목록 컴포넌트 --></p>
         </div>
     </div>
 
@@ -44,7 +44,7 @@
 
 
                     <!-- 그룹장 -->
-                    <td>{{ project.userName }}</td>
+                    <td>{{ project.adminName || '그룹장 없음' }}</td>
 
                     <!-- 멤버 -->
                     <td>
@@ -71,6 +71,7 @@ import projectApi from '@/apis/projectApi'
 import usersApi from '@/apis/usersApi'
 import RecentProjects from './project/RecentProjects.vue'
 import { useStore } from 'vuex'
+import userprojectroleApi from '@/apis/userprojectroleApi'
 
 // 라우터에서 넘겨준 projectId 받기
 const props = defineProps(['projectId'])
@@ -109,9 +110,35 @@ async function loadAllProjectMembers() {
     console.log("모든 프로젝트의 멤버 목록 조회 시작")
     for (const project of projectList.value) {
         try {
-            // 그룹장 이름
-            const userResponse = await usersApi.usersDetail(project.userId)
-            project.userName = userResponse.data.data.userName
+
+            console.log(`프로젝트 ${project.projectId} 처리 시작`);
+
+            //그룹장 userId 가져오기
+            const uprResponse =await userprojectroleApi.getProjectAdmin(project.projectId);
+            const uprData=uprResponse.data;
+            
+            console.log("Admin 응답:",uprData);
+
+           
+            if (uprData.success && uprData.userId !== 0) {
+                //** success가 true이고 userId가 0이 아닌 경우
+                
+                const userResponse = await usersApi.usersDetailById(uprData.userId);
+                const userData = userResponse.data;
+                
+                console.log("Admin 사용자 정보:", userData);
+                
+                const adminName = userData.data.userName;
+                //** userName 추출
+                console.log("Admin 사용자 이름:", adminName);
+                project.adminName = adminName;
+
+                
+            } else {
+                console.log(`프로젝트 ${project.projectId}에 admin이 없습니다.`);
+                project.adminName = null;
+            }
+            
 
             // 멤버 목록
             const memberResponse = await projectApi.getProjectMembersList(project.projectId)
