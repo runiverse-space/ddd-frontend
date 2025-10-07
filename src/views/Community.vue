@@ -201,7 +201,7 @@ const columns = [
 }
 
 .action-icon:hover {
-  color: #000;
+  color: #6759F4;
 }
 
 /* 일정 제목 */
