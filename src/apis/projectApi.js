@@ -22,13 +22,16 @@ function createProject(data){
   return axios.post("/api/project/create",data);
 }
 
-
+function getUserProjectList(userId){
+  return axios.get("/api/project/list/user", { params: { userId } });
+}
 
 export default{
   getProjectList,
   getProjectDetail,
   getProjectSchedulesList,
   getProjectMembersList,
-  createProject
+  createProject,
+  getUserProjectList
 
 }

@@ -6,7 +6,7 @@
 
         <!-- 우측 : 초대 목록 등 -->
         <div class="right-section">
-           <p>초대목록 InviteList <!-- 초대 목록 컴포넌트 --></p>
+            <p>초대목록 InviteList <!-- 초대 목록 컴포넌트 --></p>
         </div>
     </div>
 
@@ -73,115 +73,67 @@ import RecentProjects from './project/RecentProjects.vue'
 import { useStore } from 'vuex'
 import userprojectroleApi from '@/apis/userprojectroleApi'
 
-// 라우터에서 넘겨준 projectId 받기
-const props = defineProps(['projectId'])
+const myProjectList = ref([])
+const store = useStore()
 
-const projectList = ref([]);
-
-const myProjectList = ref([]);
-
-const store = useStore();
-
-async function loadProjects() {
+// ✅ 로그인한 유저의 프로젝트만 불러오기
+async function loadUserProjects() {
     try {
-        const response = await projectApi.getProjectList();
-        projectList.value = response.data;
-        // console.log("~~~", response.data);
-        console.log("~~~", projectList.value);
-        // let tmp;
-        // const tmp2 = [];
-        projectList.value.forEach(async project => {
-            // console.log("프로젝트 멤버 목록", (await projectApi.getProjectMembersList(project.projectId)).data.data);
-            const tmp = (await projectApi.getProjectMembersList(project.projectId)).data.data;
-            console.log("tmp", tmp);
-            const tmp2 = tmp.map(item => item.userId);
-            console.log("tmp2", tmp2);
-            if (tmp2.includes(store.state.userId)) {
-                myProjectList.value.push(project);
-            }
-        })
-        console.log("myProjectList:", myProjectList.value);
-    } catch (error) {
-        console.log('프로젝트 목록 조회 실패');
-    }
-}
-
-async function loadAllProjectMembers() {
-    console.log("모든 프로젝트의 멤버 목록 조회 시작")
-    for (const project of projectList.value) {
-        try {
-
-            console.log(`프로젝트 ${project.projectId} 처리 시작`);
-
-            //그룹장 userId 가져오기
-            const uprResponse =await userprojectroleApi.getProjectAdmin(project.projectId);
-            const uprData=uprResponse.data;
-            
-            console.log("Admin 응답:",uprData);
-
-           
-            if (uprData.success && uprData.userId !== 0) {
-                //** success가 true이고 userId가 0이 아닌 경우
-                
-                const userResponse = await usersApi.usersDetailById(uprData.userId);
-                const userData = userResponse.data;
-                
-                console.log("Admin 사용자 정보:", userData);
-                
-                const adminName = userData.data.userName;
-                //** userName 추출
-                console.log("Admin 사용자 이름:", adminName);
-                project.adminName = adminName;
-
-                
-            } else {
-                console.log(`프로젝트 ${project.projectId}에 admin이 없습니다.`);
-                project.adminName = null;
-            }
-            
-
-            // 멤버 목록
-            const memberResponse = await projectApi.getProjectMembersList(project.projectId)
-            project.members = memberResponse.data.data || []
-
-            // 각 멤버: 프로필 이미지 URL만 세팅
-            for (const member of project.members) {
-                try {
-                    const res = await usersApi.ufAttachDownload(member.userId)
-                    const blob = new Blob([res.data], { type: res.headers['content-type'] })
-                    member.profileUrl = URL.createObjectURL(blob)
-                } catch {
-                    member.profileUrl = null // 이미지 없으면 기본 아바타 표시 가능
-                }
-            }
-        } catch (error) {
-            console.error(`프로젝트 ${project.projectId} 로딩 실패:`, error)
-            project.userName = "(이름 불러오기 실패)"
-            project.members = []
+        const userId = store.state.userId
+        if (!userId) {
+            console.warn('로그인 정보가 없습니다.')
+            return
         }
+
+        // 🔹 userId 기반으로 필터링된 프로젝트 목록 API 호출
+        const response = await projectApi.getUserProjectList(userId)
+        myProjectList.value = response.data
+
+        // 🔹 각 프로젝트에 멤버 / 그룹장 정보 추가
+        for (const project of myProjectList.value) {
+            try {
+                const uprResponse = await userprojectroleApi.getProjectAdmin(project.projectId)
+                const uprData = uprResponse.data
+
+                if (uprData.success && uprData.userId !== 0) {
+                    const userResponse = await usersApi.usersDetailById(uprData.userId)
+                    project.adminName = userResponse.data.data.userName
+                } else {
+                    project.adminName = null
+                }
+
+                const memberResponse = await projectApi.getProjectMembersList(project.projectId)
+                project.members = memberResponse.data.data || []
+
+                for (const member of project.members) {
+                    try {
+                        const res = await usersApi.ufAttachDownload(member.userId)
+                        const blob = new Blob([res.data], { type: res.headers['content-type'] })
+                        member.profileUrl = URL.createObjectURL(blob)
+                    } catch {
+                        member.profileUrl = null
+                    }
+                }
+            } catch (error) {
+                console.error(`프로젝트 ${project.projectId} 로딩 실패:`, error)
+                project.members = []
+            }
+        }
+    } catch (error) {
+        console.error('❌ 내 프로젝트 목록 조회 실패:', error)
     }
 }
 
 function formatDate(dateStr) {
-    if (!dateStr) return "-"
+    if (!dateStr) return '-'
     const date = new Date(dateStr)
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, "0")
-    const day = String(date.getDate()).padStart(2, "0")
-    return `${year}-${month}-${day}`
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
-async function handleProjectClick(projectId) {
-
-    console.log('🚀 클릭한 projectId:', projectId);
-}
-
+// ✅ 마운트 시 호출
 onMounted(async () => {
-    await loadProjects();
-    await loadAllProjectMembers();
-    console.log(" loadAllProjectMembers 실행된다.");
-
-});
+    await loadUserProjects()
+})
 </script>
 
 <style scoped>

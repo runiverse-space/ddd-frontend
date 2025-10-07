@@ -15,34 +15,47 @@
             </div>
 
             <!-- 프로젝트가 3개 미만일 때만 보이는 '새 프로젝트' 버튼 -->
-            <div v-if="limitedProjects.length < 3" class="project-card new-project">
+            <RouterLink v-if="limitedProjects.length < 3" :to="{ name: 'ProjectCreate' }"
+                class="project-card new-project">
                 + 새 프로젝트
-            </div>
+            </RouterLink>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue"
+import { ref, onMounted } from "vue"
 import { ClockIcon } from "@heroicons/vue/24/outline"
 import projectApi from "@/apis/projectApi"
+import { useStore } from "vuex"
 
 const projectList = ref([])
+const limitedProjects = ref([]) // ✅ 별도 저장
+const store = useStore()
 
-// 최대 3개까지만 잘라냄
-const limitedProjects = computed(() => projectList.value.slice(0, 3))
-
-async function loadProjects() {
+async function loadUserProjects() {
     try {
-        const response = await projectApi.getProjectList()
+        const userId = store.state.userId
+        if (!userId) {
+            console.warn("로그인 정보가 없습니다.")
+            return
+        }
+
+        // 로그인 유저의 프로젝트만 가져오기
+        const response = await projectApi.getUserProjectList(userId)
         projectList.value = response.data || []
+
+        // 최신순 정렬 + 3개 제한
+        limitedProjects.value = [...projectList.value]
+            .sort((a, b) => new Date(b.projectCreatedAt) - new Date(a.projectCreatedAt))
+            .slice(0, 3)
     } catch (err) {
-        console.error("프로젝트 불러오기 실패", err)
+        console.error("🚨 최근 프로젝트 불러오기 실패", err)
     }
 }
 
 onMounted(() => {
-    loadProjects()
+    loadUserProjects()
 })
 </script>
 
@@ -113,5 +126,6 @@ onMounted(() => {
     font-size: 15px;
     cursor: pointer;
     padding: 20px;
+    text-decoration: none;
 }
 </style>
