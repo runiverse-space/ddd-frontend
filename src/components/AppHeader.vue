@@ -12,7 +12,7 @@
       <nav class="nav-center">
         <RouterLink to="/">메인</RouterLink>
         <RouterLink to="/explore">탐색</RouterLink>
-        <!-- <RouterLink to="/community">커뮤니티</RouterLink> -->
+        <RouterLink to="/community">커뮤니티</RouterLink>
         <RouterLink to="/project">프로젝트</RouterLink>
       </nav>
 
