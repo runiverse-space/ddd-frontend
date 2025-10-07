@@ -30,18 +30,25 @@
           <input type="text" v-model="emailLocal" placeholder="이메일" />
           <span>@</span>
 
-          <template v-if="emailDomain === 'direct'">
-            <input type="text" v-model="emailCustomDomain" placeholder="직접입력" />
-          </template>
+          <!-- 이메일 선택 or 직접입력 -->
+          <div class="email-domain-wrapper">
+            <div class="domain-select-box" @click="toggleDomainDropdown">
+              <template v-if="emailDomain === 'direct'">
+                <input v-model="emailCustomDomain" placeholder="직접입력" class="direct-input" @click.stop />
+              </template>
+              <template v-else>
+                {{ emailDomain || '선택하세요' }}
+              </template>
+              <ChevronDownIcon class="domain-icon" :class="{ open: isDomainOpen }" />
+            </div>
 
-          <select v-else v-model="emailDomain" @change="handleDomainChange">
-            <option value="" disabled>선택하세요</option>
-            <option value="gmail.com">gmail.com</option>
-            <option value="naver.com">naver.com</option>
-            <option value="daum.net">daum.net</option>
-            <option value="kakao.com">kakao.com</option>
-            <option value="direct">직접입력</option>
-          </select>
+            <div v-if="isDomainOpen" class="domain-dropdown">
+              <div v-for="domain in domainOptions" :key="domain" class="domain-option" @click="selectDomain(domain)">
+                {{ domain }}
+              </div>
+              <div class="domain-option" @click="selectDomain('direct')">직접입력</div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -53,13 +60,12 @@
         태그는 프로젝트의 목적과 방향을 빠르게 이해할 수 있도록 도와줍니다.
       </p>
 
-      <!-- 태그 선택 영역 -->
       <div ref="dropdownRef">
         <div class="tag-select-box" :class="{ open: isDropdownOpen }" @click="toggleDropdown">
           <div class="selected-tags">
             <template v-if="selectedTags.length > 0">
               <span v-for="tag in selectedTags" :key="tag.tagId" class="tag-pill"
-                :style="{ backgroundColor: tagColors[tag.tagName] || '#f2f2f2' }">
+                :style="{ backgroundColor: tagColors[tag.tagName] || '#fff' }">
                 {{ tag.tagName }}
                 <XMarkIcon class="remove-icon" @click.stop="removeTag(tag.tagId)" />
               </span>
@@ -69,16 +75,18 @@
           <ChevronDownIcon class="chevron-icon" :class="{ open: isDropdownOpen }" />
         </div>
 
-        <!-- 드롭다운 목록 -->
         <div v-if="isDropdownOpen" class="tag-dropdown">
-          <div v-for="tag in availableTags" :key="tag.tagId" class="tag-option"
-            :class="{ selected: selectedTags.some((t) => t.tagId === tag.tagId) }" @click="toggleTag(tag)">
-            {{ tag.tagName }}
+          <hr class="tag-divider" />
+          <p class="tag-limit">최대 3개까지 선택 가능합니다.</p>
+
+          <div class="tag-list">
+            <div v-for="tag in availableTags" :key="tag.tagId" class="tag-option"
+              :class="{ selected: selectedTags.some((t) => t.tagId === tag.tagId) }" @click="toggleTag(tag)">
+              {{ tag.tagName }}
+            </div>
           </div>
         </div>
       </div>
-
-      <p class="tag-limit">최대 3개까지 선택 가능합니다.</p>
     </section>
 
     <!-- 버튼 -->
@@ -106,20 +114,24 @@ const form = ref({
 const emailLocal = ref("");
 const emailDomain = ref("");
 const emailCustomDomain = ref("");
+const isDomainOpen = ref(false);
+const domainOptions = ["gmail.com", "naver.com", "daum.net", "kakao.com"];
 
-// ✅ 이메일 도메인 변경 시 직접입력 해제
-function handleDomainChange() {
-  if (emailDomain.value !== "direct") {
-    emailCustomDomain.value = "";
-  }
+function toggleDomainDropdown() {
+  isDomainOpen.value = !isDomainOpen.value;
+}
+
+function selectDomain(domain) {
+  emailDomain.value = domain;
+  isDomainOpen.value = false;
+  if (domain !== "direct") emailCustomDomain.value = "";
 }
 
 const availableTags = ref([]);
 const selectedTags = ref([]);
 const isDropdownOpen = ref(false);
-const dropdownRef = ref(null); // 외부 클릭 감지 ref
+const dropdownRef = ref(null);
 
-// 태그 색상 매핑
 const tagColors = {
   Backend: "#CFE2FF",
   Frontend: "#E7E9FF",
@@ -129,7 +141,6 @@ const tagColors = {
   Spring: "#E6FFF0",
 };
 
-// ✅ 태그 목록 불러오기
 onMounted(async () => {
   try {
     const res = await tagApi.getTagsByType("USER");
@@ -145,19 +156,19 @@ onBeforeUnmount(() => {
   window.removeEventListener("click", handleClickOutside);
 });
 
-// ✅ 외부 클릭 시 드롭다운 닫기
 function handleClickOutside(e) {
   if (dropdownRef.value && !dropdownRef.value.contains(e.target)) {
     isDropdownOpen.value = false;
   }
+  if (!e.target.closest(".domain-select-box")) {
+    isDomainOpen.value = false;
+  }
 }
 
-// ✅ 드롭다운 토글
 function toggleDropdown() {
   isDropdownOpen.value = !isDropdownOpen.value;
 }
 
-// ✅ 태그 선택
 function toggleTag(tag) {
   const exists = selectedTags.value.some((t) => t.tagId === tag.tagId);
   if (exists) {
@@ -171,23 +182,15 @@ function toggleTag(tag) {
   }
 }
 
-// ✅ 태그 제거
 function removeTag(tagId) {
   selectedTags.value = selectedTags.value.filter((t) => t.tagId !== tagId);
 }
 
-// ✅ 회원가입 요청
 async function handleSubmit() {
-  const domain =
-    emailDomain.value === "direct" ? emailCustomDomain.value : emailDomain.value;
+  const domain = emailDomain.value === "direct" ? emailCustomDomain.value : emailDomain.value;
   form.value.userEmail = `${emailLocal.value}@${domain}`;
 
-  if (
-    !form.value.userLoginId ||
-    !form.value.userPassword ||
-    !form.value.userName ||
-    !form.value.userEmail
-  ) {
+  if (!form.value.userLoginId || !form.value.userPassword || !form.value.userName || !form.value.userEmail) {
     alert("필수 항목을 모두 입력해주세요.");
     return;
   }
@@ -211,7 +214,6 @@ async function handleSubmit() {
   }
 }
 
-// ✅ 취소 버튼
 function goBack() {
   window.history.back();
 }
@@ -256,22 +258,89 @@ label {
   color: #bb0003;
 }
 
-input,
-select {
+input {
   width: 100%;
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 6px;
   font-size: 1rem;
+  background-color: #fff;
+  outline: none;
 }
 
+/* 이메일 입력 */
 .email-row {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-/* ✅ 태그 선택 */
+.email-row input[type="text"]:first-child {
+  flex: 0 0 50%;
+}
+
+.email-domain-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.domain-select-box {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  background-color: #fff;
+}
+
+.direct-input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 1rem;
+  color: #111;
+  cursor: text;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.domain-dropdown {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  position: absolute;
+  width: 100%;
+  top: 45px;
+  z-index: 10;
+}
+
+.domain-option {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.domain-option:hover {
+  background-color: #f5f5f5;
+}
+
+.domain-icon {
+  width: 18px;
+  height: 18px;
+  color: #555;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.domain-icon.open {
+  transform: rotate(180deg);
+}
+
+/* 태그 선택 */
 .tag-select-box {
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -299,8 +368,15 @@ select {
 }
 
 .placeholder {
-  color: #aaa;
+  color: 555;
+  /* 더 옅은 회색으로 변경 */
   font-size: 0.95rem;
+  font-weight: 400;
+  background: transparent;
+  /* 배경 투명 명시 */
+  box-shadow: none;
+  /* 혹시 브라우저 기본 그림자 제거 */
+  border: none;
 }
 
 .tag-pill {
@@ -312,7 +388,7 @@ select {
   border: 1px solid #ddd;
   font-size: 0.9rem;
   color: #111;
-  background-color: #f5f5f5;
+  background-color: #fff;
 }
 
 .remove-icon {
@@ -333,16 +409,32 @@ select {
   transform: rotate(180deg);
 }
 
-/* ✅ 드롭다운 */
+/* 드롭다운 */
 .tag-dropdown {
   border: 1px solid #ccc;
   border-top: none;
   border-radius: 0 0 8px 8px;
-  padding: 10px;
+  padding: 6px 10px 12px;
+  background-color: #fff;
+}
+
+.tag-divider {
+  border: none;
+  border-top: 1.5px solid #999;
+  width: 100%;
+  margin: 4px 0 6px;
+}
+
+.tag-limit {
+  color: #888;
+  font-size: 0.85rem;
+  margin: 0 0 6px 3px;
+}
+
+.tag-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  background-color: #fff;
+  gap: 8px;
 }
 
 .tag-option {
@@ -365,12 +457,7 @@ select {
   border-color: #000;
 }
 
-.tag-limit {
-  color: #888;
-  font-size: 0.85rem;
-  margin-top: 6px;
-}
-
+/* 버튼 */
 .submit-box {
   text-align: center;
   margin-top: 30px;

@@ -64,8 +64,7 @@ const routes = [
             name: "ProjectCreate",
             component: ProjectCreate,
           },
-
-        ]
+        ],
       },
       {
         path: "project/:projectId",
