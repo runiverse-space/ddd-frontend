@@ -41,27 +41,25 @@ import { RouterView } from 'vue-router';
 import { RouterLink } from 'vue-router';
 
 const props = defineProps(['projectId']);
-
-
 </script>
 
 <style scoped>
 .project-layout {
   display: flex;
-  padding: 20px;
+  padding: 0px;
 }
 
 .project-layout main {
   flex: 1;
-  /* 남은 공간 모두 차지 */
-  max-width: 1600px;
-  /* 필요시 최대 폭 제한 */
+  width: 100%;
+  max-width: none;
+  padding-right: 0;
 }
 
 .sidebar {
   width: 160px;
   /* 사이드바 너비 */
-  padding: 40px 20px;
+  padding: 20px 20px;
   margin-right: 40px;
   display: flex;
   flex-direction: column;

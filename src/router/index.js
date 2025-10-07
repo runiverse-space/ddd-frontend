@@ -16,9 +16,10 @@ import ProjectHome from "@/views/projects/ProjectHome.vue";
 
 import Signup from "@/views/users/Signup.vue";
 import Login from "@/views/users/Login.vue";
+import Update from "@/views/users/Update.vue";
+
 import ProjectManagementLayout from "@/layout/ProjectManagementLayout.vue";
 import ProjectCreate from "@/views/projects/project/ProjectCreate.vue";
-import Update from "@/views/users/Update.vue";
 
 const routes = [
   {

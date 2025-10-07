@@ -1,155 +1,221 @@
 <template>
-    <h1>{{ props.projectId }}번 째 프로젝트</h1>
-    <div>
-
-        <div class="bg-warning">
-            <div v-if="project">
-                <div>프로젝트명{{ project.projectTitle }}</div>
-                <div>프로젝트 내용{{ project.projectContent }}</div>
-                <div>생성자: {{ project.userId }}</div>
-                <div>프로젝트 멤버:
-                    <span v-if="memberList.length > 0">
-                        <span v-for="(member, index) in memberList" :key="member.userId">
-                            사용자{{ member.userId }}({{ member.uprRole }})
-                            <span v-if="index < memberList.length - 1">,</span>
-                        </span>
-                    </span>
-                    <span v-else>멤버 없음</span>
-
+    <div class="project-home">
+        <!-- 좌측 -->
+        <div class="left-panel">
+            <!-- 프로젝트명 -->
+            <div class="section-header">
+                <div class="icon-title">
+                    <FolderIcon class="icon" />
+                    <span class="small-title">프로젝트명</span>
                 </div>
+                <h1 class="project-name">{{ projectDetail?.projectTitle || "프로젝트명" }}</h1>
+                <p class="project-desc">
+                    {{ projectDetail?.projectContent || "프로젝트 설명을 불러오는 중입니다." }}
+                </p>
             </div>
 
-            <div v-else>
-                <p>프로젝트 정보를 불러오는 중...</p>
-            </div>
+            <!-- 타임라인 -->
+            <HomeMilestone :milestones="milestones" />
 
+            <!-- 멤버 -->
+            <HomeMember :members="members" />
         </div>
 
-        <div class="bg-info mt-2 p-3">
-            <h3>일정 목록</h3>
+        <!-- ✅ 세로 분리선 -->
+        <div class="divider"></div>
 
-            <div v-for="schedule in scheduleList" :key="schedule.scheduleId">
-                <div>일정 제목{{ schedule.scheduleTitle }}</div>
-                <div>일정 내용 해당 프로젝트의 일정 내용 projectId를 누르고 들어옴{{ schedule.scheduleContent }}</div>
-                <div>일정 멤버 스케쥴 id로 불러온다.{{ schedule.users }}</div>
-                <div>일정 시간 start{{ formatDate(schedule.scheduleStartDate) }} </div>
-                <div>일정 시간 end{{ formatDate(schedule.scheduleEndDate) }} </div>
-
-                <!-- 일정 참여자가 있다면 -->
-                <div v-if="schedule.users && schedule.users.length > 0">
-                    <strong>참여자:</strong>
-                    <span v-for="(user, index) in schedule.users" :key="user.userId">
-                        {{ user.userId }}
-                        <span v-if="index < schedule.users.length - 1">, </span>
-                    </span>
-                </div>
-
-            </div>
+        <!-- 우측 : 일정 -->
+        <div class="right-panel">
+            <HomeSchedule :recentSchedules="recentSchedules" :todayLabel="todayLabel" />
         </div>
-
     </div>
 </template>
 
 <script setup>
-import projectApi from '@/apis/projectApi';
-import { onMounted, ref } from 'vue';
+import { ref, onMounted, computed } from "vue";
+import { FolderIcon } from "@heroicons/vue/24/outline";
+import projectApi from "@/apis/projectApi";
+import userprojectroleApi from "@/apis/userprojectroleApi";
+import usersApi from "@/apis/usersApi";
+import tagApi from "@/apis/tagApi";
+import defaultProfile from "@/assets/default-profile.png";
+import { useStore } from "vuex";
 
-// 라우터에서 넘겨준 projectId 받기
-const props = defineProps(['projectId'])
-const project = ref(null);
-const memberList = ref([]);
-const scheduleList = ref([]);
+// ✅ 분리된 컴포넌트
+import HomeMilestone from "./project/HomeMilestone.vue";
+import HomeSchedule from "./project/HomeSchedule.vue";
+import HomeMember from "./project/HomeMember.vue";
 
-async function loadProjects() {
+const props = defineProps({
+    projectId: { type: Number, required: true },
+});
+
+const store = useStore();
+const projectDetail = ref({});
+const members = ref([]);
+const recentSchedules = ref([]);
+const milestones = ref([]);
+
+// ✅ 프로젝트 상세
+async function loadProject() {
     try {
-        console.log(`프로젝트 ${props.projectId} 상세 조회 시작`);
-        const response = await projectApi.getProjectDetail(props.projectId);
-        if (response.data.result === 'success') {
-            project.value = response.data.data;
-            console.log("프로젝트 목록: ", project.value);
-        } else {
-            console.log("프로젝트를 불러올수가 없습니다");
-        }
+        const res = await projectApi.getProjectDetail(props.projectId);
+        projectDetail.value = res.data.data || res.data;
     } catch (error) {
-        console.log('프로젝트 목록 조회 실패');
+        console.error("❌ 프로젝트 상세 불러오기 실패:", error);
     }
 }
 
-async function loadProjectMembers() {
-    console.log("모든 프로젝트의 멤버 목록 조회 시작")
-
+// ✅ 멤버
+async function loadMembers() {
     try {
-        console.log(`프로젝트 ${props.projectId}의 멤버 목록 조회 시작`);
-        const memberResponse = await projectApi.getProjectMembersList(props.projectId);
-        console.log("멤버 목록:", memberResponse.data);
-        if (memberResponse.data.result === 'success') {
-            memberList.value = memberResponse.data.data || [];
-            console.log("멤버 목록:", memberList.value);
-        } else {
-            console.error('멤버 조회 실패:', memberResponse.data.message);
-            memberList.value = [];
-        }
-    } catch (error) {
-        console.error('멤버 목록 조회 실패:', error);
+        const res = await userprojectroleApi.getMemberList(props.projectId);
+        const data = res.data.data || res.data;
+
+        members.value = await Promise.all(
+            data.map(async (m) => {
+                const userRes = await usersApi.usersDetailById(m.userId);
+                const userData = userRes.data.data || userRes.data;
+
+                let profileUrl = defaultProfile;
+                try {
+                    const imgRes = await usersApi.ufAttachDownload(m.userId);
+                    const blob = new Blob([imgRes.data], {
+                        type: imgRes.headers["content-type"],
+                    });
+                    profileUrl = URL.createObjectURL(blob);
+                } catch (error) {
+                    console.log(error);
+                }
+
+                const tagRes = await tagApi.getUserTags(m.userId);
+                const tags = tagRes.data.tags?.map((t) => t.tagName) || [];
+
+                return {
+                    userId: userData.userId,
+                    userName: userData.userName,
+                    userEmail: userData.userEmail,
+                    userIntro: userData.userIntro,
+                    profileUrl,
+                    tags,
+                };
+            })
+        );
+    } catch (e) {
+        console.error("❌ 멤버 조회 실패:", e);
     }
-
-
 }
 
-async function loadSchedule() {
-
-
+// ✅ 최근 일정 3개
+async function loadSchedules() {
     try {
-        console.log("스케쥴 조회 시작")
-        const response = await projectApi.getProjectSchedulesList(props.projectId);
-        scheduleList.value = response.data;
-        if (response.data.result === 'success') {
-            scheduleList.value = response.data.data || [];
-            console.log("스케줄 목록:", scheduleList.value);
-        } else {
-            console.error('스케줄 조회 실패:', response.data.message);
-            scheduleList.value = [];
-        }
+        const res = await projectApi.getProjectSchedulesList(props.projectId);
+        const list = res.data.data || res.data;
+        recentSchedules.value = Array.isArray(list)
+            ? list.slice(0, 3).map((s, i) => ({
+                title: s.scheduleTitle || "일정 제목",
+                time: `${s.scheduleStart || "09:00"} - ${s.scheduleEnd || "09:00"}`,
+                statusText: i === 1 ? "진행 중" : "시작되지 않음",
+                statusClass: i === 1 ? "active" : "inactive",
+                members: [defaultProfile, defaultProfile],
+            }))
+            : [];
     } catch (error) {
-        console.log('스케쥴 목록 조회 실패');
+        console.error("❌ 일정 조회 실패:", error);
     }
-
-    console.log("스케쥴 로드완료");
 }
 
-function formatDate(dataString) {
-    if (!dataString) return '';
-    const date = new Date(dataString);
-    return date.toLocaleString('ko-KR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-}
+// ✅ 타임라인 (임시)
+milestones.value = [
+    { label: "Jan 20", name: "프로젝트 시작" },
+    { label: "Feb 14", name: "해야할 것-01" },
+    { label: "Mar 8", name: "해야할 것-02" },
+    { label: "Apr 30", name: "해야할 것-03" },
+    { label: "Sep 16", name: "프로젝트 종료" },
+];
 
+// ✅ 날짜 표시
+const todayLabel = computed(() => {
+    const now = new Date();
+    const weekday = now.toLocaleDateString("en-US", { weekday: "long" });
+    const month = now.toLocaleString("en-US", { month: "short" });
+    return `${weekday}, ${now.getDate()} ${month}`;
+});
 
-
-onMounted(async () => {
-    console.log("ProjectHome 마운트");
-    console.log("받은 projectId:", props.projectId);
-
-    if (!props.projectId) {
-        console.error("❌ projectId가 없습니다!");
-
-        return;
-    }
-
-    // 병렬로 데이터 로드 (더 빠름!)
-    await Promise.all([
-        loadProjects(),
-        loadProjectMembers(),
-        loadSchedule()
-    ]);
-
-    console.log("모든 데이터 로드 완료");
-})
-
-
+onMounted(() => {
+    loadProject();
+    loadMembers();
+    loadSchedules();
+});
 </script>
+
+<style scoped>
+.project-home {
+    display: grid;
+    grid-template-columns: 7.5fr 0.5px 2.5fr;
+    gap: 0;
+    padding: 10px 10px;
+    background-color: #fff;
+    min-height: 100vh;
+    align-items: stretch;
+    /* ✅ 왼쪽 높이에 맞춰 오른쪽 늘림 */
+}
+
+/* ✅ 왼쪽 패널 */
+.left-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    padding-right: 10px;
+    max-width: 100%;
+    min-height: 720px;
+    /* ✅ 최소 높이 지정 (멤버 없을 때도 일정이 아래쪽으로 유지) */
+}
+
+/* ✅ 오른쪽 패널 */
+.right-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 0 10px 0 30px;
+}
+
+/* ✅ 분리선 */
+.divider {
+    background-color: #d5d5d5;
+    width: 1px;
+    height: 100%;
+}
+
+.project-name {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-top: 6px;
+    color: #111;
+}
+
+.project-desc {
+    color: #555;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-top: 4px;
+}
+</style>
+
+<style>
+/* 공통 아이콘 타이틀 스타일 - 모든 하위 컴포넌트에서 공유 가능 */
+.icon-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #999;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.icon {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2;
+}
+</style>

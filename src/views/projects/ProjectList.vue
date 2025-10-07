@@ -31,8 +31,7 @@
                 <tr v-for="project in myProjectList" :key="project.projectId">
                     <!-- 프로젝트명 -->
                     <td>
-                        <router-link :to="{ name: 'ProjectHome', params: { projectId: project.projectId } }"
-                            @click="handleProjectClick(project.projectId)">
+                        <router-link :to="{ name: 'ProjectHome', params: { projectId: project.projectId } }">
                             {{ project.projectTitle }}
                         </router-link>
                     </td>
