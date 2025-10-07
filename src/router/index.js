@@ -14,11 +14,11 @@ import RetrospecRoutes from "./RetrospecRoutes";
 import ProjectList from "@/views/projects/ProjectList.vue";
 import ProjectHome from "@/views/projects/ProjectHome.vue";
 
-import Signup from "@/views/users/Signup";
-import Login from "@/views/users/Login";
+import Signup from "@/views/users/Signup.vue";
+import Login from "@/views/users/Login.vue";
 import ProjectManagementLayout from "@/layout/ProjectManagementLayout.vue";
 import ProjectCreate from "@/views/projects/project/ProjectCreate.vue";
-import Update from "@/views/users/Update";
+import Update from "@/views/users/Update.vue";
 
 const routes = [
   {
