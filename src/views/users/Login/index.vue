@@ -47,15 +47,24 @@ async function handleSubmit() {
     const data = structuredClone(loginForm.value);
     const response = await usersApi.usersLogin(data);
     const result = response.data;
+
     if (result.result === "success") {
       loginFail.value = false;
-      store.dispatch("saveAuth", result);
+
+      // store를 통해 로그인 상태 저장
+      store.dispatch("saveAuth", {
+        userId: result.userId,
+        userLoginId: result.userLoginId,
+        jwt: result.jwt
+      });
+
       router.push("/");
     } else {
       loginFail.value = true;
     }
   } catch (error) {
-    console.log(error);
+    console.error("로그인 오류:", error);
+    loginFail.value = true;
   }
 }
 </script>
