@@ -58,13 +58,23 @@
                     </div>
                 </div>
             </div>
-        </section>
 
-        <!-- 기술 스택 태그 -->
-        <section class="section">
-            <h5 class="section-title">기술 스택</h5>
-            <!-- <p class="tag-desc">태그는 프로젝트의 목적과 방향을 빠르게 이해할 수 있도록 도와줍니다.</p> -->
-            <TagSelector v-model="selectedTags" tagType="USER" />
+            <!-- 한마디 (소개) -->
+            <div class="form-group">
+                <label>한마디</label>
+                <div class="textarea-wrapper">
+                    <textarea v-model="form.userIntro" placeholder="내용을 입력합니다." rows="3" maxlength="100"></textarea>
+                    <p class="char-counter">
+                        {{ form.userIntro.length }}/100 characters
+                    </p>
+                </div>
+            </div>
+
+            <!-- 기술 스택 -->
+            <div class="form-group">
+                <label>기술 스택</label>
+                <TagSelector v-model="selectedTags" tagType="USER" />
+            </div>
         </section>
 
         <!-- 버튼 -->
@@ -94,6 +104,7 @@ const form = ref({
     userName: "",
     userPassword: "",
     userEmail: "",
+    userIntro: "",
 });
 
 const profileUrl = ref("");
@@ -133,6 +144,7 @@ async function loadUserData() {
             userName: data.userName,
             userPassword: "",
             userEmail: data.userEmail,
+            userIntro: data.userIntro || "",
         };
 
         // ✅ 이메일 자동 분리
@@ -304,11 +316,37 @@ input[disabled] {
     cursor: not-allowed;
 }
 
+.textarea-wrapper {
+    position: relative;
+}
+
 textarea {
     width: 100%;
     border: 1px solid #ddd;
     border-radius: 6px;
-    padding: 10px;
+    padding: 12px;
+    font-size: 1rem;
+    line-height: 1.5;
+    resize: none;
+    background: #fff;
+    transition: border-color 0.2s ease;
+}
+
+textarea:focus {
+    border-color: #000;
+    outline: none;
+}
+
+textarea::placeholder {
+    color: #888;
+}
+
+.char-counter {
+    text-align: right;
+    font-size: 0.7rem;
+    color: #666;
+    margin-top: 0px;
+    user-select: none;
 }
 
 .email-row {
