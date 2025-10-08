@@ -21,10 +21,15 @@ function scheduleUpdate(schedule) {
   return axios.put("/api/schedule/update", schedule);
 }
 
+function scheduleDelete(scheduleId) {
+  return axios.delete("/api/schedule/delete", {params: {scheduleId}});
+}
+
 export default{
   getSchedule,
   getProjectScheduleList,
   getScheduleMemberList,
   scheduleCreate,
-  scheduleUpdate
+  scheduleUpdate,
+  scheduleDelete
 }
