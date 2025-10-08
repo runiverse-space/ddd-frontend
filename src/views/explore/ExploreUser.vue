@@ -174,34 +174,37 @@ onMounted(async () => {
     color: #aaa;
 }
 
+/* ✅ 사용자 카드 그리드 */
 .user-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    /* 최소 260px, 남는 공간 균등 분배 */
-    gap: 35px;
-    /* row-gap + column-gap 동시 제어 */
-    justify-items: center;
-    align-items: start;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+    /* 카드 간격 */
+    justify-content: center;
+    /* 가운데 정렬 */
+    margin-top: 20px;
 }
 
 /* ✅ 카드 스타일 */
 .user-card {
     width: 100%;
-    min-height: 160px;
+    max-width: 320px;
     background: #fff;
     border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     padding: 20px;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    transition: all 0.2s ease;
+    justify-content: space-between;
+    /* 위쪽 정보 + 아래 한마디 간격 유지 */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .user-card:hover {
-    box-shadow: 0 5px 14px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
+    transform: translateY(-4px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
+
 
 /* ✅ 상단: 프로필 + 이름 + 초대 버튼 */
 .card-top {
