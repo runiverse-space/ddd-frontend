@@ -283,10 +283,7 @@ async function loadScheduleMembers(scheduleId) {
 async function getProjectDetail() {
   try {
     const response = await projectApi.getProjectDetail(props.projectId);
-    console.log(response);
     projectInfo.value = response.data.data;
-    console.log('프로젝트 정보', projectInfo.value);
-
   } catch (error) {
     console.log(error);
   }
@@ -314,8 +311,6 @@ async function loadProjectMembers() {
 }
 
 async function handleWrite(status) {
-  console.log("새 일정 작성 클릭");
-  console.log("기본 상태:", status);
   try {
     router.push(`schedule/write?status=${status}`);
   } catch (error) {
@@ -337,16 +332,13 @@ function formatDate(dataString) {
 
 async function openModal(schedule) {
   selectedSchedule.value = schedule;
-  console.log("선택된 일정", selectedSchedule.value);
   selectedSchedule.value.users = await loadScheduleMembers(schedule.scheduleId);
 
   scheduleMemberList.value = selectedSchedule.value.users.map(user => user.userId);
-  console.log("선택된 일정 멤버", scheduleMemberList.value);
 
   console.groupEnd();
   if (!modalInstance) {
     modalInstance = new Modal(detailModalRef.value);
-    console.log("모달 인스턴스 생성");
   }
   modalInstance.show();
 }
@@ -376,23 +368,17 @@ async function handleUpdateConfirm() {
 
 function handleDelete(schedule) {
   selectedSchedule.value = schedule;
-  console.log("삭제할 일정", schedule);
   if (!modalInstance) {
     modalInstance = new Modal(deleteModalRef.value);
-    console.log("모달 인스턴스 생성");
   }
   modalInstance.show();
 }
 
 async function handleDeleteConfirm() {
-  console.group("handleDeleteConfirm()");
-  console.log("삭제할 일정", selectedSchedule.value);
-  console.groupEnd();
   try {
     const response = await scheduleApi.scheduleDelete(selectedSchedule.value.scheduleId);
     const result = response.data;
     if (result.result === "success") {
-      console.log("일정 삭제 완료");
       await loadSchedule();
     } else {
       console.log("일정 삭제 실패:", result.message);
@@ -439,7 +425,6 @@ async function onDragEnd(event) {
 }
 
 onMounted(async () => {
-  console.log("일정 컴포넌트 마운트");
   await getProjectDetail();
   await loadSchedule();
   await loadProjectMembers();
