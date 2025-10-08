@@ -1,9 +1,9 @@
 <template>
   <div class="container-fluid my-3">
-    <h1>일정 생성 화면</h1>
+    <h1>일정 등록</h1>
     <form @submit.prevent="handleSubmit()">
       <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-6">
 
           <!-- 일정 제목 -->
           <div class="form-section mt-3">
@@ -30,6 +30,10 @@
             <p v-if="isScheduleEndDateBlank" class="text-danger small">일정 종료일자는 필수 입력 항목입니다.</p>
           </div>
 
+
+        </div>
+
+        <div class="col-md-4">
           <!-- 초기 상태 설정 -->
           <div class="form-section mt-3">
             <p class="text-muted small">초기 상태 설정</p>
@@ -43,18 +47,23 @@
           <!-- 추가 가능한 사용자(프로젝트 멤버) 조회 -->
           <div class="form-section mt-3">
             <p class="text-muted small">일정을 배정할 멤버 선택</p>
-            <p v-for="projectMember in projectMemberList" :key="projectMember">
-              <button type="button" class="btn btn-sm"
+            <span v-for="projectMember in projectMemberList" :key="projectMember">
+              <button type="button" class="btn btn-sm m-1"
                 :class="scheduleMemberList.includes(projectMember.userId) ? 'btn-primary' : 'btn-outline-primary'"
                 @click="toggleScheduleMember(projectMember)">
                 {{ projectMember.userLoginId }} {{ projectMember.userName }}
               </button>
-            </p>
+            </span>
           </div>
 
-          <button class="btn btn-dark btn-sm">일정 생성</button>
-
+          <div class="d-flex justify-content-end mt-4">
+            <button class="btn btn-dark btn-sm m-2">확인</button>
+            <button type="button" class="btn active btn-sm m-2" @click="handleCancel()">취소</button>
+          </div>
         </div>
+
+
+
 
       </div>
     </form>
