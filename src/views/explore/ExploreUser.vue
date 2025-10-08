@@ -174,18 +174,18 @@ onMounted(async () => {
     color: #aaa;
 }
 
-/* ✅ 유저 카드 그리드 */
 .user-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    /* column-gap: 10px; */
-    row-gap: 35px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    /* 최소 260px, 남는 공간 균등 분배 */
+    gap: 35px;
+    /* row-gap + column-gap 동시 제어 */
     justify-items: center;
+    align-items: start;
 }
 
 /* ✅ 카드 스타일 */
 .user-card {
-    max-width: 300px;
     width: 100%;
     min-height: 160px;
     background: #fff;
@@ -231,15 +231,18 @@ onMounted(async () => {
 
 /* ✅ 초대 버튼 */
 .invite-btn {
-    border: 1px solid #bbb;
     background: #fff;
+    border: 1px solid #aaa;
+    color: #555;
     border-radius: 999px;
     padding: 6px 14px;
     font-size: 0.8rem;
     cursor: pointer;
-    white-space: nowrap;
-    line-height: 1.3;
+    transition: 0.2s;
+
+    display: inline-block;
     vertical-align: middle;
+    line-height: 1.3;
 }
 
 .invite-btn:hover {

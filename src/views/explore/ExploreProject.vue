@@ -210,6 +210,7 @@ const filterByTag = (tag) => {
 .join-btn {
     background: #fff;
     border: 1px solid #aaa;
+    color: #555;
     border-radius: 999px;
     padding: 6px 14px;
     font-size: 0.8rem;
