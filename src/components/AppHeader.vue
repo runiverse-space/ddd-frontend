@@ -40,7 +40,7 @@
 <script setup>
 import { RouterLink, useRouter } from "vue-router";
 import { useStore } from "vuex";
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { ArrowRightStartOnRectangleIcon } from "@heroicons/vue/24/outline";
 import usersApi from "@/apis/usersApi";
 
@@ -72,11 +72,24 @@ onMounted(() => {
   if (isLoggedIn.value) loadUserProfile();
 });
 
+watch(
+  () => store.state.userId,
+  (newId) => {
+    if (newId) {
+      loadUserProfile();
+    } else {
+      userProfileUrl.value = defaultProfile;
+    }
+  }
+);
+
 function handleLogin() {
   router.push("/login");
 }
 
 function handleLogout() {
+  if (userProfileUrl.value) URL.revokeObjectURL(userProfileUrl.value);
+  userProfileUrl.value = defaultProfile;
   store.dispatch("removeAuth");
   router.push("/");
 }
