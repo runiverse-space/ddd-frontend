@@ -1,38 +1,34 @@
 <template>
-  <div class="container-fluid my-5">
+  <div class="container-fluid my-3">
     <h1>일정 생성 화면</h1>
     <form @submit.prevent="handleSubmit()">
       <div class="row">
-        <div class="col-md-12">
+        <div class="col-md-8">
 
           <!-- 일정 제목 -->
-          <div class="mb-3">
-            <label class="form-label">일정 제목 <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" placeholder="일정 제목을 입력합니다" v-model="schedule.scheduleTitle" />
+          <div class="form-section mt-3">
+            <p class="text-muted small">일정 제목 <span class="text-danger">*</span></p>
+            <input type="text" class="form-control mb-3" placeholder="일정 제목을 입력합니다" v-model="schedule.scheduleTitle" />
           </div>
 
           <!-- 일정 내용 -->
-          <div class="mb-3">
-            <label class="form-label">일정 내용</label>
-            <input type="text" class="form-control" placeholder="일정 내용을 입력합니다" v-model="schedule.scheduleContent" />
+          <div class="form-section mt-3">
+            <p class="text-muted small">일정 내용</p>
+            <input type="text" class="form-control mb-3" placeholder="일정 내용을 입력합니다" v-model="schedule.scheduleContent" />
           </div>
 
-          <!-- 시작 일시 -->
-          <div class="mb-3">
-            <label class="form-label">시작 일시 <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" placeholder="yyyy-mm-dd" v-model="schedule.scheduleStartDate" />
-          </div>
-
-          <!-- 종료 일시 -->
-          <div class="mb-3">
-            <label class="form-label">종료 일시 <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" placeholder="yyyy-mm-dd" v-model="schedule.scheduleEndDate" />
+          <!-- 일정 기간 -->
+          <div class="form-section mt-3">
+            <p class="text-muted small">일정 시작일자를 선택해주세요.</p>
+            <input type="date" class="form-control mb-3" v-model="schedule.scheduleStartDate" />
+            <p class="text-muted small ">일정 종료일자를 선택해주세요.</p>
+            <input type="date" class="form-control" v-model="schedule.scheduleEndDate" />
           </div>
 
           <!-- 초기 상태 설정 -->
-          <div class="mb-3">
-            <label class="form-label">초기 상태 설정</label>
-            <select class="form-select" v-model="schedule.scheduleStatus">
+          <div class="form-section mt-3">
+            <p class="text-muted small">초기 상태 설정</p>
+            <select class="form-select mb-3" v-model="schedule.scheduleStatus">
               <option value="NOT STARTED">시작되지 않음</option>
               <option value="IN PROGRESS">진행 중</option>
               <option value="DONE">완료됨</option>
@@ -40,11 +36,14 @@
           </div>
 
           <!-- 추가 가능한 사용자(프로젝트 멤버) 조회 -->
-          <p v-for="projectMember in projectMemberList" :key="projectMember">
-            <button type="button" class="btn btn-sm" :class="scheduleMemberList.includes(projectMember.userId) ? 'btn-primary' : 'btn-outline-primary'" @click="toggleScheduleMember(projectMember)">
-              {{ projectMember.userLoginId }} {{ projectMember.userName }}
-            </button>
-          </p>
+          <div class="form-section mt-3">
+            <p class="text-muted small">일정을 배정할 멤버 선택</p>
+            <p v-for="projectMember in projectMemberList" :key="projectMember">
+              <button type="button" class="btn btn-sm" :class="scheduleMemberList.includes(projectMember.userId) ? 'btn-primary' : 'btn-outline-primary'" @click="toggleScheduleMember(projectMember)">
+                {{ projectMember.userLoginId }} {{ projectMember.userName }}
+              </button>
+            </p>
+          </div>
 
           <button class="btn btn-dark btn-sm">일정 생성</button>
 
@@ -82,7 +81,7 @@ const schedule = ref({
   scheduleContent: "",
   scheduleStartDate: "",
   scheduleEndDate: "",
-  scheduleStatus: "NOT STARTED",
+  scheduleStatus: route.query.status || "NOT STARTED",
 });
 
 const scheduleMemberList = ref([]);
@@ -96,7 +95,6 @@ async function handleSubmit() {
     schedule.value.userIds = scheduleMemberList;
     const response = await scheduleApi.scheduleCreate(schedule.value);
     const result = response.data;
-    // console.log(result);
     if (result.result === "success") {
       router.push(`/project/${route.params.projectId}/schedule`);
     }
@@ -106,17 +104,14 @@ async function handleSubmit() {
 }
 
 async function loadProjectMembers() {
-  console.log("모든 프로젝트의 멤버 목록 조회 시작")
   try {
-    console.log(`프로젝트 ${projectId}의 멤버 목록 조회 시작`);
     const response = await projectApi.getProjectMembersList(projectId);
     if (response.data.result === 'success') {
       userProjectRoleList.value = response.data.data || [];
-      console.log("멤버 목록:", userProjectRoleList.value);
 
       // projectMemberList에 사용자 정보 삽입
       userProjectRoleList.value.forEach(async userProjectRole => {
-        const response = await usersApi.usersDetail(userProjectRole.userId);
+        const response = await usersApi.usersDetailById(userProjectRole.userId);
         const result = response.data;
         projectMemberList.value.push(result.data);
       });
@@ -131,13 +126,11 @@ async function loadProjectMembers() {
 
 // 일정 멤버 토글 함수
 function toggleScheduleMember(scheduleMember) {
-  // console.log(structuredClone(selectedTagList));
   if (scheduleMemberList.value.includes(scheduleMember.userId)) {
     scheduleMemberList.value = scheduleMemberList.value.filter((t) => t !== scheduleMember.userId);
   } else {
     scheduleMemberList.value.push(scheduleMember.userId);
   }
-  // emit("handleTagEvent", tag)
 }
 
 watch(scheduleMemberList, (newScheduleMemberList, oldScheduleMemberList) => {
