@@ -1,18 +1,20 @@
 <template>
     <div class="user-tab">
-        <!-- 헤더: 제목 + 검색 -->
+        <!-- ✅ 상단 검색창 -->
         <div class="header-row">
-            <h2 class="title">프로젝트를 함께 할 사용자들을 찾을 수 있습니다.</h2>
-            <UserSearch @update:results="handleSearchResults" />
+            <div class="search-box">
+                <MagnifyingGlassIcon class="icon" />
+                <input type="text" placeholder="유저 검색" v-model="searchTerm" @input="onSearch" />
+            </div>
         </div>
 
         <!-- 👥 전체 멤버 카드 -->
         <div class="user-grid">
             <div v-for="user in allUsers" :key="user.userId" class="user-card">
-                <!-- 상단: 프로필 + 이름 + 버튼 한 줄 -->
-                <div class="profile-row">
+                <!-- 상단: 프로필 + 이름 + 버튼 -->
+                <div class="card-top">
                     <img :src="user.profileUrl" alt="profile" class="profile-img" />
-                    <div class="name-area">
+                    <div class="user-info">
                         <h4 class="name">{{ user.userName }}</h4>
                     </div>
                     <button class="invite-btn">초대하기</button>
@@ -41,25 +43,34 @@ import { ref, onMounted } from "vue";
 import usersApi from "@/apis/usersApi";
 import tagApi from "@/apis/tagApi";
 import defaultImgSrc from "@/assets/default-profile.png";
-import UserSearch from "./UserSearch.vue";
+import { MagnifyingGlassIcon } from "@heroicons/vue/24/outline"; // ✅ 아이콘 추가
 
 const allUsers = ref([]);
-const defaultImg = defaultImgSrc;
-
-const handleSearchResults = (results) => {
-    allUsers.value = results.length > 0 ? results : originalUsers.value;
-};
 const originalUsers = ref([]);
+const defaultImg = defaultImgSrc;
+const searchTerm = ref("");
 
-onMounted(async () => {
+const onSearch = async () => {
+    const keyword = searchTerm.value.trim();
+
+    // ✅ 입력이 완전히 비어 있으면 전체 유저 다시 불러오기
+    if (keyword === "") {
+        allUsers.value = originalUsers.value;
+        return;
+    }
+
     try {
-        // ✅ 검색어 없이 호출하면 전체 목록 반환됨
-        const res = await usersApi.usersSearch("");
-
+        const res = await usersApi.usersSearch(keyword);
         if (res.data.result === "success") {
             const users = res.data.data;
 
-            // 프로필 + 태그 처리
+            // ✅ 검색 결과가 없으면 전체 복원 X
+            if (!users || users.length === 0) {
+                allUsers.value = []; // ❌ 전체유저 복구 금지
+                return;
+            }
+
+            // ✅ 검색 결과 있을 때만 표시
             for (const user of users) {
                 try {
                     const imgRes = await usersApi.ufAttachDownload(user.userId);
@@ -74,6 +85,31 @@ onMounted(async () => {
             }
 
             allUsers.value = users;
+        }
+    } catch (err) {
+        console.error("유저 검색 실패:", err);
+    }
+};
+
+
+onMounted(async () => {
+    try {
+        const res = await usersApi.usersSearch("");
+        if (res.data.result === "success") {
+            const users = res.data.data;
+            for (const user of users) {
+                try {
+                    const imgRes = await usersApi.ufAttachDownload(user.userId);
+                    const blobUrl = URL.createObjectURL(imgRes.data);
+                    user.profileUrl = blobUrl;
+                } catch {
+                    user.profileUrl = defaultImg;
+                }
+
+                const tagRes = await tagApi.getUserTags(user.userId);
+                user.tags = (tagRes.data.tags || []).map((t) => t.tagName);
+            }
+            allUsers.value = users;
             originalUsers.value = users;
         }
     } catch (err) {
@@ -85,52 +121,94 @@ onMounted(async () => {
 <style scoped>
 .user-tab {
     width: 100%;
-    padding: 0 40px;
+    padding: 0px;
     margin-top: 20px;
 }
 
-/* ===========================
-   ✅ 상단 헤더 (제목 + 검색창)
-=========================== */
+/* ✅ 검색창 */
 .header-row {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    justify-content: flex-start;
+    /* 왼쪽 정렬 */
     margin-bottom: 30px;
 }
 
-.title {
-    font-size: 1rem;
-    font-weight: 500;
-}
-
-/* ===========================
-   👥 유저 카드 스타일
-=========================== */
-.user-grid {
+.search-box {
     display: flex;
-    flex-wrap: wrap;
-    gap: 18px;
-    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    width: 250px;
+    padding: 7px 10px;
+    border: 1.5px solid #ccc;
+    border-radius: 50px;
+    background: #fff;
+    transition: all 0.2s ease;
 }
 
+.search-box:hover {
+    border-color: #aaa;
+}
+
+.search-box:focus-within {
+    border-color: #6759f4;
+    /* 포커스 시 포인트 컬러 */
+}
+
+.search-box .icon {
+    width: 15px;
+    height: 15px;
+    color: #999;
+    flex-shrink: 0;
+    margin-left: 4px;
+}
+
+.search-box input {
+    border: none;
+    outline: none;
+    flex-grow: 1;
+    font-size: 0.8rem;
+    color: #333;
+}
+
+.search-box input::placeholder {
+    color: #aaa;
+}
+
+/* ✅ 유저 카드 그리드 */
+.user-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    /* column-gap: 10px; */
+    row-gap: 35px;
+    justify-items: center;
+}
+
+/* ✅ 카드 스타일 */
 .user-card {
-    width: 240px;
+    max-width: 300px;
+    width: 100%;
+    min-height: 160px;
     background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-    padding: 16px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    padding: 20px;
     display: flex;
     flex-direction: column;
+    justify-content: flex-start;
+    transition: all 0.2s ease;
 }
 
-/* ✅ 프로필 + 이름 + 버튼 한 줄 */
-.profile-row {
+.user-card:hover {
+    box-shadow: 0 5px 14px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+/* ✅ 상단: 프로필 + 이름 + 초대 버튼 */
+.card-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    width: 100%;
+    gap: 10px;
 }
 
 .profile-img {
@@ -140,24 +218,28 @@ onMounted(async () => {
     object-fit: cover;
 }
 
-.name-area {
+.user-info {
     flex-grow: 1;
 }
 
 .name {
-    font-weight: 600;
+    font-weight: 700;
+    color: #111;
     font-size: 1rem;
+    margin: 0;
 }
 
 /* ✅ 초대 버튼 */
 .invite-btn {
     border: 1px solid #bbb;
     background: #fff;
-    border-radius: 20px;
-    padding: 3px 10px;
-    font-size: 0.85rem;
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
     cursor: pointer;
     white-space: nowrap;
+    line-height: 1.3;
+    vertical-align: middle;
 }
 
 .invite-btn:hover {
@@ -167,25 +249,37 @@ onMounted(async () => {
 /* ✅ 유저 태그 */
 .tags {
     display: flex;
-    gap: 6px;
-    margin-top: 8px;
     flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 15px;
 }
 
 .tag {
-    background: #f3f1ff;
-    color: #6b4fe7;
-    border-radius: 8px;
-    padding: 3px 8px;
-    font-size: 0.75rem;
+    background: #000;
+    color: #fff;
+    border-radius: 5px;
+    padding: 6px 12px;
+    font-size: 0.65rem;
+    font-weight: 500;
+    line-height: 1.3;
+    display: inline-block;
+    white-space: nowrap;
 }
 
 /* ✅ 한마디 */
 .oneline {
-    margin-top: 8px;
-    font-size: 0.85rem;
-    color: #666;
+    margin-top: 20px;
+    /* 위쪽 여백만 살짝 줄임 */
+    margin-bottom: 0;
+    /* ✅ 하단 여백 완전 제거 */
+    color: #555;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
+
 
 /* ✅ 빈 상태 */
 .empty-text {

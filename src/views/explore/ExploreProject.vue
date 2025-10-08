@@ -97,28 +97,43 @@ const filterByTag = (tag) => {
     margin: 16px 0 32px;
 }
 
+/* 기본 상태: 흰색 배경, 검은 테두리 */
 .tag-btn {
-    padding: 6px 14px;
-    border-radius: 20px;
-    border: none;
-    background: #f2f2f2;
+    padding: 7px 15px;
+    border-radius: 999px;
+    border: 1px solid #333;
+    background: transparent;
+    color: #000;
     cursor: pointer;
-    transition: 0.2s;
+    font-weight: 500;
+    font-size: 0.7rem !important;
+    transition: all 0.25s ease;
 }
 
+/* hover 시 살짝 어두워짐 */
+.tag-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* 선택된 상태 */
 .tag-btn.active {
     background: #000;
     color: #fff;
 }
 
-.tag-btn:hover {
-    background: #e5e5e5;
+/* 태그 버튼 전체적으로 살짝 작게 */
+.filter-tags button {
+    font-size: 0.9rem;
 }
 
 .card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
+    /* ✅ 한 줄에 3개 */
     gap: 24px;
+    /* ✅ 카드 사이 간격 */
+    justify-items: center;
+    /* ✅ 가운데 정렬 */
 }
 
 .project-card {
@@ -126,57 +141,91 @@ const filterByTag = (tag) => {
     border-radius: 16px;
     padding: 20px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    width: 330px;
+    /* ✅ 가로 크기 고정 */
+    box-sizing: border-box;
+    /* ✅ padding 포함 */
 }
 
 .project-title {
     font-weight: 700;
     font-size: 1.05rem;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .desc {
     color: #666;
-    font-size: 0.9rem;
-    margin: 6px 0;
-    min-height: 40px;
+    font-size: 0.8rem;
+    margin: 5px 0 15px;
+    /* ✅ 아래 여백 줄이기 */
+    /* min-height: 40px; ✅ 삭제 또는 주석처리 */
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .tags {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    margin-bottom: 8px;
+    margin-top: 0;
+    margin-bottom: 10px;
 }
 
 .tag {
-    background: #f1f1f1;
-    border-radius: 10px;
-    padding: 2px 10px;
-    font-size: 0.8rem;
-    cursor: pointer;
+    background: #000;
+    color: #fff;
+    border-radius: 6px;
+    padding: 6px 14px;
+    /* ✅ pill 형태 유지 */
+    font-size: 0.7rem;
+    font-weight: 500;
+    display: inline-block;
+    white-space: nowrap;
+
+    /* ✅ 세로 중앙 정렬 대체 방식 */
+    line-height: 1.3;
+    /* 텍스트 높이 균형 */
+    vertical-align: middle;
+    /* 인접 요소 기준 맞춤 */
 }
 
+
+
+/* 참여인원 + 버튼 라인 */
 .member-row {
     display: flex;
     justify-content: space-between;
-    /* 왼쪽/오른쪽 배치 */
     align-items: center;
-    margin-top: 10px;
+    margin-top: 20px;
 }
 
 .member-count {
     color: #777;
-    font-size: 0.85rem;
-    margin-bottom: 10px;
+    font-size: 0.7rem;
+    margin-bottom: 0;
 }
 
+/* 참여하기 버튼 */
 .join-btn {
     background: #fff;
     border: 1px solid #aaa;
-    border-radius: 10px;
-    padding: 6px 12px;
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
     cursor: pointer;
     transition: 0.2s;
+
+    display: inline-block;
+    vertical-align: middle;
+    /* ✅ 인라인 정렬 시 주변 기준선 맞춤 */
+    line-height: 1.3;
+    /* ✅ 버튼 내부 텍스트 세로 중앙 보정 */
+}
+
+.join-btn:hover {
+    border-color: #000;
+    background: #f9f9f9;
 }
 
 .join-btn:hover {
