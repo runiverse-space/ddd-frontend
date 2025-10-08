@@ -13,7 +13,7 @@
 
       <!-- ✅ 오른쪽 끝의 회고 작성 버튼 -->
       <button class="write-btn" @click="goWritePage">
-        회고 작성하기
+        글쓰기
       </button>
     </div>
 
@@ -26,7 +26,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import retrospecApi from "@/apis/retrospecApi";
 import usersApi from "@/apis/usersApi";
@@ -34,9 +34,14 @@ import RetrospecCalendar from "./RetrospecCalendar.vue";
 import RetrospecList from "./RetrospecList.vue";
 
 const retrospecs = ref([]);
-const activeTab = ref("calendar");
 const route = useRoute();
 const router = useRouter();
+const activeTab = ref(localStorage.getItem("retrospecTab") || "calendar");
+
+// ✅ 탭 변경 시마다 저장
+watch(activeTab, (newTab) => {
+  localStorage.setItem("retrospecTab", newTab);
+});
 
 function goWritePage() {
   router.push({
@@ -68,7 +73,7 @@ onMounted(async () => {
 <style scoped>
 .retrospec-page {
   width: 100%;
-  padding: 20px 40px;
+  padding: 0px 40px;
 }
 
 /* 🔹탭 헤더 전체 영역 */
@@ -107,17 +112,25 @@ onMounted(async () => {
 
 /* ✅ 오른쪽 끝 회고 작성 버튼 */
 .tab-header .write-btn {
-  margin-left: auto;
-  margin-bottom: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   background: #000;
   color: #fff;
+  margin-left: auto;
+  margin-bottom: 10px;
   border: none;
   border-radius: 999px;
-  padding: 10px 20px;
+  height: 36px;
+  /* ✅ 고정 높이 */
+  padding: 0 16px;
+  /* ✅ 좌우만 패딩 */
+  line-height: 1;
+  /* ✅ 텍스트가 정확히 가운데 오게 */
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.25s ease;
+  transition: background 0.25s ease, transform 0.1s ease;
 }
 
 .tab-header .write-btn:hover {

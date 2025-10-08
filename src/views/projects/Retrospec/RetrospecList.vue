@@ -1,82 +1,69 @@
 <template>
     <div class="retrospec-list">
-        <div v-for="retro in retrospecs" :key="retro.retroId" class="retrospec-item">
+        <div v-for="retro in retrospecs" :key="retro.retroId" class="retrospec-item" @click="goDetail(retro.retroId)">
             <h3 class="title">{{ retro.retrospecTitle }}</h3>
-            <p class="preview">{{ retro.retrospecContent }}</p>
+            <p class="preview">{{ extractPreview(retro.retrospecContent) }}</p>
 
             <div class="meta">
-                <!-- ✅ 프로필 이미지 -->
-                <img v-if="retro.profileUrl" :src="retro.profileUrl" alt="profile" class="profile-img" />
-
                 <div class="author">
-                    <span class="by">by</span>
-                    <span class="name">
-                        {{ retro.userName || "알 수 없는 사용자" }}
-                        <span v-if="retro.userId === currentUserId"></span>
-                    </span>
+                    <img :src="retro.profileUrl || '/images/default-profile.png'" alt="profile" class="profile-img" />
+                    <span>by</span>
+                    <span class="author-name">{{ retro.userName || '알 수 없는 사용자' }}</span>
                 </div>
-
                 <span class="date">{{ formatDate(retro.retrospecStartAt) }}</span>
             </div>
+
         </div>
     </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { useRoute } from "vue-router";
-import { useStore } from "vuex";
+import { useRoute, useRouter } from "vue-router";
 import retrospecApi from "@/apis/retrospecApi";
 import usersApi from "@/apis/usersApi";
 
 const route = useRoute();
-const store = useStore();
+const router = useRouter();
 const retrospecs = ref([]);
 
-/* ✅ 현재 로그인 사용자 ID */
-const currentUserId = store.getters.getUserId;
+/* ✅ 날짜 포맷 */
+const formatDate = (d) =>
+    d ? new Date(d).toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" }) : "";
 
-/* ✅ 날짜 포맷 함수 */
-function formatDate(dateString) {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("ko-KR", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
+/* ✅ 내용 미리보기 */
+const extractPreview = (md) =>
+    md ? md.replace(/[#>*_`]/g, "").replace(/\n+/g, " ").trim() : "";
+
+const goDetail = (retroId) => {
+    router.push({
+        name: "RetrospecDetail",
+        params: { projectId: route.params.projectId, retroId },
+        query: { tab: "list" }, // ✅ 리스트에서만 쿼리 추가
     });
-}
+};
 
-/* ✅ 회고 목록 + 작성자 정보 붙이기 */
+/* ✅ 목록 불러오기 */
 onMounted(async () => {
-    const projectId = route.params.projectId;
-
     try {
-        // 1️⃣ 해당 프로젝트 회고 목록 가져오기
-        const { data } = await retrospecApi.getRetrospecList(projectId);
-        retrospecs.value = data;
-
-        for (const retro of retrospecs.value) {
-            try {
-                const profileRes = await usersApi.ufAttachDownload(retro.userId);
-                retro.profileUrl = URL.createObjectURL(profileRes.data);
-            } catch {
-                retro.profileUrl = "/images/default-profile.png";
-            }
-
-            try {
-                const userRes = await usersApi.usersDetailById(retro.userId);
-
-                // ✅ JSON 구조 안의 data에 유저 정보가 들어 있음
-                retro.userName = userRes.data.data.userName;
-                retro.userEmail = userRes.data.data.userEmail;
-            } catch (err) {
-                console.error("❌ 유저정보 불러오기 실패:", err);
-                retro.userName = "알 수 없는 사용자";
-            }
-        }
-    } catch (error) {
-        console.error("❌ 회고 목록 불러오기 실패:", error);
+        const { data } = await retrospecApi.getRetrospecList(route.params.projectId);
+        retrospecs.value = await Promise.all(
+            data.map(async (retro) => {
+                try {
+                    const profileRes = await usersApi.ufAttachDownload(retro.userId);
+                    const userRes = await usersApi.usersDetailById(retro.userId);
+                    return {
+                        ...retro,
+                        profileUrl: URL.createObjectURL(profileRes.data),
+                        userName: userRes.data.data.userName,
+                    };
+                } catch {
+                    return { ...retro, profileUrl: "/images/default-profile.png", userName: "알 수 없는 사용자" };
+                }
+            })
+        );
+    } catch (err) {
+        console.error("❌ 회고 목록 불러오기 실패:", err);
     }
 });
 </script>
@@ -85,51 +72,104 @@ onMounted(async () => {
 .retrospec-list {
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 24px;
 }
 
+/* 카드 */
 .retrospec-item {
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    padding: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+    cursor: pointer;
+    transition: background 0.2s ease;
 }
 
+.retrospec-item:hover {
+    background: #fafafa;
+}
+
+/* 제목 */
 .title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 10px;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #111;
+    margin-bottom: 8px;
 }
 
+/* ✅ 미리보기 (3줄) */
 .preview {
-    font-size: 0.9rem;
-    color: #555;
-    margin-bottom: 12px;
+    font-size: 0.8rem;
+    color: #444;
+    line-height: 1.4;
+    margin-bottom: 10px;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    word-break: break-word;
+
+    max-width: 70%;
 }
 
+/* 메타 (프로필 + 작성자 + 날짜) */
 .meta {
     display: flex;
     align-items: center;
+    /* ✅ 전체 세로 중앙 정렬 */
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+/* 왼쪽 영역 */
+.author {
+    display: flex;
+    align-items: center;
+    /* ✅ 이미지와 텍스트 높이 중앙 정렬 */
     gap: 8px;
     font-size: 0.85rem;
     color: #777;
+    line-height: 1;
+    /* ✅ 텍스트 높이 줄여서 정확히 가운데 */
 }
 
+/* 프로필 이미지 */
 .profile-img {
     width: 28px;
     height: 28px;
     border-radius: 50%;
     object-fit: cover;
+    flex-shrink: 0;
 }
 
-.author .name {
+/* by 텍스트 */
+.author span:first-of-type {
+    color: #777;
     font-weight: 500;
-    color: #333;
+    font-size: 0.75rem;
+    line-height: 1;
+    /* ✅ 세로 균형 */
+    display: flex;
+    align-items: center;
+    /* ✅ 폰트 기준선 보정 */
+    margin-left: 4px;
 }
 
+/* 작성자명 */
+.author-name {
+    color: #000;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    /* ✅ by와 동일 높이 */
+    line-height: 1;
+}
+
+/* 날짜 */
 .date {
-    margin-left: auto;
-    font-size: 0.8rem;
-    color: #aaa;
+    color: #b3b3b3;
+    font-size: 0.85rem;
 }
 </style>

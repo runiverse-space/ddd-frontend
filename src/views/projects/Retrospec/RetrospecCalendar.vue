@@ -1,7 +1,7 @@
 <template>
     <div class="calendar-page">
         <!-- ✅ 상단 헤더 -->
-        <CalendarHeader :currentDate="currentDate" />
+        <CalendarHeader :currentDate="currentDate" @move="handleMove" />
 
         <!-- ✅ 캘린더 -->
         <div ref="calendarRoot" class="calendar-container"></div>
@@ -17,6 +17,7 @@ import "tui-date-picker/dist/tui-date-picker.css";
 import "tui-time-picker/dist/tui-time-picker.css";
 import retrospecApi from "@/apis/retrospecApi";
 import CalendarHeader from "./CalendarHeader.vue";
+import router from "@/router";
 
 const route = useRoute();
 const calendarRoot = ref(null);
@@ -41,10 +42,42 @@ onMounted(async () => {
             { id: "TIL", name: "TIL 회고", backgroundColor: "#eeeeee", borderColor: "#eeeeee" },
             { id: "CSS", name: "CSS 회고", backgroundColor: "#C5BBDE", borderColor: "#C5BBDE" },
         ],
+        /* ✅ 팝업 제목 클릭 시 이동 가능하도록 템플릿 지정 */
+        template: {
+            popupDetailTitle(event) {
+                return `
+      <span 
+        class="popup-title-link"
+        data-project-id="${route.params.projectId}"
+        data-retro-id="${event.id}"
+        style="color:#111; font-weight:700; cursor:pointer; text-decoration:none;"
+      >
+        ${event.title}
+      </span>
+    `;
+            },
+        },
+
     });
 
     updateCurrentDate();
     await loadRetrospecs();
+
+    /* ✅ 팝업 제목 클릭 시 상세 페이지로 이동 */
+    document.addEventListener("click", (e) => {
+        const target = e.target.closest(".popup-title-link");
+        if (target) {
+            const projectId = target.dataset.projectId;
+            const retroId = target.dataset.retroId;
+            // Vue Router 기반 이동 (SPA)
+            router.push({
+                name: "RetrospecDetail",
+                params: { projectId, retroId },
+            });
+
+        }
+    });
+
 });
 
 /* ✅ 회고 목록 불러오기 */
@@ -57,11 +90,18 @@ async function loadRetrospecs() {
             const start = new Date(retro.retrospecStartAt);
             const end = new Date(retro.retrospecEndAt);
 
+            const cleanContent = retro.retrospecContent
+                // ✅ 마크다운 기호 제거 (백슬래시 없이 안전한 위치로 '-' 이동)
+                .replace(/[#_*`>~-]/g, "") // -, #, *, _, `, > 등 제거
+                .replace(/\[(.*?)\]\(.*?\)/g, "$1") // [링크텍스트](url) → 링크텍스트
+                .replace(/\n+/g, " ") // 줄바꿈 제거
+                .trim();
+
             return {
                 id: String(retro.retroId),
                 calendarId: retro.retrospecTemplateType, // KTP/TIL/CSS
                 title: retro.retrospecTitle,
-                body: retro.retrospecContent,
+                body: cleanContent,
                 start: start.toISOString(),
                 end: end.toISOString(),
                 category: "time",
@@ -81,6 +121,15 @@ async function loadRetrospecs() {
 function updateCurrentDate() {
     const date = calendarInstance.value.getDate();
     currentDate.value = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/* ✅ 헤더 이동 */
+function handleMove(type) {
+    if (!calendarInstance.value) return;
+    const actions = { prev: "prev", next: "next", today: "today" };
+    const action = actions[type];
+    if (action) calendarInstance.value[action]();
+    updateCurrentDate();
 }
 </script>
 
@@ -134,5 +183,19 @@ function updateCurrentDate() {
     background-color: #000 !important;
     color: #fff !important;
     border-radius: 50% !important;
+}
+
+/* ✅ 팝업 본문 내용 2줄까지만 표시 (... 처리) */
+:deep(.toastui-calendar-template-popupDetailBody) {
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    /* ✅ 3줄까지만 표시 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal !important;
+    word-break: break-word;
+    line-height: 1.5;
+    margin-top: 10px;
 }
 </style>
