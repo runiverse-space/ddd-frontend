@@ -9,20 +9,25 @@
           <div class="form-section mt-3">
             <p class="text-muted small">일정 제목 <span class="text-danger">*</span></p>
             <input type="text" class="form-control mb-3" placeholder="일정 제목을 입력합니다" v-model="schedule.scheduleTitle" />
+            <p v-if="isScheduleTitleBlank" class="text-danger small">일정 제목은 필수 입력 항목입니다.</p>
           </div>
 
           <!-- 일정 내용 -->
           <div class="form-section mt-3">
             <p class="text-muted small">일정 내용</p>
-            <input type="text" class="form-control mb-3" placeholder="일정 내용을 입력합니다" v-model="schedule.scheduleContent" />
+            <input type="text" class="form-control mb-3" placeholder="일정 내용을 입력합니다"
+              v-model="schedule.scheduleContent" />
           </div>
 
           <!-- 일정 기간 -->
           <div class="form-section mt-3">
-            <p class="text-muted small">일정 시작일자를 선택해주세요.</p>
+            <p class="text-muted small">일정 시작일자를 선택하세요. <span class="text-danger">*</span></p>
             <input type="date" class="form-control mb-3" v-model="schedule.scheduleStartDate" />
-            <p class="text-muted small ">일정 종료일자를 선택해주세요.</p>
-            <input type="date" class="form-control" v-model="schedule.scheduleEndDate" />
+            <p v-if="isScheduleStartDateBlank" class="text-danger small">일정 시작일자는 필수 입력 항목입니다.</p>
+
+            <p class="text-muted small ">일정 종료일자를 선택하세요. <span class="text-danger">*</span></p>
+            <input type="date" class="form-control mb-3" v-model="schedule.scheduleEndDate" />
+            <p v-if="isScheduleEndDateBlank" class="text-danger small">일정 종료일자는 필수 입력 항목입니다.</p>
           </div>
 
           <!-- 초기 상태 설정 -->
@@ -39,7 +44,9 @@
           <div class="form-section mt-3">
             <p class="text-muted small">일정을 배정할 멤버 선택</p>
             <p v-for="projectMember in projectMemberList" :key="projectMember">
-              <button type="button" class="btn btn-sm" :class="scheduleMemberList.includes(projectMember.userId) ? 'btn-primary' : 'btn-outline-primary'" @click="toggleScheduleMember(projectMember)">
+              <button type="button" class="btn btn-sm"
+                :class="scheduleMemberList.includes(projectMember.userId) ? 'btn-primary' : 'btn-outline-primary'"
+                @click="toggleScheduleMember(projectMember)">
                 {{ projectMember.userLoginId }} {{ projectMember.userName }}
               </button>
             </p>
@@ -74,6 +81,10 @@ const projectId = route.params.projectId;
 
 const userId = store.state.userId;
 
+let isScheduleTitleBlank = ref(false);
+let isScheduleStartDateBlank = ref(false);
+let isScheduleEndDateBlank = ref(false);
+
 const schedule = ref({
   projectId,
   userId,
@@ -92,12 +103,19 @@ const userProjectRoleList = ref([]);
 
 async function handleSubmit() {
   try {
-    schedule.value.userIds = scheduleMemberList;
-    const response = await scheduleApi.scheduleCreate(schedule.value);
-    const result = response.data;
-    if (result.result === "success") {
-      router.push(`/project/${route.params.projectId}/schedule`);
+    isScheduleTitleBlank.value = schedule.value.scheduleTitle === "" ? true : false;
+    isScheduleStartDateBlank.value = schedule.value.scheduleStartDate === "" ? true : false;
+    isScheduleEndDateBlank.value = schedule.value.scheduleEndDate === "" ? true : false;
+
+    if (!isScheduleTitleBlank.value && !isScheduleStartDateBlank.value && !isScheduleEndDateBlank.value) {
+      schedule.value.userIds = scheduleMemberList;
+      const response = await scheduleApi.scheduleCreate(schedule.value);
+      const result = response.data;
+      if (result.result === "success") {
+        router.push(`/project/${route.params.projectId}/schedule`);
+      }
     }
+
   } catch (error) {
     console.log(error);
   }
