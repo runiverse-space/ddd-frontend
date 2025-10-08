@@ -1,59 +1,79 @@
 <template>
-  <h3 v-if="projectInfo">{{ projectInfo.projectTitle }} - 일정</h3>
-  <button class="btn btn-dark btn-sm m-2" @click="handleWrite()">새 일정 작성</button>
-  <div class="row">
-    <!-- 상태별 칼럼 -->
-    <div v-for="status in statuses" :key="status" class="col-md-4 ">
-      <div class="card shadow-sm border-0 h-100">
-        <div class="card-header text-center fw-bold bg-light">
-          <span class="badge me-2" :class="{
-            'bg-secondary': status === 'NOT STARTED',
-            'bg-primary': status === 'IN PROGRESS',
-            'bg-success': status === 'DONE'
-          }">●{{ statusLabels[status] }}</span>
+  <!-- <button class="btn btn-dark btn-sm m-2" @click="handleWrite()">새 일정 작성</button> -->
+  <div class="board-container">
+    <div v-for="status in statuses" :key="status" class="status-column" :class="{
+      'not-started': status === 'NOT STARTED',
+      'in-progress': status === 'IN PROGRESS',
+      'done': status === 'DONE',
+    }">
+      <!-- 상태 제목 -->
+      <div class="column-header">
+        <span class="status-dot"></span>
+        {{ statusLabels[status] }}
+      </div>
 
-        </div>
+      <VueDraggableNext v-model="schedulesByStatus[status]" group="schedules" @end="onDragEnd($event)"
+        :data-status="status" tag="div" class="p-2">
 
-        <!-- 드래그 가능 리스트 -->
-        <VueDraggableNext v-model="schedulesByStatus[status]" group="schedules" @end="onDragEnd($event)"
-          :data-status="status" tag="div" class="p-2">
-          <div v-for="schedule in schedulesByStatus[status]" :key="schedule.scheduleId"
-            class="card m-2 shadow-sm border-0">
-            <div class="card-body p-2">
-              <div class="d-flex justify-content-between align-items-start">
-                <div>
-                  <div class="text-muted small">
-                    <i class="bi bi-calendar-event">
-                      {{ formatDate(schedule.scheduleStartDate) }}~{{ formatDate(schedule.scheduleEndDate) }}
-                    </i>
-                  </div>
-                </div>
-
-              </div>
-              <a href="#" class="fw-bold text-decoration-none text-dark" @click.prevent="openModal(schedule)">
-                {{ schedule.scheduleTitle }}
-              </a>
-              <!-- 일정 멤버의 프로필 사진 -->
-              <div v-for="user in schedule.users" :key="user.userId" class="d-inline-block me-1">
-                <div v-if="user.profileUrl">
-                  <img :src="user.profileUrl" class="rounded-circle" width="20" height="20" />
-                </div>
-                <div v-else class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
-                  style="width: 30px; height: 30px; font-size: 14px;">
-                  {{ user.userName.charAt(0) }}
-                </div>
-              </div>
+        <!-- 일정 카드 -->
+        <div v-for="schedule in schedulesByStatus[status]" :key="schedule.scheduleId" class="schedule-card">
+          <div class="card-top">
+            <div class="date">
+              <CalendarIcon class="icon" />
+              {{ formatDate(schedule.scheduleStartDate) }} - {{ formatDate(schedule.scheduleEndDate) }}
+            </div>
+            <div class="card-icons">
+              <ListBulletIcon class="action-icon" title="상세보기" @click="openModal(schedule)" />
+              <PencilSquareIcon v-if="schedule.userId === store.state.userId" class="action-icon" title="수정하기" @click="() => {
+                openModal(schedule);
+                handleEdit();
+              }" />
+              <XMarkIcon v-if="schedule.userId === store.state.userId" class="action-icon" title="삭제하기"
+                @click="handleDelete(schedule)" />
             </div>
           </div>
-        </VueDraggableNext>
 
+          <div class="card-title">{{ schedule.scheduleTitle }}</div>
+
+          <div class="card-members">
+            <img v-for="user in schedule.users" :key="user.userId" :src="user.profileUrl" class="profile-img" />
+          </div>
+        </div>
+
+        <!-- 새 일정 추가 -->
+        <div class="add-schedule" @click="handleWrite(status)">
+          <PlusIcon class="plus-icon" />
+          새 일정 추가
+        </div>
+      </VueDraggableNext>
+
+
+    </div>
+  </div>
+
+  <!-- 일정 삭제 모달 -->
+  <div class="modal fade" id="scheduleDeleteModal" tabindex="-1" aria-labelledby="scheduleDeleteModalLabel"
+    aria-hidden="true" ref="deleteModalRef">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="scheduleDeleteModalLabel">일정 삭제</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          삭제된 일정은 복구할 수 없습니다. 정말 삭제하시겠습니까?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">아니요</button>
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @click="handleDeleteConfirm()">예</button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- 일정 상세 모달 -->
   <div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true"
-    ref="modalRef">
+    ref="detailModalRef">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
@@ -77,8 +97,16 @@
               :disabled="!editMode"></textarea>
           </div>
 
-          <!-- 일정 기간 -->
-          <div class="mb-3">
+          <!-- 일정 기간(수정 모드) -->
+          <div class="mb-3" v-if="editMode">
+            <p class="text-muted small">일정 시작일자를 선택해주세요.</p>
+            <input type="date" class="form-control mb-3" v-model="selectedSchedule.scheduleStartDate" />
+            <p class="text-muted small ">일정 종료일자를 선택해주세요.</p>
+            <input type="date" class="form-control" v-model="selectedSchedule.scheduleEndDate" />
+          </div>
+          
+          <!-- 일정 기간(일기 모드) -->
+          <div class="mb-3" v-if="!editMode">
             <label class="form-label">일정 기간</label>
             <div class="row m-1">
               <div class="col-6">
@@ -98,7 +126,6 @@
                 <span>까지</span>
               </div>
             </div>
-
           </div>
 
           <!-- 담당자(읽기 모드) -->
@@ -130,25 +157,27 @@
               <option value="DONE">완료됨</option>
             </select>
           </div>
+
+          <!-- 하단 버튼 구역 -->
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="editMode = false">
+              닫기
+            </button>
+            <button type="button" class="btn btn-primary" @click="handleEdit()"
+              v-if="selectedSchedule.userId === store.state.userId && !editMode">
+              수정하기
+            </button>
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @click="handleUpdateConfirm()"
+              v-if="selectedSchedule.userId === store.state.userId && editMode">
+              수정확인
+            </button>
+          </div>
         </div>
 
-        <!-- 하단 버튼 구역 -->
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="editMode = false">
-            닫기
-          </button>
-          <button type="button" class="btn btn-primary" @click="handleEdit()" v-if="!editMode">
-            수정하기
-          </button>
-          <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @click="handleConfirm()" v-if="editMode">
-            수정확인
-          </button>
-        </div>
+
       </div>
     </div>
   </div>
-
-
 </template>
 
 <!--컴포넌트의 초기화 또는 이벤트 처리-->
@@ -156,17 +185,21 @@
 import projectApi from '@/apis/projectApi';
 import scheduleApi from '@/apis/scheduleApi';
 import usersApi from '@/apis/usersApi';
+import { CalendarIcon, ListBulletIcon, PencilSquareIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { Modal } from 'bootstrap';
 import { onMounted, reactive } from 'vue';
 import { ref } from 'vue';
 import { VueDraggableNext } from 'vue-draggable-next';
 import { useRoute, useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 
 const props = defineProps(['projectId']);
 
 const router = useRouter();
 
 const route = useRoute();
+
+const store = useStore();
 
 const scheduleList = ref([]);
 const projectInfo = ref(null);
@@ -190,7 +223,8 @@ const schedulesByStatus = reactive({
 
 const selectedSchedule = ref(null);
 
-const modalRef = ref(null);
+const detailModalRef = ref(null);
+const deleteModalRef = ref(null);
 let modalInstance = null;
 
 const editMode = ref(false);
@@ -209,7 +243,6 @@ async function loadSchedule() {
 
       scheduleList.value.forEach(async schedule => {
         schedule.users = await loadScheduleMembers(schedule.scheduleId);
-        // schedu
         for (const user of schedule.users) {
           try {
             const res = await usersApi.ufAttachDownload(user.userId);
@@ -280,9 +313,11 @@ async function loadProjectMembers() {
   }
 }
 
-async function handleWrite() {
+async function handleWrite(status) {
+  console.log("새 일정 작성 클릭");
+  console.log("기본 상태:", status);
   try {
-    router.push(`schedule/write`);
+    router.push(`schedule/write?status=${status}`);
   } catch (error) {
     console.log(error);
   }
@@ -292,11 +327,11 @@ function formatDate(dataString) {
   if (!dataString) return '';
   const date = new Date(dataString);
   return date.toLocaleString('ko-KR', {
-    year: 'numeric',
+    year: '2-digit',
     month: '2-digit',
     day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
+    // hour: '2-digit',
+    // minute: '2-digit'
   });
 }
 
@@ -306,10 +341,12 @@ async function openModal(schedule) {
   selectedSchedule.value.users = await loadScheduleMembers(schedule.scheduleId);
 
   scheduleMemberList.value = selectedSchedule.value.users.map(user => user.userId);
+  console.log("선택된 일정 멤버", scheduleMemberList.value);
 
   console.groupEnd();
   if (!modalInstance) {
-    modalInstance = new Modal(modalRef.value);
+    modalInstance = new Modal(detailModalRef.value);
+    console.log("모달 인스턴스 생성");
   }
   modalInstance.show();
 }
@@ -318,9 +355,9 @@ function handleEdit() {
   editMode.value = true;
 }
 
-async function handleConfirm() {
+async function handleUpdateConfirm() {
   editMode.value = false;
-  console.group("handleConfirm()");
+  console.group("handleUpdateConfirm()");
   console.groupEnd();
   try {
     selectedSchedule.value.userIds = scheduleMemberList;
@@ -331,6 +368,34 @@ async function handleConfirm() {
       await loadScheduleMembers(selectedSchedule.value.scheduleId);
     } else {
       console.log(result.message);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+function handleDelete(schedule) {
+  selectedSchedule.value = schedule;
+  console.log("삭제할 일정", schedule);
+  if (!modalInstance) {
+    modalInstance = new Modal(deleteModalRef.value);
+    console.log("모달 인스턴스 생성");
+  }
+  modalInstance.show();
+}
+
+async function handleDeleteConfirm() {
+  console.group("handleDeleteConfirm()");
+  console.log("삭제할 일정", selectedSchedule.value);
+  console.groupEnd();
+  try {
+    const response = await scheduleApi.scheduleDelete(selectedSchedule.value.scheduleId);
+    const result = response.data;
+    if (result.result === "success") {
+      console.log("일정 삭제 완료");
+      await loadSchedule();
+    } else {
+      console.log("일정 삭제 실패:", result.message);
     }
   } catch (error) {
     console.log(error);
@@ -383,4 +448,171 @@ onMounted(async () => {
 
 </script>
 <!--컴포넌트의 스타일 정의-->
-<style scoped></style>
+<style scoped>
+/* ✅ 전체 */
+.board-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  /* 높이를 맞추지 않음 */
+  gap: 24px;
+  padding: 24px;
+  background-color: #fff;
+}
+
+/* ✅ 컬럼 공통 */
+.status-column {
+  flex: 1;
+  border-radius: 16px;
+  padding: 16px;
+  display: inline-flex;
+  /* ✅ 높이를 자동으로 맞추려면 inline-flex */
+  flex-direction: column;
+  width: 100%;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+  height: auto;
+  /* ✅ 내용만큼만 높이 */
+}
+
+/* ✅ 컬럼별 배경색 */
+.status-column.not-started {
+  background-color: #f9f8f7;
+}
+
+.status-column.in-progress {
+  background-color: #f4f9fc;
+}
+
+.status-column.done {
+  background-color: #f6f9f7;
+}
+
+/* ✅ 헤더 */
+.column-header {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+  color: #333;
+}
+
+/* ✅ 상태별 점 색상 */
+.not-started .status-dot {
+  background-color: #8e8b86;
+}
+
+.in-progress .status-dot {
+  background-color: #2383e2;
+}
+
+.done .status-dot {
+  background-color: #55a77c;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 7px;
+}
+
+/* ✅ 일정 카드 */
+.schedule-card {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.08);
+}
+
+/* 상단 날짜 및 아이콘 */
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.date {
+  display: flex;
+  align-items: center;
+  color: #555;
+  font-size: 0.85rem;
+  gap: 4px;
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* 카드 아이콘 */
+.card-icons {
+  display: flex;
+  gap: 6px;
+}
+
+.action-icon {
+  width: 18px;
+  height: 18px;
+  color: #555;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.action-icon:hover {
+  color: #6759F4;
+}
+
+/* 일정 제목 */
+.card-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin: 8px 0;
+  color: #111;
+}
+
+/* 멤버 */
+.card-members {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.profile-img {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* ✅ 새 일정 추가 */
+.add-schedule {
+  margin-top: 8px;
+  /* 카드와 간격 */
+  text-align: center;
+  border: 1.5px solid #d0d7de;
+  color: #9ca3af;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 12px 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  background-color: transparent;
+}
+
+.add-schedule:hover {
+  background-color: #dfe3e8;
+  color: #111827;
+  border-color: #c5c9ce;
+}
+
+.plus-icon {
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+</style>
