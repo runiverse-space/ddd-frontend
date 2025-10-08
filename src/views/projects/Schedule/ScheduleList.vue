@@ -267,7 +267,7 @@ async function loadProjectMembers() {
 
       // projectMemberList에 사용자 정보 삽입
       userProjectRoleList.value.forEach(async userProjectRole => {
-        const response = await usersApi.usersDetail(userProjectRole.userId);
+        const response = await usersApi.usersDetailById(userProjectRole.userId);
         const result = response.data;
         projectMemberList.value.push(result.data);
       });
