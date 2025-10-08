@@ -1,9 +1,9 @@
 <template>
     <div class="calendar-page">
-        <!-- 상단 헤더 -->
-        <CalendarHeader :currentDate="currentDate" @move="handleMove" />
+        <!-- ✅ 상단 헤더 -->
+        <CalendarHeader :currentDate="currentDate" />
 
-        <!-- 캘린더 -->
+        <!-- ✅ 캘린더 -->
         <div ref="calendarRoot" class="calendar-container"></div>
     </div>
 </template>
@@ -13,6 +13,8 @@ import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import Calendar from "@toast-ui/calendar";
 import "@toast-ui/calendar/dist/toastui-calendar.min.css";
+import "tui-date-picker/dist/tui-date-picker.css";
+import "tui-time-picker/dist/tui-time-picker.css";
 import retrospecApi from "@/apis/retrospecApi";
 import CalendarHeader from "./CalendarHeader.vue";
 
@@ -28,11 +30,17 @@ onMounted(async () => {
         useDetailPopup: true,
         isReadOnly: true,
         month: {
-            isAlways6Weeks: true,   // ✅ 항상 6주 보이게
-            startDayOfWeek: 0,      // ✅ 일요일부터
+            isAlways6Weeks: true,
+            startDayOfWeek: 0,
             workweek: false,
             narrowWeekend: false,
         },
+        /* ✅ 템플릿(enum)별 캘린더 그룹 정의 */
+        calendars: [
+            { id: "KTP", name: "KTP 회고", backgroundColor: "#F3AAB5", borderColor: "#F3AAB5" },
+            { id: "TIL", name: "TIL 회고", backgroundColor: "#eeeeee", borderColor: "#eeeeee" },
+            { id: "CSS", name: "CSS 회고", backgroundColor: "#C5BBDE", borderColor: "#C5BBDE" },
+        ],
     });
 
     updateCurrentDate();
@@ -45,25 +53,20 @@ async function loadRetrospecs() {
         const res = await retrospecApi.getRetrospecList(route.params.projectId);
         const retrospecs = Array.isArray(res.data) ? res.data : [];
 
-        const colorMap = { KTP: "#F3AAB5", TIL: "#eeeeee", CSS: "#C5BBDE" };
-
         const events = retrospecs.map((retro) => {
             const start = new Date(retro.retrospecStartAt);
             const end = new Date(retro.retrospecEndAt);
-            const isOneDay = start.toDateString() === end.toDateString();
-
-            const bg = colorMap[retro.retrospecTemplateType] || "#ccc";
 
             return {
                 id: String(retro.retroId),
-                calendarId: "retrospec",
+                calendarId: retro.retrospecTemplateType, // KTP/TIL/CSS
                 title: retro.retrospecTitle,
-                category: isOneDay ? "time" : "allday",
+                body: retro.retrospecContent,
                 start: start.toISOString(),
                 end: end.toISOString(),
-                backgroundColor: bg,
-                color: "#333",
-                borderColor: bg,
+                category: "time",
+                color: "#fff",
+                state: "",
             };
         });
 
@@ -74,35 +77,39 @@ async function loadRetrospecs() {
     }
 }
 
-/* ✅ 현재 날짜 업데이트 */
+/* 현재 날짜 표시 */
 function updateCurrentDate() {
     const date = calendarInstance.value.getDate();
     currentDate.value = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
-
-/* ✅ 헤더 이동 */
-function handleMove(type) {
-    if (!calendarInstance.value) return;
-    const actions = { prev: "prev", next: "next", today: "today" };
-    const action = actions[type];
-    if (action) calendarInstance.value[action]();
-    updateCurrentDate();
 }
 </script>
 
 <style scoped>
 .calendar-page {
-    padding: 0px;
+    padding: 0;
 }
 
 .calendar-container {
-    height: 750px;
-    border: 1px solid #eee;
+    height: 800px;
+    border: 1px solid #ddd;
+    background-color: #fff;
     margin-top: 30px;
-    /* ✅ 헤더와의 여백 */
 }
 
-/* ✅ Toast UI Calendar 기본 색 조정 (화이트 배경) */
+/* 하단 버튼(Edit/Delete) 제거 */
+:deep(.toastui-calendar-section-button),
+:deep(.toastui-calendar-popup-section-button) {
+    display: none !important;
+}
+
+/* 팝업 내부 불필요한 아이콘 및 라벨 제거 */
+:deep(.toastui-calendar-ic-user-b),
+:deep(.toastui-calendar-icon.toastui-calendar-ic-user-b),
+:deep(.toastui-calendar-detail-item.toastui-calendar-detail-item-indent) {
+    display: none !important;
+}
+
+/* 날짜 및 요일 스타일 */
 :deep(.toastui-calendar-month-dayname-item) {
     font-weight: 600;
     color: #444;
@@ -121,7 +128,11 @@ function handleMove(type) {
     color: #3498db !important;
 }
 
-:deep(.toastui-calendar-popup-detail) {
-    font-family: "Pretendard", sans-serif;
+/* 오늘 날짜 표시 */
+:deep(.toastui-calendar-month-daygrid-cell--today .toastui-calendar-daygrid-cell-date),
+:deep(.toastui-calendar-weekday-grid-date.toastui-calendar-weekday-grid-date-decorator) {
+    background-color: #000 !important;
+    color: #fff !important;
+    border-radius: 50% !important;
 }
 </style>

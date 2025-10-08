@@ -66,7 +66,7 @@ onMounted(async () => {
 
             try {
                 const userRes = await usersApi.usersDetailById(retro.userId);
-                console.log("📡 작성자 응답:", userRes.data);
+
                 // ✅ JSON 구조 안의 data에 유저 정보가 들어 있음
                 retro.userName = userRes.data.data.userName;
                 retro.userEmail = userRes.data.data.userEmail;
@@ -75,8 +75,6 @@ onMounted(async () => {
                 retro.userName = "알 수 없는 사용자";
             }
         }
-
-        console.log("✅ 최종 회고 목록 (작성자 포함):", retrospecs.value);
     } catch (error) {
         console.error("❌ 회고 목록 불러오기 실패:", error);
     }

@@ -90,7 +90,19 @@ async function submitRetrospec() {
     const endAt = `${endDate.value}T23:59:59`;
 
     try {
+        /*
         await retrospecApi.retrospecCreate({
+            projectId: route.params.projectId,
+            userId: store.getters.getUserId,
+            userName: store.getters.getUserName,
+            retrospecTitle: title.value,
+            retrospecContent: content,
+            retrospecTemplateType: templateType.value,
+            retrospecCategory: "task",
+            retrospecStartAt: startAt,
+            retrospecEndAt: endAt,
+        }); */
+        const requestData = {
             projectId: route.params.projectId,
             userId: store.getters.getUserId,
             retrospecTitle: title.value,
@@ -99,7 +111,12 @@ async function submitRetrospec() {
             retrospecCategory: "task",
             retrospecStartAt: startAt,
             retrospecEndAt: endAt,
-        });
+        };
+
+        console.log("데이터 요청", requestData);
+
+        await retrospecApi.retrospecCreate(requestData);
+
 
         alert("회고가 저장되었습니다.");
         goBack();
