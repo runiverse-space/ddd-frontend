@@ -321,7 +321,7 @@ h2 {
   margin-bottom: 20px;
 }
 
-div>*+* {
-  margin-left: 10px;
+div button {
+  margin-right: 10px;
 }
 </style>
