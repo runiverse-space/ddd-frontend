@@ -5,12 +5,19 @@
       <div>
         <div class="mb-3">
           <label for="knowledgeTitle" class="form-label">제목<span class="text-danger">*</span></label>
-          <input type="text" class="form-control" :class="{ 'is-invalid': touched.knowledgeTitle && errors.knowledgeTitle }" v-model="knowledge.knowledgeTitle">
+          <input type="text" class="form-control" :class="{ 'is-invalid': touched.knowledgeTitle && errors.knowledgeTitle }" v-model="knowledge.knowledgeTitle" @blur="handleTitleBlur"
+            @input="handleTitleInput">
+          <div v-if="touched.knowledgeTitle && errors.knowledgeTitle" class="invalid-feedback">
+            {{ errors.knowledgeTitle }}
+          </div>
         </div>
         <div class="mb-3">
           <label for="knowledgeContent" class="form-label">내용<span class="text-danger">*</span></label>
           <textarea class="form-control" :class="{ 'is-invalid': touched.knowledgeContent && errors.knowledgeContent }" style="width: 100rem; height: 200px; resize: none;" rows="3"
-            v-model="knowledge.knowledgeContent"></textarea>
+            v-model="knowledge.knowledgeContent" @blur="handleContentBlur" @input="handleContentInput"> </textarea>
+          <div v-if="touched.knowledgeContent && errors.knowledgeContent" class="invalid-feedback">
+            {{ errors.knowledgeContent }}
+          </div>
         </div>
         <div class="mb-3">
           <LinkIcon class="need-icon" />
@@ -27,6 +34,8 @@
           </div>
         </div>
 
+        <TagSelector :tag-type="knowledge.tagType" v-model="selectedTags" />
+
 
         <div class="row">
           <div class="col-sm-12 d-flex justify-content-center">
@@ -42,7 +51,7 @@
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="validationModalLabel">⚠️ 입력 오류</h5>
+            <h5 class="modal-title" id="validationModalLabel"> </h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
@@ -55,36 +64,38 @@
       </div>
     </div>
 
-
-
-
-
   </div>
 </template>
 
 
 <!--컴포넌트의 초기화 또는 이벤트 처리-->
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { LinkIcon, ArchiveBoxArrowDownIcon } from "@heroicons/vue/24/outline";
 import knowledgeApi from '@/apis/knowledgeApi';
 // @ts-nocheck
 import * as bootstrap from 'bootstrap';
+import tagApi from '@/apis/tagApi';
+import TagSelector from '@/components/TagSelector.vue';
 
 
-// const props = defineProps(["projectId"]);
 const store = useStore();
 const router = useRouter();
 const route = useRoute();
 const projectId = route.params.projectId;
 const modalMessage = ref('');
 
+//태그 추가
+const selectedTags = ref([]);
+
+
 const knowledge = ref({
   knowledgeTitle: "",
   knowledgeContent: "",
   knowledgeUrl: "",
+  tagType: "KNOWLEDGE"
 
 })
 
@@ -93,6 +104,7 @@ const errors = ref({
   knowledgeTitle: "",
   knowledgeContent: ""
 });
+
 // 터치 상태
 const touched = ref({
   knowledgeTitle: false,
@@ -101,6 +113,7 @@ const touched = ref({
 
 //제목 검증 함수
 function validateTitle() {
+
   if (!knowledge.value.knowledgeTitle || knowledge.value.knowledgeTitle.trim() === '') {
     errors.value.knowledgeTitle = '제목은 필수 입력 항목입니다.';
     return false;
@@ -126,14 +139,13 @@ function validateForm() {
   return isTitleValid && isContentValid;
 }
 
-function showModal(message){
-  modalMessage.value= message;
+function showModal(message) {
+  modalMessage.value = message;
   const modalElement = document.getElementById('validationModal');
-  const modal= new bootstrap.Modal(modalElement);
+  const modal = new bootstrap.Modal(modalElement);
   modal.show();
 
 }
-
 
 function handleTitleBlur() {
   touched.value.knowledgeTitle = true;
@@ -145,16 +157,18 @@ function handleContentBlur() {
   validateContent();
 }
 
-
-
-
+function handleTitleInput() {
+  if (touched.value.knowledgeTitle) {  // ⭐ 이미 터치된 경우에만
+    validateTitle();  // 재검증하여 에러를 즉시 제거
+  }
+}
 
 //첨부파일
 const kfAttach = ref(null);
 
 //멀티 파트 객체 생성
 async function handleSubmit() {
-  console.log('userId를 확인:', store.state.userId);
+  // console.log('userId를 확인:', store.state.userId);
 
   touched.value.knowledgeTitle = true;
   touched.value.knowledgeContent = true;
@@ -163,16 +177,22 @@ async function handleSubmit() {
     showModal('필수 항목을 입력해주세요.');
     return;
   }
+  //유효성 검사 통과시 실제 등록 처리
+  submitKnowledge();
+}
+
+
+//실제 파일과 함께 등록 처리 함수
+async function submitKnowledge() {
 
   const formData = new FormData();
   formData.append("knowledgeTitle", knowledge.value.knowledgeTitle);
   formData.append("knowledgeContent", knowledge.value.knowledgeContent);
   formData.append("knowledgeUrl", knowledge.value.knowledgeUrl);
   formData.append("userId", store.state.userId);
-  //formData.append("userId",userId);
-  formData.append("projectId", projectId);// projectId는 처음부터 전달되어서 들어와야하는데 이거를 
+  formData.append("projectId", projectId);
 
-  console.log("formdata: ", formData);
+  //console.log("formdata: ", formData);
   //파일 파트 추가
   if (kfAttach.value.files.length !== 0) {
     formData.append("kfAttach", kfAttach.value.files[0]);
@@ -180,26 +200,107 @@ async function handleSubmit() {
 
   try {
     const response = await knowledgeApi.knowledgeCreate(formData);
+    const knowledgeId = response.data.knowledgeId;
 
-    console.log(response);
+    if (selectedTags.value.length > 0) {
+      const selectedTagIds =selectedTags.value.map(tag=>tag.tagId);
+
+      await tagApi.updateKnowledgeTags({
+        knowledgeId: knowledgeId,
+        tagIds: selectedTagIds 
+      });
+
+
+    }
+    showModal('등록되었습니다.');
+
+    // console.log(response);
     router.back();
   } catch (error) {
     console.log(error);
-    if (error.response?.data?.message) {
-      showModal(error.response.data.message);
-    } else {
-      showModal('서버 오류가 발생했습니다.');
-    }
+    showModal('서버 오류가 발생했습니다.');
+    
   }
 
 }
+
+
+
+
 function handleCancel() {
   router.back();
 }
 
+
 </script>
 
 <style scoped>
+.available-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-btn {
+  padding: 6px 16px;
+  border: 1px solid #dee2e6;
+  border-radius: 20px;
+  background-color: #fff;
+  color: #495057;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tag-btn:hover {
+  background-color: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+.tag-btn.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+
+.selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.selected-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background-color: #007bff;
+  color: white;
+  border-radius: 16px;
+  font-size: 14px;
+}
+
+.remove-tag-btn {
+  border: none;
+  background: none;
+  color: white;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+}
+
+.remove-tag-btn:hover {
+  color: #ffc107;
+}
+
+
+
 .need-icon {
   width: 24px;
   height: 24px;
