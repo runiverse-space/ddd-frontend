@@ -148,12 +148,12 @@ function filterByTag(tag) {
     font-size: 0.9rem;
 }
 
-/* 🔹 카드 그리드 */
 .card-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
     justify-items: center;
+    margin-top: 20px;
 }
 
 .project-card {
