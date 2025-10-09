@@ -10,7 +10,6 @@
             <div v-for="member in members" :key="member.userId" class="member-card">
                 <div class="card-top">
                     <img :src="member.profileUrl" class="profile-img" alt="profile" />
-
                     <div class="user-info">
                         <h4 class="name">{{ member.userName }}</h4>
                         <p class="email">{{ member.userEmail }}</p>
@@ -19,8 +18,8 @@
 
                 <!-- 태그 -->
                 <div class="tags">
-                    <span v-for="tag in member.tags" :key="tag" class="tag">
-                        {{ tag }}
+                    <span v-for="tag in member.tags" :key="tag.tagId" class="tag" :style="tagStyle(tag)">
+                        {{ tag.tagName }}
                     </span>
                 </div>
 
@@ -37,10 +36,78 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from "vue";
 import { UserPlusIcon } from "@heroicons/vue/24/outline";
-defineProps({
-    members: Array,
+import userprojectroleApi from "@/apis/userprojectroleApi";
+import usersApi from "@/apis/usersApi";
+import tagApi from "@/apis/tagApi";
+import defaultProfile from "@/assets/default-profile.png";
+import { getTagColors } from "@/utils/tagColor";
+
+const props = defineProps({
+    projectId: Number,
 });
+
+const members = ref([]);
+
+onMounted(() => {
+    loadMembers();
+});
+
+async function loadMembers() {
+    try {
+        const res = await userprojectroleApi.getMemberList(props.projectId);
+        const data = res.data.data || res.data;
+
+        members.value = await Promise.all(
+            data.map(async (m) => {
+                const userRes = await usersApi.usersDetailById(m.userId);
+                const userData = userRes.data.data || userRes.data;
+
+                let profileUrl = defaultProfile;
+                try {
+                    const imgRes = await usersApi.ufAttachDownload(m.userId);
+                    const blob = new Blob([imgRes.data], {
+                        type: imgRes.headers["content-type"],
+                    });
+                    profileUrl = URL.createObjectURL(blob);
+                } catch (error) {
+                    console.log(error);
+                }
+
+                // ✅ userData에 직접 tags 추가
+                const tagRes = await tagApi.getUserTags(m.userId);
+                userData.tags =
+                    tagRes.data.tags?.map((t) => ({
+                        tagId: t.tagId ?? t.tag_id,
+                        tagName: t.tagName ?? t.tag_name,
+                        tagType: t.tagType ?? t.tag_type ?? "USER",
+                    })) || [];
+
+                // ✅ userData + profileUrl만 합쳐서 반환
+                return {
+                    ...userData,
+                    profileUrl,
+                };
+            })
+        );
+    } catch (e) {
+        console.error("멤버 조회 실패:", e);
+    }
+}
+
+function tagStyle(tag) {
+    const { bg, color, border } = getTagColors(tag.tagType);
+    return {
+        backgroundColor: bg,
+        color,
+        border: `1px solid ${border}`,
+        borderRadius: "3px",
+        padding: "6px 12px",
+        fontWeight: "500",
+        fontSize: "0.65rem",
+    };
+}
 </script>
 
 <style scoped>
@@ -48,21 +115,17 @@ defineProps({
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     column-gap: 15px;
-    /* 카드 가로 간격 */
     row-gap: 35px;
-    /* 카드 위·아래 간격 */
     margin-top: 20px;
-    /* 타이틀과의 거리 */
 }
 
-/* ✅ 카드 전체 */
 .member-card {
     width: 270px;
     min-height: 160px;
     background: #fff;
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    padding: 15px 15px;
+    padding: 15px;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -77,40 +140,28 @@ defineProps({
 .card-top {
     display: flex;
     align-items: center;
-    /* ✅ 수직 중앙 정렬 */
     gap: 15px;
     min-height: 52px;
-    /* 상단 블록 최소 높이 확보 */
 }
 
-/* 프로필 이미지 */
 .profile-img {
     width: 45px;
     height: 45px;
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
-    display: block;
-    /* ✅ 이미지 하단 기본 여백 제거 */
 }
 
-/* 이름 + 이메일 */
 .user-info {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    height: 48px;
-    /* 이미지 높이와 동일하게 맞춤 */
-    margin-top: 0;
-    /* 혹시 남아있는 마진 제거 */
 }
 
 .name {
     font-weight: 700;
     color: #111;
     font-size: 1rem;
-    line-height: 1.1;
-    /* 줄간격 살짝 줄여 안정감 */
     margin: 0;
 }
 
@@ -118,47 +169,31 @@ defineProps({
     font-size: 0.7rem;
     color: #777;
     margin: 3px 0 0 0;
-    /* 이름과의 간격만 살짝 */
-    line-height: 1.1;
 }
 
-/* ✅ 태그 영역 */
 .tags {
     display: flex;
-    gap: 8px;
     flex-wrap: wrap;
+    gap: 8px;
     margin-top: 10px;
 }
 
 .tag {
-    background: #000;
-    color: #fff;
-    border-radius: 5px;
-    padding: 6px 12px;
-    font-size: 0.65rem;
-    font-weight: 500;
     display: inline-block;
     white-space: nowrap;
+    transition: all 0.2s ease;
 }
 
-/* ✅ 한마디 영역 */
 .oneline {
     margin-top: 15px;
-    margin-bottom: 0;
     color: #555;
     font-size: 0.9rem;
     line-height: 1.4;
-    display: block;
-    /* ✅ 추가 */
     overflow: hidden;
-    /* ✅ 추가 */
     white-space: nowrap;
-    /* 한 줄만 표시 */
     text-overflow: ellipsis;
-    /* 넘치면 … 처리 */
 }
 
-/* ✅ 추가 버튼 카드 */
 .add-member {
     justify-content: center;
     align-items: center;

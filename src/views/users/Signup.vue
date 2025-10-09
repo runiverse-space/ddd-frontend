@@ -60,7 +60,7 @@
       <p class="tag-desc">태그는 프로젝트의 목적과 방향을 빠르게 이해할 수 있도록 도와줍니다.</p>
 
       <!-- 태그 props -->
-      <TagSelector v-model="selectedTags" tagType="USER" />
+      <DualTagSelector v-model="selectedTags" />
     </section>
 
     <!-- 버튼 -->
@@ -76,6 +76,7 @@ import { ref, onMounted, onBeforeUnmount } from "vue";
 import usersApi from "@/apis/usersApi";
 import { ChevronDownIcon } from "@heroicons/vue/24/outline";
 import TagSelector from "@/components/TagSelector.vue";
+import DualTagSelector from "@/components/DualTagSelector.vue";
 
 /* ----------------------------
    기본 회원가입 폼 데이터

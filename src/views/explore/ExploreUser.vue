@@ -22,8 +22,8 @@
 
                 <!-- 유저 태그 -->
                 <div class="tags">
-                    <span v-for="tag in user.tags" :key="tag" class="tag">
-                        {{ tag }}
+                    <span v-for="tag in user.tags" :key="tag.tagId" class="tag" :style="tagStyle(tag)">
+                        {{ tag.tagName }}
                     </span>
                 </div>
 
@@ -43,17 +43,27 @@ import { ref, onMounted } from "vue";
 import usersApi from "@/apis/usersApi";
 import tagApi from "@/apis/tagApi";
 import defaultImgSrc from "@/assets/default-profile.png";
-import { MagnifyingGlassIcon } from "@heroicons/vue/24/outline"; // ✅ 아이콘 추가
+import { MagnifyingGlassIcon } from "@heroicons/vue/24/outline";
+import { getTagColors } from "@/utils/tagColor"; // ✅ 추가
 
 const allUsers = ref([]);
 const originalUsers = ref([]);
 const defaultImg = defaultImgSrc;
 const searchTerm = ref("");
 
+/* ✅ 태그 스타일 계산 (유틸 활용) */
+function tagStyle(tag) {
+    const { bg, color, border } = getTagColors(tag.tagType);
+    return {
+        backgroundColor: bg,
+        color,
+        border: `1px solid ${border}`,
+    };
+}
+
 const onSearch = async () => {
     const keyword = searchTerm.value.trim();
 
-    // ✅ 입력이 완전히 비어 있으면 전체 유저 다시 불러오기
     if (keyword === "") {
         allUsers.value = originalUsers.value;
         return;
@@ -64,13 +74,11 @@ const onSearch = async () => {
         if (res.data.result === "success") {
             const users = res.data.data;
 
-            // ✅ 검색 결과가 없으면 전체 복원 X
             if (!users || users.length === 0) {
-                allUsers.value = []; // ❌ 전체유저 복구 금지
+                allUsers.value = [];
                 return;
             }
 
-            // ✅ 검색 결과 있을 때만 표시
             for (const user of users) {
                 try {
                     const imgRes = await usersApi.ufAttachDownload(user.userId);
@@ -81,7 +89,12 @@ const onSearch = async () => {
                 }
 
                 const tagRes = await tagApi.getUserTags(user.userId);
-                user.tags = (tagRes.data.tags || []).map((t) => t.tagName);
+                user.tags =
+                    tagRes.data.tags?.map((t) => ({
+                        tagId: t.tagId,
+                        tagName: t.tagName,
+                        tagType: t.tagType, // ✅ tagType 추가 (색상에 필요)
+                    })) || [];
             }
 
             allUsers.value = users;
@@ -90,7 +103,6 @@ const onSearch = async () => {
         console.error("유저 검색 실패:", err);
     }
 };
-
 
 onMounted(async () => {
     try {
@@ -107,7 +119,12 @@ onMounted(async () => {
                 }
 
                 const tagRes = await tagApi.getUserTags(user.userId);
-                user.tags = (tagRes.data.tags || []).map((t) => t.tagName);
+                user.tags =
+                    tagRes.data.tags?.map((t) => ({
+                        tagId: t.tagId,
+                        tagName: t.tagName,
+                        tagType: t.tagType, // ✅ tagType 추가
+                    })) || [];
             }
             allUsers.value = users;
             originalUsers.value = users;
@@ -129,7 +146,6 @@ onMounted(async () => {
 .header-row {
     display: flex;
     justify-content: flex-start;
-    /* 왼쪽 정렬 */
     margin-bottom: 30px;
 }
 
@@ -151,7 +167,6 @@ onMounted(async () => {
 
 .search-box:focus-within {
     border-color: #6759f4;
-    /* 포커스 시 포인트 컬러 */
 }
 
 .search-box .icon {
@@ -174,14 +189,12 @@ onMounted(async () => {
     color: #aaa;
 }
 
-/* ✅ 사용자 카드 그리드 */
+/* ✅ 카드 레이아웃 */
 .user-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 25px;
-    /* 카드 간격 */
     justify-content: center;
-    /* 가운데 정렬 */
     margin-top: 20px;
 }
 
@@ -196,7 +209,6 @@ onMounted(async () => {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    /* 위쪽 정보 + 아래 한마디 간격 유지 */
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -205,8 +217,7 @@ onMounted(async () => {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-
-/* ✅ 상단: 프로필 + 이름 + 초대 버튼 */
+/* ✅ 상단 프로필 + 이름 + 버튼 */
 .card-top {
     display: flex;
     align-items: center;
@@ -242,10 +253,6 @@ onMounted(async () => {
     font-size: 0.8rem;
     cursor: pointer;
     transition: 0.2s;
-
-    display: inline-block;
-    vertical-align: middle;
-    line-height: 1.3;
 }
 
 .invite-btn:hover {
@@ -261,23 +268,20 @@ onMounted(async () => {
 }
 
 .tag {
-    background: #000;
-    color: #fff;
-    border-radius: 5px;
+    border-radius: 3px;
     padding: 6px 12px;
     font-size: 0.65rem;
     font-weight: 500;
     line-height: 1.3;
     display: inline-block;
     white-space: nowrap;
+    transition: all 0.2s ease;
 }
 
 /* ✅ 한마디 */
 .oneline {
     margin-top: 20px;
-    /* 위쪽 여백만 살짝 줄임 */
     margin-bottom: 0;
-    /* ✅ 하단 여백 완전 제거 */
     color: #555;
     font-size: 0.8rem;
     line-height: 1.4;
@@ -285,7 +289,6 @@ onMounted(async () => {
     white-space: nowrap;
     text-overflow: ellipsis;
 }
-
 
 /* ✅ 빈 상태 */
 .empty-text {
