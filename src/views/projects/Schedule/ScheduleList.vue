@@ -24,11 +24,13 @@
             </div>
             <div class="card-icons">
               <ListBulletIcon class="action-icon" title="상세보기" @click="openModal(schedule)" />
-              <PencilSquareIcon v-if="schedule.userId === store.state.userId" class="action-icon" title="수정하기" @click="() => {
-                openModal(schedule);
-                handleEdit();
-              }" />
-              <XMarkIcon v-if="schedule.userId === store.state.userId" class="action-icon" title="삭제하기"
+              <PencilSquareIcon class="action-icon" title="수정하기"
+                @click="() => {
+                  openModal(schedule);
+                  handleEdit();
+                }" />
+              <XMarkIcon v-if="schedule.userId === store.state.userId ||
+                schedule.users.map(user => user.userId).includes(store.state.userId)" class="action-icon" title="삭제하기"
                 @click="handleDelete(schedule)" />
             </div>
           </div>
@@ -104,7 +106,7 @@
             <p class="text-muted small ">일정 종료일자를 선택해주세요.</p>
             <input type="date" class="form-control" v-model="selectedSchedule.scheduleEndDate" />
           </div>
-          
+
           <!-- 일정 기간(일기 모드) -->
           <div class="mb-3" v-if="!editMode">
             <label class="form-label">일정 기간</label>
@@ -164,11 +166,11 @@
               닫기
             </button>
             <button type="button" class="btn btn-primary" @click="handleEdit()"
-              v-if="selectedSchedule.userId === store.state.userId && !editMode">
+              v-if="!editMode">
               수정하기
             </button>
             <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @click="handleUpdateConfirm()"
-              v-if="selectedSchedule.userId === store.state.userId && editMode">
+              v-if="editMode">
               수정확인
             </button>
           </div>
