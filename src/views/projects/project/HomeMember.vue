@@ -35,21 +35,11 @@
             </div>
         </div>
 
-        <BaseModal :show="showInviteModal" title="새 멤버 초대" @close="showInviteModal = false">
-            <!-- ✅ 모달 내부에 컴포넌트 삽입 -->
+        <BaseModal :show="showInviteModal" type="default" title="새 멤버 찾기" button-text="등록" button-action="confirm"
+            :height="250" @close="showInviteModal = false" @confirm="inviteMembers">
+            함께 프로젝트를 진행할 팀원을 찾아보세요 👋
             <MemberSelector v-model="projectMembers" />
-
-            <!-- ✅ 푸터를 별도 슬롯으로 재정의 가능 -->
-            <template #footer>
-                <button class="btn btn-dark btn-sm" @click="inviteMembers">
-                    초대하기
-                </button>
-                <button class="btn btn-secondary btn-sm" @click="showInviteModal = false">
-                    닫기
-                </button>
-            </template>
         </BaseModal>
-
     </div>
 </template>
 
@@ -125,7 +115,6 @@ async function inviteMembers() {
     for (const user of projectMembers.value) {
         await userprojectroleApi.addMember(props.projectId, user.userId);
     }
-    alert("새 멤버가 성공적으로 추가되었습니다!");
     showInviteModal.value = false;
     loadMembers(); // 리스트 새로고침
 }
@@ -243,13 +232,13 @@ function tagStyle(tag) {
     color: #999;
     font-weight: 500;
     cursor: pointer;
-    border: 2px dashed #ddd;
-    background: #fafafa;
+    border: 1px dashed #ddd;
+    background: #fefefe;
     transition: all 0.2s ease;
 }
 
 .add-member:hover {
-    border-color: #aaa;
-    color: #333;
+    border-color: #ddd;
+    color: #555;
 }
 </style>

@@ -20,7 +20,7 @@
         </div>
 
         <!-- ✅ 드롭다운 -->
-        <div v-if="isDropdownOpen" class="member-dropdown">
+        <div v-show="isDropdownOpen" class="member-dropdown">
             <hr class="divider" />
             <!-- <p class="dropdown-info">검색 결과를 선택해주세요.</p> -->
 
@@ -146,6 +146,20 @@ function removeMember(userId) {
 .member-selector {
     position: relative;
     width: 100%;
+    overflow: visible;
+}
+
+.member-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    z-index: 10000;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 /* ✅ 상단 선택/검색 박스 */

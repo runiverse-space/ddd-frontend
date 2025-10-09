@@ -2,10 +2,10 @@
     <Teleport to="body">
         <div v-if="show" class="modal-overlay" @click.self="close">
             <div class="base-modal" :style="{
-                width: typeof width === 'number' ? width + 'px' : width,
-                height: typeof height === 'number' ? height + 'px' : height,
+                '--modal-width': typeof width === 'number' ? width + 'px' : width,
+                '--modal-height': typeof height === 'number' ? height + 'px' : height,
             }">
-                <!-- 상단 헤더 -->
+                <!-- 헤더 -->
                 <div class="modal-header" :class="type">
                     <div class="left-group">
                         <component :is="iconComponent" class="header-icon" />
@@ -21,7 +21,7 @@
                     <slot>{{ defaultMessage }}</slot>
                 </div>
 
-                <!-- 확인 버튼 -->
+                <!-- 하단 버튼 -->
                 <div class="modal-footer">
                     <button class="confirm-btn" :class="type" @click="handleButtonClick">
                         {{ buttonText }}
@@ -39,27 +39,28 @@ import {
     InformationCircleIcon,
     XCircleIcon,
     CheckCircleIcon,
+    FaceSmileIcon
 } from "@heroicons/vue/24/outline";
 
 const props = defineProps({
     show: Boolean,
     type: { type: String, default: "default" },
-    title: { type: String, default: "" },
-    width: { type: [Number, String], default: 440 },
-    height: { type: [Number, String], default: "auto" },
+    title: String,
+    width: { type: [Number, String], default: 480 },
+    height: { type: [Number, String], default: 160 },
     buttonText: { type: String, default: "확인" },
     buttonAction: { type: String, default: "close" },
 });
 
 const emits = defineEmits(["close", "confirm"]);
 
-const iconComponent = computed(() => {
-    return props.type === "info"
+const iconComponent = computed(() =>
+    props.type === "info"
         ? InformationCircleIcon
         : props.type === "error"
             ? XCircleIcon
-            : CheckCircleIcon;
-});
+            : FaceSmileIcon
+);
 
 const titleText = computed(() =>
     props.title
@@ -84,8 +85,7 @@ function close() {
 }
 
 function handleButtonClick() {
-    if (props.buttonAction === "close") emits("close");
-    else emits("confirm");
+    props.buttonAction === "close" ? emits("close") : emits("confirm");
 }
 </script>
 
@@ -100,17 +100,18 @@ function handleButtonClick() {
     z-index: 20000;
 }
 
-/* ✅ width 고정만 유지 */
+/* ✅ 불필요한 고정값 제거, overflow 해제 */
 .base-modal {
-    width: var(--modal-width, 440px);
-    height: var(--modal-height, auto);
     background: #fff;
     border-radius: 10px;
     box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
-    overflow: visible;
     display: flex;
     flex-direction: column;
+    overflow: visible;
     animation: fadeIn 0.25s ease;
+
+    width: var(--modal-width, 440px);
+    height: var(--modal-height, auto);
 }
 
 /* HEADER */
@@ -118,9 +119,24 @@ function handleButtonClick() {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-height: 40px;
-    padding: 0 10px;
+    padding: 8px 14px;
+    min-height: 42px;
+}
+
+.modal-header.info {
+    background: #3f8047;
     color: #fff;
+}
+
+.modal-header.error {
+    background: #a62b2b;
+    color: #fff;
+}
+
+.modal-header.default {
+    background: transparent;
+    border-bottom: 1px solid #eee;
+    color: #111;
 }
 
 .left-group {
@@ -139,32 +155,12 @@ function handleButtonClick() {
     font-weight: 700;
 }
 
-/* 타입별 헤더 색상 */
-.modal-header.info {
-    background: #3f8047;
-}
-
-.modal-header.error {
-    background: #a62b2b;
-}
-
-.modal-header.default {
-    background: transparent;
-    color: #111;
-    border-bottom: 1px solid #eee;
-}
-
-/* 닫기 버튼 */
+/* CLOSE 버튼 */
 .close-btn {
     background: none;
     border: none;
     cursor: pointer;
-    color: #fff;
     padding: 4px;
-}
-
-.close-btn:hover {
-    opacity: 0.8;
 }
 
 .modal-header.default .close-btn {
@@ -183,26 +179,21 @@ function handleButtonClick() {
 
 /* BODY */
 .modal-body {
-    padding: 20px 20px 10px;
-    /* ✅ 하단 여백 줄임 */
+    padding: 20px;
+    overflow: visible;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    text-align: center;
+    justify-content: flex-start;
+    gap: 16px;
     font-size: 13px;
-    font-weight: 500;
-    color: #222;
-    white-space: normal;
-    word-break: break-word;
-    line-height: 1.6;
 }
 
 /* FOOTER */
 .modal-footer {
     display: flex;
     justify-content: center;
-    padding: 6px 0 16px;
-    /* ✅ 위쪽 여백 ↓ */
+    padding: 0px 0 22px;
 }
 
 .confirm-btn {
@@ -216,11 +207,6 @@ function handleButtonClick() {
     transition: opacity 0.2s ease;
 }
 
-.confirm-btn:hover {
-    opacity: 0.9;
-}
-
-/* 타입별 버튼 색상 */
 .confirm-btn.info {
     background: #3f8047;
 }
@@ -233,7 +219,10 @@ function handleButtonClick() {
     background: #252525;
 }
 
-/* 애니메이션 */
+.confirm-btn:hover {
+    opacity: 0.9;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
