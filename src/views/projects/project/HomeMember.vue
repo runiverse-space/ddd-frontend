@@ -6,7 +6,7 @@
         </div>
 
         <div class="member-grid">
-            <!-- 멤버 카드 -->
+            <!-- ✅ 기존 멤버 카드 -->
             <div v-for="member in members" :key="member.userId" class="member-card">
                 <div class="card-top">
                     <img :src="member.profileUrl" class="profile-img" alt="profile" />
@@ -24,20 +24,40 @@
                 </div>
 
                 <!-- 한마디 -->
-                <p class="oneline">{{ member.userIntro || "한마디를 작성해주세요." }}</p>
+                <p class="oneline">
+                    {{ member.userIntro || "한마디를 작성해주세요." }}
+                </p>
             </div>
 
-            <!-- 새 멤버 초대 -->
-            <div class="member-card add-member">
+            <!-- ✅ 새 멤버 초대 카드 -->
+            <div class="member-card add-member" @click="openInviteModal">
                 <span>+ 새 멤버 초대</span>
             </div>
         </div>
+
+        <BaseModal :show="showInviteModal" title="새 멤버 초대" @close="showInviteModal = false">
+            <!-- ✅ 모달 내부에 컴포넌트 삽입 -->
+            <MemberSelector v-model="projectMembers" />
+
+            <!-- ✅ 푸터를 별도 슬롯으로 재정의 가능 -->
+            <template #footer>
+                <button class="btn btn-dark btn-sm" @click="inviteMembers">
+                    초대하기
+                </button>
+                <button class="btn btn-secondary btn-sm" @click="showInviteModal = false">
+                    닫기
+                </button>
+            </template>
+        </BaseModal>
+
     </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
 import { UserPlusIcon } from "@heroicons/vue/24/outline";
+import BaseModal from "@/components/BaseModal.vue";
+import MemberSelector from "@/components/MemberSelector.vue";
 import userprojectroleApi from "@/apis/userprojectroleApi";
 import usersApi from "@/apis/usersApi";
 import tagApi from "@/apis/tagApi";
@@ -49,6 +69,13 @@ const props = defineProps({
 });
 
 const members = ref([]);
+const showInviteModal = ref(false); // ✅ 모달 상태
+const projectMembers = ref([]); // ✅ 멤버 선택 결과
+
+function openInviteModal() {
+    projectMembers.value = [];
+    showInviteModal.value = true;
+}
 
 onMounted(() => {
     loadMembers();
@@ -75,7 +102,6 @@ async function loadMembers() {
                     console.log(error);
                 }
 
-                // ✅ userData에 직접 tags 추가
                 const tagRes = await tagApi.getUserTags(m.userId);
                 userData.tags =
                     tagRes.data.tags?.map((t) => ({
@@ -84,7 +110,6 @@ async function loadMembers() {
                         tagType: t.tagType ?? t.tag_type ?? "USER",
                     })) || [];
 
-                // ✅ userData + profileUrl만 합쳐서 반환
                 return {
                     ...userData,
                     profileUrl,
@@ -95,6 +120,23 @@ async function loadMembers() {
         console.error("멤버 조회 실패:", e);
     }
 }
+
+async function inviteMembers() {
+    for (const user of projectMembers.value) {
+        await userprojectroleApi.addMember(props.projectId, user.userId);
+    }
+    alert("새 멤버가 성공적으로 추가되었습니다!");
+    showInviteModal.value = false;
+    loadMembers(); // 리스트 새로고침
+}
+/*
+async function removeMember(member) {
+    if (confirm(`${member.userName} 님을 제거하시겠습니까?`)) {
+        await userprojectroleApi.removeMember(props.projectId, member.userId);
+        loadMembers();
+    }
+}
+*/
 
 function tagStyle(tag) {
     const { bg, color, border } = getTagColors(tag.tagType);
@@ -201,6 +243,13 @@ function tagStyle(tag) {
     color: #999;
     font-weight: 500;
     cursor: pointer;
-    border: 2px solid #eee;
+    border: 2px dashed #ddd;
+    background: #fafafa;
+    transition: all 0.2s ease;
+}
+
+.add-member:hover {
+    border-color: #aaa;
+    color: #333;
 }
 </style>

@@ -1,5 +1,14 @@
 <template>
   <div>
+    <h6>모달 테스트</h6>
+    <button class="btn btn-datk" @click="openModal">모달 클릭</button>
+
+    <BaseModal :show="show" title="테스트 모달" message="모달이 뜨나요?" @close="show = false" />
+  </div>
+
+  <br>
+
+  <div>
     <h6>멤버 추가</h6>
     <MemberSelector v-model="projectMembers" />
   </div>
@@ -8,7 +17,7 @@
 
   <div>
     <h6>지식창고 태그</h6>
-    <SingleTagSelector v-model="selectedProjectTags" tagType="KNOWLEDGE" />
+    <SingleTagSelector v-model="selectedTags" tagType="KNOWLEDGE" />
   </div>
 
   <div class="board-container">
@@ -64,8 +73,21 @@ import {
 import SingleTagSelector from "@/components/SingleTagSelector.vue";
 import MemberSelector from "@/components/MemberSelector.vue";
 import { ref } from "vue";
+import BaseModal from "@/components/BaseModal.vue";
 
+// 멤버 추가 
 const projectMembers = ref([]);
+
+// 모달
+const show = ref(false);
+
+// 태그
+const selectedTags = ref([]);
+
+function openModal() {
+  show.value = true;
+  console.log("show = true", show.value);
+}
 
 const columns = [
   {
@@ -270,5 +292,20 @@ const columns = [
   height: 18px;
   margin-right: 6px;
   vertical-align: middle;
+}
+
+/* 모달 */
+.test-modal-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  color: #333;
+}
+
+h2 {
+  margin-bottom: 20px;
 }
 </style>

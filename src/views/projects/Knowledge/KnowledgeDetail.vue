@@ -12,12 +12,32 @@
               {{ knowledge.knowledgeTitle }}
             </h5>
 
-            <!-- 내용 -->
             <div class="mb-3">
-              <p class="card-text" style="white-space: pre-wrap; line-height: 1.6;">
-                {{ knowledge.knowledgeContent }}
-              </p>
+
+              <div class="d-flex align-items-center">
+                <!--  member.userId → knowledge.userId -->
+                <!-- userProfileUrl ref 사용 -->
+                <img :src="userProfileUrl || '/images/default-profile.png'" :key="knowledge.userId" class="member-avatar me-2" alt="프로필 이미지" />
+                <!-- users.userName으로 접근  -->
+                <span class="me-4">by {{ users.userName || '알 수 없는 사용자' }}</span>
+
+
+                <span class="ms-5">{{ formatDate(knowledge.knowledgeCreatedAt) }}</span>
+              </div>
+
             </div>
+
+            <!--태그 표시 영역 추가 -->
+            <div class="mb-3" v-if="knowledgeTags.length > 0">
+              <div class="knowledge-tags">
+                <span v-for="tag in knowledgeTags" :key="tag.tagId" class="knowledge-tag">
+                  {{ tag.tagName }}
+                </span>
+              </div>
+            </div>
+
+
+
 
             <!-- URL -->
             <div class="mb-3" v-if="knowledge.knowledgeUrl">
@@ -35,15 +55,23 @@
               <img :src="kfAttach" alt="첨부 이미지" style="width: 100%; height: auto; border-radius: 8px; object-fit: cover; max-height: 400px;" />
             </div>
 
+            <!-- 내용 -->
+            <div class="mb-3">
+              <p class="card-text" style="white-space: pre-wrap; line-height: 1.6;">
+                {{ knowledge.knowledgeContent }}
+              </p>
+            </div>
+
+
             <hr style="margin: 1.5rem 0; border-color: #e0e0e0;">
 
 
             <!--댓글 영역 -->
 
             <div class="mb-4">
-              <h6 class="mb-3" style="font-weight: bold; font-size: 1.1rem;">
-                댓글 개수: {{ knowledgeCommentList.length }}
-              </h6>
+              <span class="mb-3" style="font-weight: lighter; font-size: 1.1rem;">
+                댓글 {{ knowledgeCommentList.length }}
+              </span>
 
               <!-- 댓글 목록-->
               <div v-if="knowledgeCommentList.length > 0" class="mb-4">
@@ -64,15 +92,18 @@
                         {{ '사용자' + comment.userId }}
                       </span>
                       <!-- 작성자 표시-->
-                      <span v-if="comment.userId === knowledge.userId" class="badge bg-primary" style="font-size: 0.7rem;">
+                      <span v-if="comment.userId === knowledge.userId" class="badge bg-primary " style="font-size: 0.7rem;">
                         작성자
                       </span>
+
+                      <!-- 작성 날짜-->
+                      <span style="font-size: 0.85rem; color: #6c757d; ">
+                        {{ formatDate(comment.knowledgeCommentCreatedAt) }}
+                      </span>
+
                     </div>
 
-                    <!-- 작성 날짜-->
-                    <span style="font-size: 0.85rem; color: #6c757d;">
-                      {{ formatDate(comment.knowledgeCommentCreatedAt) }}
-                    </span>
+
                   </div>
 
                   <!--댓글 내용-->
@@ -107,7 +138,7 @@
                       수정 완료
                     </button>
                     <button v-if="editingKnowledgeCommentId === comment.knowledgeCommentId" class="btn btn-sm btn-secondary" style="font-size: 0.8rem;" @click="cancelUpdateKnowledgeComment">
-                    취소
+                      취소
                     </button>
 
                   </div>
@@ -255,15 +286,15 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="fadeModal"> 댓글 등록 성공</h5>
+            <h5 class="modal-title" id="fadeModal"> </h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <CheckBadgeIcon class="need-icon" />
             {{ modalMessage }}
           </div>
-          
-          <div v-if="modalType ==='confirm'" class="modal-footer">
+
+          <div v-if="modalType === 'confirm'" class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
               취소
             </button>
@@ -290,6 +321,8 @@ import { computed, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import * as bootstrap from 'bootstrap';
+import usersApi from '@/apis/usersApi';
+import tagApi from '@/apis/tagApi';
 
 const props = defineProps(['projectId']);
 
@@ -302,9 +335,20 @@ const modalMessage = ref('');
 const modalTitle = ref('알림');
 const modalType = ref('alert');  // 'alert' 또는 'confirm'
 const modalCallback = ref(null);
-// const knowledgeId = route.query.knowledgeId;
 const knowledgeId = computed(() => route.query.knowledgeId);
-//** computed를 사용하면 route.query.knowledgeId가 변경될 때마다 자동으로 업데이트됨!
+
+const knowledgeTags = ref([]);
+
+
+const users = ref({
+  userName: "",
+  userId: ""
+});
+
+const userProfileUrl = ref(null);
+
+
+
 
 const knowledge = ref({
   knowledgeId: "",
@@ -314,7 +358,9 @@ const knowledge = ref({
   kfAttachoname: "",
   kfAttachtype: "",
   userId: "",
-  projectId: ""
+  projectId: "",
+  tagType: "KNOWLEDGE",
+  knowledgeCreatedAt: ""
 
 })
 //입력용
@@ -338,28 +384,63 @@ const editingKnowledgeCommentContent = ref('');
 
 
 //백엔드에서 게시물 가져오기
-async function getKnowledge(knowledgeId) {
+async function getKnowledge() {
   try {
-    const response = await knowledgeApi.knowledgeDetail(knowledgeId);
-    console.log('요청 URL:', response.data);
+    //** ✅ 유효성 검사 추가
+    if (!knowledgeId.value) {
+      console.error("knowledgeId가 없습니다!");
+      return;
+    }
+
+    const response = await knowledgeApi.knowledgeDetail(knowledgeId.value);
+    // console.log('요청 URL:', response.data);
 
     if (response.data.result === 'success') {
       knowledge.value = response.data.data;
-      console.log(knowledge.value);
-      console.log(knowledge.value.userId);
+      // console.log("지식창고 구조",knowledge.value);
+      // console.log("knowledgeCreatedAt:", knowledge.value.knowledgeCreatedAt);
+      // console.log(knowledge.value.userId);
+      const userId = knowledge.value.userId;
+
+      const userResponse = await usersApi.usersDetailById(userId);
+      // console.log("users에서 userName 찾기", userResponse.data);
+      users.value = userResponse.data.data;
+
+      //** 사용자 프로필 이미지 가져오기
+      try {
+        const profileResponse = await usersApi.ufAttachDownload(userId);
+        //** blob 데이터를 URL로 변환하여 img src에 사용 가능하게 만듦
+        userProfileUrl.value = URL.createObjectURL(profileResponse.data);
+      } catch (error) {
+        //** 프로필 이미지가 없으면 기본 이미지 사용
+        // console.log("프로필 이미지 없음, 기본 이미지 사용");
+        userProfileUrl.value = "/images/default-profile.png";
+      }
+
+
+      try {
+        const tagResponse = await tagApi.getKnowledgeTags(knowledgeId.value);
+        console.log("태그 응답:", tagResponse.data);
+        knowledgeTags.value = tagResponse.data.tags || [];
+        console.log("태그목록", knowledgeTags.value);
+
+      } catch (error) {
+        console.log("태그 가져오기 실패", error);
+        knowledgeTags.value = [];
+      }
+
 
       prevKnowledge.value = response.data.prevKnowledge;
       nextKnowledge.value = response.data.nextKnowledge;
 
-      console.log(prevKnowledge.value);
-      console.log(nextKnowledge.value);
+
 
       kfAttach.value = null;
 
       if (knowledge.value.kfAttachoname != null) {
-        knowledgeAttachDownload(knowledgeId);
+        knowledgeAttachDownload();
       }
-      console.log("지식창고 개별 getKnowledge 게시물 가져오기 성공");
+
     } else {
       console.log("지식 창고 개별 페이지 조회 실패");
     }
@@ -370,35 +451,36 @@ async function getKnowledge(knowledgeId) {
 
 }
 
-/*
-   로그인 처리하면 없앨 임시 코드
-*/
-getKnowledge(knowledgeId);
+// /*
+//    로그인 처리하면 없앨 임시 코드
+// */
+//getKnowledge(knowledgeId);
 
-
-
-async function knowledgeAttachDownload(knowledgeId) {
+async function knowledgeAttachDownload() {
   try {
-    const response = await knowledgeApi.knowledgeAttachDownload(knowledgeId);
+
+    if (!knowledgeId.value) {
+      console.error("knowledgeAttachDownload: knowledgeId가 없습니다");
+      return;
+    }
+
+    const response = await knowledgeApi.knowledgeAttachDownload(knowledgeId.value);
     const blob = response.data;
     kfAttach.value = URL.createObjectURL(blob);
-    console.log('knowlege첨부파일확인용: ', kfAttach.value);
+    // console.log('knowlege첨부파일확인용: ', kfAttach.value);
   } catch (error) {
     console.log(error);
   }
 }
 
 watch(() => route.query.knowledgeId, (newKnowledgeId, oldKnowledgeId) => {
-  console.log('=== knowledgeId 변경 감지 ===');
-  console.log('이전 knowledgeId:', oldKnowledgeId);
-  console.log('새로운 knowledgeId:', newKnowledgeId);
 
-  if(newKnowledgeId){
+  if (newKnowledgeId && newKnowledgeId !== 'undefined') {
     getKnowledge(newKnowledgeId);
-    getKnowledgeCommentList(newKnowledgeId)
+    getKnowledgeCommentList(newKnowledgeId);
   }
 
-  
+
 },
   {
     immediate: true  // 컴포넌트 마운트 시 즉시 실행
@@ -419,7 +501,7 @@ async function createComment() {
     knowledgeComment.value.userId = store.state.userId;
 
     const data = structuredClone(knowledgeComment.value);
-    console.log(data);
+    // console.log(data);
 
     const response = await knowledgeCommentApi.knowledgeCommentCreate(data);
     console.log("response의 값", response.data);
@@ -439,19 +521,19 @@ async function createComment() {
 }
 
 //댓글 목록
-async function getKnowledgeCommentList(knowledgeId) {
+async function getKnowledgeCommentList() {
   try {
-    console.log("댓글 목록 가져오기 도전: ", knowledgeId);
-    const response = await knowledgeCommentApi.knowledgeCommentList(knowledgeId);
+    console.log("댓글 목록 가져오기 도전: ", knowledgeId.value);
+    const response = await knowledgeCommentApi.knowledgeCommentList(knowledgeId.value);
     //전체 응답
-    console.log("응답 전체:", response.data);
+    // console.log("응답 전체:", response.data);
     if (response.data.result === 'success') {
       // 백엔드가 commentList로 보냄
       knowledgeCommentList.value = response.data.commentList;
 
-      console.log("댓글 조회 성공");
-      console.log("댓글 개수:", knowledgeCommentList.value.length);
-      console.log("댓글 데이터:", knowledgeCommentList.value);
+      // console.log("댓글 조회 성공");
+      // console.log("댓글 개수:", knowledgeCommentList.value.length);
+      // console.log("댓글 데이터:", knowledgeCommentList.value);
     } else {
       knowledgeCommentList.value = [];
     }
@@ -539,7 +621,7 @@ async function updateKnowledgeComment() {
 
     const data = {
       knowledgeCommentId: editingKnowledgeCommentId.value,
-      knowledgeId: knowledgeId,
+      knowledgeId: knowledgeId.value,
       userId: store.state.userId,
       knowledgeCommentContent: editingKnowledgeCommentContent.value
     }
@@ -554,7 +636,7 @@ async function updateKnowledgeComment() {
       showModal('댓글 수정이 완료되었습니다');
       //수정 모드 종료
       cancelUpdateKnowledgeComment();
-      await getKnowledgeCommentList(knowledgeId);
+      await getKnowledgeCommentList(knowledgeId.value);
     }
 
 
@@ -578,19 +660,19 @@ async function deleteKnowledgeComment(knowledgeCommentId) {
       try {
         const response = await knowledgeCommentApi.knowledgeCommentDelete(knowledgeCommentId);
 
-        console.log("---------response에 뭐가 들어오나",response.data);
-        console.log("타입:", typeof response.data);
+        // console.log("---------response에 뭐가 들어오나",response.data);
+        // console.log("타입:", typeof response.data);
 
         let result = response.data;
-        if(typeof response.data ==='string'){
-          result=JSON.parse(response.data);
+        if (typeof response.data === 'string') {
+          result = JSON.parse(response.data);
         }
 
-         console.log("파싱된 결과:", result);
+        console.log("파싱된 결과:", result);
 
         if (result.result === 'success') {
-          
-          await getKnowledgeCommentList(knowledgeId);
+
+          await getKnowledgeCommentList(knowledgeId.value);
 
           setTimeout(() => {
             showModal('댓글이 삭제되었습니다.');
@@ -614,7 +696,7 @@ function showModal(message, title = '알림', type = 'alert', callback = null) {
   modalType.value = type;
   modalCallback.value = callback;
 
-  
+
   const modalElement = document.getElementById('fadeModal');
   const modal = new bootstrap.Modal(modalElement);
   modal.show();
@@ -639,7 +721,7 @@ function updateKnowledge() {
 
 async function deleteKnowledge() {
   try {
-    const response = await knowledgeApi.knowledgeDelete(knowledgeId);
+    const response = await knowledgeApi.knowledgeDelete(knowledgeId.value);
     if (response.data.result === "success") {
       router.back();
     }
@@ -683,5 +765,30 @@ async function deleteKnowledge() {
 .comment-item:hover {
   background-color: #e9ecef !important;
   transform: translateX(2px);
+}
+
+
+.member-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.knowledge-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
+.knowledge-tag {
+  padding: 4px 10px;
+  background: #f0f0f0;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 </style>

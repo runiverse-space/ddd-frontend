@@ -54,6 +54,8 @@ const props = defineProps(['projectId']);
   width: 100%;
   max-width: none;
   padding-right: 0;
+  overflow: visible !important;
+  position: static !important;
 }
 
 .sidebar {
