@@ -15,7 +15,7 @@
             </div>
 
             <!-- 타임라인 -->
-            <HomeMilestone :milestones="milestones" />
+            <HomeMilestone :milestones="milestones" :projectDetail="projectDetail"/>
 
             <!-- 멤버 -->
             <HomeMember :members="members" />
@@ -48,6 +48,7 @@ import { useStore } from "vuex";
 import HomeMilestone from "./project/HomeMilestone.vue";
 import HomeSchedule from "./project/HomeSchedule.vue";
 import HomeMember from "./project/HomeMember.vue";
+import projectMilestoneApi from "@/apis/projectMilestoneApi";
 
 const props = defineProps({
     projectId: { type: Number, required: true },
@@ -145,6 +146,17 @@ async function loadSchedules() {
     }
 }
 
+// 마일스톤
+async function loadMilestones() {
+    try {
+        const response = await projectMilestoneApi.getProjectMilestones(props.projectId);
+        milestones.value = response.data.data || response.data;
+        console.log("로드된 마일스톤:", milestones.value);
+    } catch (error) {
+        console.error("마일스톤 조회 실패:", error);
+    }
+}
+
 // 날짜 포맷 함수
 function formatTime(dateString) {
     if (!dateString) return "";
@@ -166,6 +178,7 @@ onMounted(() => {
     loadProject();
     loadMembers();
     loadSchedules();
+    loadMilestones();
 });
 </script>
 
