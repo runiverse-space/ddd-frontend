@@ -29,8 +29,7 @@
                   openModal(schedule);
                   handleEdit();
                 }" />
-              <XMarkIcon v-if="schedule.userId === store.state.userId ||
-                schedule.users.map(user => user.userId).includes(store.state.userId)" class="action-icon" title="삭제하기"
+              <XMarkIcon class="action-icon" title="삭제하기"
                 @click="handleDelete(schedule)" />
             </div>
           </div>
