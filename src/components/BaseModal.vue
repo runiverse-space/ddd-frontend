@@ -23,7 +23,9 @@
 
                 <!-- 확인 버튼 -->
                 <div class="modal-footer">
-                    <button class="confirm-btn" :class="type" @click="close">확인</button>
+                    <button class="confirm-btn" :class="type" @click="handleButtonClick">
+                        {{ buttonText }}
+                    </button>
                 </div>
             </div>
         </div>
@@ -45,9 +47,11 @@ const props = defineProps({
     title: { type: String, default: "" },
     width: { type: [Number, String], default: 440 },
     height: { type: [Number, String], default: "auto" },
+    buttonText: { type: String, default: "확인" },
+    buttonAction: { type: String, default: "close" },
 });
 
-const emits = defineEmits(["close"]);
+const emits = defineEmits(["close", "confirm"]);
 
 const iconComponent = computed(() => {
     return props.type === "info"
@@ -78,6 +82,11 @@ const defaultMessage = computed(() =>
 function close() {
     emits("close");
 }
+
+function handleButtonClick() {
+    if (props.buttonAction === "close") emits("close");
+    else emits("confirm");
+}
 </script>
 
 <style scoped>
@@ -98,7 +107,7 @@ function close() {
     background: #fff;
     border-radius: 10px;
     box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
-    overflow: hidden;
+    overflow: visible;
     display: flex;
     flex-direction: column;
     animation: fadeIn 0.25s ease;
@@ -140,7 +149,9 @@ function close() {
 }
 
 .modal-header.default {
-    background: #252525;
+    background: transparent;
+    color: #111;
+    border-bottom: 1px solid #eee;
 }
 
 /* 닫기 버튼 */
@@ -154,6 +165,15 @@ function close() {
 
 .close-btn:hover {
     opacity: 0.8;
+}
+
+.modal-header.default .close-btn {
+    color: #111;
+}
+
+.modal-header.info .close-btn,
+.modal-header.error .close-btn {
+    color: #fff;
 }
 
 .icon {
