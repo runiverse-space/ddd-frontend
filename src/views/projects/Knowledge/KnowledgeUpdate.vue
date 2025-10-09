@@ -179,7 +179,17 @@ function handleTitleInput() {
 const kfAttach = ref(null);
 
 async function handleSubmit() {
+  if(!validateForm()){
+    showModal('필수 항목을 입력해주세요.');
+    return;
+  }
 
+updateKnowledge();
+}
+
+
+async function updateKnowledge(){
+  
   const formData = new FormData();
   formData.append("knowledgeId", knowledgeId);
   // console.log('수정요청 knowledgeId', knowledgeId);
@@ -194,7 +204,7 @@ async function handleSubmit() {
   //게시판 수정 요청
   try {
     const response = await knowledgeApi.knowledgeUpdate(formData);
-    // router.push(``);
+    
     const updatedKnowledgeId = response.data.knowledgeId;
 
     //태그 업데이트
@@ -217,8 +227,9 @@ async function handleSubmit() {
     console.log(error);
     showModal('서버 오류가 발생했습니다.');
   }
-
 }
+
+
 function handleCancel() {
   router.back();
 }
