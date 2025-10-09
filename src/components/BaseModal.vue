@@ -1,25 +1,29 @@
 <template>
     <Teleport to="body">
         <div v-if="show" class="modal-overlay" @click.self="close">
-            <div class="base-modal">
-                <!-- 닫기 버튼 -->
-                <button class="close-btn" @click="close">
-                    <XMarkIcon class="icon" />
-                </button>
-
-                <h3 class="modal-title">{{ title }}</h3>
-
-                <!-- ✅ message 대신 slot -->
-                <div class="modal-body">
-                    <slot>
-                        <p>내용이 없습니다.</p>
-                    </slot>
+            <div class="base-modal" :style="{
+                width: typeof width === 'number' ? width + 'px' : width,
+                height: typeof height === 'number' ? height + 'px' : height,
+            }">
+                <!-- 상단 헤더 -->
+                <div class="modal-header" :class="type">
+                    <div class="left-group">
+                        <component :is="iconComponent" class="header-icon" />
+                        <h3 class="modal-title">{{ titleText }}</h3>
+                    </div>
+                    <button class="close-btn" @click="close">
+                        <XMarkIcon class="icon" />
+                    </button>
                 </div>
 
+                <!-- 본문 -->
+                <div class="modal-body">
+                    <slot>{{ defaultMessage }}</slot>
+                </div>
+
+                <!-- 확인 버튼 -->
                 <div class="modal-footer">
-                    <slot name="footer">
-                        <button class="btn btn-dark btn-sm" @click="close">확인</button>
-                    </slot>
+                    <button class="confirm-btn" :class="type" @click="close">확인</button>
                 </div>
             </div>
         </div>
@@ -27,20 +31,56 @@
 </template>
 
 <script setup>
-import { XMarkIcon } from "@heroicons/vue/24/outline";
+import { computed } from "vue";
+import {
+    XMarkIcon,
+    InformationCircleIcon,
+    XCircleIcon,
+    CheckCircleIcon,
+} from "@heroicons/vue/24/outline";
 
 const props = defineProps({
     show: Boolean,
-    title: { type: String, default: "모달 제목" },
+    type: { type: String, default: "default" },
+    title: { type: String, default: "" },
+    width: { type: [Number, String], default: 440 },
+    height: { type: [Number, String], default: "auto" },
 });
+
 const emits = defineEmits(["close"]);
+
+const iconComponent = computed(() => {
+    return props.type === "info"
+        ? InformationCircleIcon
+        : props.type === "error"
+            ? XCircleIcon
+            : CheckCircleIcon;
+});
+
+const titleText = computed(() =>
+    props.title
+        ? props.title
+        : props.type === "info"
+            ? "Info title"
+            : props.type === "error"
+                ? "Error title"
+                : "Default title"
+);
+
+const defaultMessage = computed(() =>
+    props.type === "info"
+        ? "요청이 정상적으로 처리되었습니다."
+        : props.type === "error"
+            ? "문제가 발생했습니다. 잠시 후 다시 시도해주세요."
+            : "확인이 필요한 알림입니다."
+);
 
 function close() {
     emits("close");
 }
 </script>
 
-<style>
+<style scoped>
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -51,51 +91,129 @@ function close() {
     z-index: 20000;
 }
 
+/* ✅ width 고정만 유지 */
 .base-modal {
+    width: var(--modal-width, 440px);
+    height: var(--modal-height, auto);
     background: #fff;
-    border: 1px solid #e5e5e5;
-    border-radius: 12px;
-    padding: 28px 28px 24px 28px;
-    width: 500px;
-    max-width: 90%;
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
     animation: fadeIn 0.25s ease;
-    z-index: 20001;
-    position: relative;
 }
 
-.close-btn {
-    position: absolute;
-    top: 14px;
-    right: 16px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #777;
-    padding: 4px;
-    transition: color 0.2s ease;
+/* HEADER */
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 40px;
+    padding: 0 10px;
+    color: #fff;
 }
 
-.close-btn:hover {
-    color: #222;
+.left-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.header-icon {
+    width: 18px;
+    height: 18px;
 }
 
 .modal-title {
-    font-size: 1.25rem;
+    font-size: 14px;
     font-weight: 700;
-    margin: 0 0 12px 0;
 }
 
+/* 타입별 헤더 색상 */
+.modal-header.info {
+    background: #3f8047;
+}
+
+.modal-header.error {
+    background: #a62b2b;
+}
+
+.modal-header.default {
+    background: #252525;
+}
+
+/* 닫기 버튼 */
+.close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #fff;
+    padding: 4px;
+}
+
+.close-btn:hover {
+    opacity: 0.8;
+}
+
+.icon {
+    width: 18px;
+    height: 18px;
+}
+
+/* BODY */
 .modal-body {
-    margin-bottom: 20px;
+    padding: 20px 20px 10px;
+    /* ✅ 하단 여백 줄임 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: #222;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.6;
 }
 
+/* FOOTER */
 .modal-footer {
     display: flex;
-    justify-content: flex-end;
-    gap: 8px;
+    justify-content: center;
+    padding: 6px 0 16px;
+    /* ✅ 위쪽 여백 ↓ */
 }
 
+.confirm-btn {
+    padding: 8px 22px;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-weight: 500;
+    font-size: 13px;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.confirm-btn:hover {
+    opacity: 0.9;
+}
+
+/* 타입별 버튼 색상 */
+.confirm-btn.info {
+    background: #3f8047;
+}
+
+.confirm-btn.error {
+    background: #a62b2b;
+}
+
+.confirm-btn.default {
+    background: #252525;
+}
+
+/* 애니메이션 */
 @keyframes fadeIn {
     from {
         opacity: 0;

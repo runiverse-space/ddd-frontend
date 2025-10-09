@@ -1,9 +1,23 @@
 <template>
   <div>
-    <h6>모달 테스트</h6>
-    <button class="btn btn-datk" @click="openModal">모달 클릭</button>
+    <!-- Info Modal -->
+    <button @click="showInfo = true" class="btn info">Info 모달</button>
+    <BaseModal :show="showInfo" type="info" title="Info title" @close="showInfo = false">
+      이 프로젝트는 정상적으로 저장되었습니다.
+    </BaseModal>
 
-    <BaseModal :show="show" title="테스트 모달" message="모달이 뜨나요?" @close="show = false" />
+
+    <!-- Error Modal :width, :height로 size 조절 가능 -->
+    <button @click="showError = true" class="btn error">Error 모달</button>
+    <BaseModal :show="showError" type="error" title="Error title" :width="600" :height="500" @close="showError = false">
+      파일 업로드 중 문제가 발생했습니다. 다시 시도해주세요.
+    </BaseModal>
+
+    <!-- Default Modal -->
+    <button @click="showDefault = true" class="btn default">Default 모달</button>
+    <BaseModal :show="showDefault" type="default" title="Default title" @close="showDefault = false">
+      프로젝트 데이터가 최신 상태입니다.
+    </BaseModal>
   </div>
 
   <br>
@@ -73,21 +87,19 @@ import {
 import SingleTagSelector from "@/components/SingleTagSelector.vue";
 import MemberSelector from "@/components/MemberSelector.vue";
 import { ref } from "vue";
+//모달 불러오기
 import BaseModal from "@/components/BaseModal.vue";
+
+// 모달
+const showInfo = ref(false);
+const showError = ref(false);
+const showDefault = ref(false);
 
 // 멤버 추가 
 const projectMembers = ref([]);
 
-// 모달
-const show = ref(false);
-
 // 태그
 const selectedTags = ref([]);
-
-function openModal() {
-  show.value = true;
-  console.log("show = true", show.value);
-}
 
 const columns = [
   {
