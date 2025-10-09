@@ -1,23 +1,22 @@
 <template>
   <div>
+    <!-- Default Modal [button: close, confirm 선택 가능] -->
+    <button @click="showDefault = true" class="btn default btn-dark btn-sm">Default 모달</button>
+    <BaseModal :show="showDefault" type="default" title="Default title" button-text="버튼명을 변경하세요." button-action="close"
+      @close="showDefault = false">
+      프로젝트 데이터가 최신 상태입니다.
+    </BaseModal>
+
     <!-- Info Modal [기본 사용] -->
-    <button @click="showInfo = true" class="btn info">Info 모달</button>
+    <button @click="showInfo = true" class="btn info btn-dark btn-sm">Info 모달</button>
     <BaseModal :show="showInfo" type="info" title="Info title" @close="showInfo = false">
       이 프로젝트는 정상적으로 저장되었습니다.
     </BaseModal>
 
-
     <!-- Error Modal [:width, :height로 size 조절 가능] -->
-    <button @click="showError = true" class="btn error">Error 모달</button>
+    <button @click="showError = true" class="btn error btn-dark btn-sm">Error 모달</button>
     <BaseModal :show="showError" type="error" title="Error title" :width="600" :height="500" @close="showError = false">
       파일 업로드 중 문제가 발생했습니다. 다시 시도해주세요.
-    </BaseModal>
-
-    <!-- Default Modal [button: close, confirm 선택 가능] -->
-    <button @click="showDefault = true" class="btn default">Default 모달</button>
-    <BaseModal :show="showDefault" type="default" title="Default title" button-text="버튼명 변경하세요." button-action="close"
-      @close="showDefault = false">
-      프로젝트 데이터가 최신 상태입니다.
     </BaseModal>
   </div>
 
@@ -320,5 +319,9 @@ const columns = [
 
 h2 {
   margin-bottom: 20px;
+}
+
+div>*+* {
+  margin-left: 10px;
 }
 </style>

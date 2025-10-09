@@ -121,6 +121,9 @@ function handleButtonClick() {
     justify-content: space-between;
     padding: 8px 14px;
     min-height: 42px;
+
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
 }
 
 .modal-header.info {

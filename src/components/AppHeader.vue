@@ -12,8 +12,8 @@
       <nav class="nav-center">
         <RouterLink to="/">메인</RouterLink>
         <RouterLink to="/explore">탐색</RouterLink>
-        <RouterLink to="/community">커뮤니티</RouterLink>
         <RouterLink to="/project">프로젝트</RouterLink>
+        <RouterLink to="/community">테스트</RouterLink>
       </nav>
 
       <!-- 오른쪽: 로그인 전 -->
