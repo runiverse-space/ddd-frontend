@@ -1,4 +1,9 @@
 <template>
+  <div>
+    <h5>지식창고 태그</h5>
+    <SingleTagSelector v-model="selectedProjectTags" tagType="KNOWLEDGE" />
+  </div>
+
   <div class="board-container">
     <div v-for="column in columns" :key="column.status" class="status-column" :class="{
       'not-started': column.status === 'NOT STARTED',
@@ -49,6 +54,7 @@ import {
   XMarkIcon,
   PlusIcon,
 } from "@heroicons/vue/24/outline";
+import SingleTagSelector from "@/components/SingleTagSelector.vue";
 
 const columns = [
   {

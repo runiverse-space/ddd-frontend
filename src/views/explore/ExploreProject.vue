@@ -15,8 +15,9 @@
                 <p class="desc">{{ project.projectContent }}</p>
 
                 <div class="tags">
-                    <span v-for="tag in project.tags" :key="tag" class="tag" @click="filterByTag(tag)">
-                        {{ tag }}
+                    <span v-for="tag in project.tags" :key="tag.tagId" class="tag" :style="tagStyle(tag)"
+                        @click="filterByTag(tag.tagName)">
+                        {{ tag.tagName }}
                     </span>
                 </div>
 
@@ -36,53 +37,76 @@ import { ref, onMounted, computed } from "vue";
 import projectApi from "@/apis/projectApi";
 import userProjectRoleApi from "@/apis/userprojectroleApi";
 import tagApi from "@/apis/tagApi";
+import { getTagColors } from "@/utils/tagColor"; // ✅ 전역 색상 유틸 추가
 
 const projectList = ref([]);
-const selectedTag = ref("전체"); // ✅ 기본값: 전체
-const tagList = ref([]); // ✅ 태그 목록
+const selectedTag = ref("전체");
+const tagList = ref([]);
+
+/* ✅ 태그 스타일 계산 */
+function tagStyle(tag) {
+    const { bg, color, border } = getTagColors(tag.tagType || "PROJECT"); // 모든 태그는 PROJECT 타입
+    return {
+        backgroundColor: bg,
+        color,
+        border: `1px solid ${border}`,
+    };
+}
 
 onMounted(async () => {
-    // 1️⃣ 전체 PROJECT 태그 목록 가져오기
-    const tagRes = await tagApi.getTagsByType("PROJECT");
-    const tagsFromApi = tagRes.data.map((tag) => tag.tagName);
+    try {
+        // 1️⃣ 전체 PROJECT 태그 목록 가져오기
+        const tagRes = await tagApi.getTagsByType("PROJECT");
+        const tagsFromApi = tagRes.data.map((tag) => tag.tagName);
+        tagList.value = ["전체", ...tagsFromApi];
 
-    // ✅ “전체” 버튼 추가
-    tagList.value = ["전체", ...tagsFromApi];
+        // 2️⃣ 프로젝트 목록 가져오기
+        const res = await projectApi.getProjectList();
+        const projects = res.data;
 
-    // 2️⃣ 프로젝트 목록 가져오기
-    const res = await projectApi.getProjectList();
-    const projects = res.data;
+        // 3️⃣ 각 프로젝트별 멤버 수 & 태그 병합
+        for (const project of projects) {
+            const memberRes = await userProjectRoleApi.getMemberList(project.projectId);
+            project.memberCount = memberRes.data.length || 0;
 
-    // 3️⃣ 각 프로젝트별 멤버 수 & 태그 병합
-    for (const project of projects) {
-        const memberRes = await userProjectRoleApi.getMemberList(project.projectId);
-        project.memberCount = memberRes.data.length || 0;
-
-        const projectTagRes = await tagApi.getProjectTags(project.projectId);
-        if (projectTagRes.data && projectTagRes.data.tags) {
-            project.tags = projectTagRes.data.tags.map((t) => t.tagName);
-        } else if (Array.isArray(projectTagRes.data)) {
-            project.tags = projectTagRes.data.map((t) => t.tagName);
-        } else {
-            project.tags = [];
+            const projectTagRes = await tagApi.getProjectTags(project.projectId);
+            if (projectTagRes.data && projectTagRes.data.tags) {
+                project.tags = projectTagRes.data.tags.map((t) => ({
+                    tagId: t.tagId,
+                    tagName: t.tagName,
+                    tagType: t.tagType || "PROJECT", // ✅ 색상 유틸에 필요
+                }));
+            } else if (Array.isArray(projectTagRes.data)) {
+                project.tags = projectTagRes.data.map((t) => ({
+                    tagId: t.tagId,
+                    tagName: t.tagName,
+                    tagType: t.tagType || "PROJECT",
+                }));
+            } else {
+                project.tags = [];
+            }
         }
-    }
 
-    projectList.value = projects;
+        projectList.value = projects;
+    } catch (err) {
+        console.error("프로젝트 데이터 불러오기 실패:", err);
+    }
 });
 
 // ✅ 필터링 로직
 const filteredProjects = computed(() => {
     if (!selectedTag.value || selectedTag.value === "전체") {
-        return projectList.value; // 전체 보기
+        return projectList.value;
     }
-    return projectList.value.filter((p) => p.tags.includes(selectedTag.value));
+    return projectList.value.filter((p) =>
+        p.tags.some((t) => t.tagName === selectedTag.value)
+    );
 });
 
 // ✅ 태그 선택 시 필터 변경
-const filterByTag = (tag) => {
+function filterByTag(tag) {
     selectedTag.value = tag;
-};
+}
 </script>
 
 <style scoped>
@@ -90,6 +114,7 @@ const filterByTag = (tag) => {
     margin-top: 20px;
 }
 
+/* 🔹 태그 필터 */
 .filter-tags {
     display: flex;
     flex-wrap: wrap;
@@ -97,7 +122,7 @@ const filterByTag = (tag) => {
     margin: 16px 0 32px;
 }
 
-/* 기본 상태: 흰색 배경, 검은 테두리 */
+/* 버튼 스타일 */
 .tag-btn {
     padding: 7px 15px;
     border-radius: 999px;
@@ -110,30 +135,25 @@ const filterByTag = (tag) => {
     transition: all 0.25s ease;
 }
 
-/* hover 시 살짝 어두워짐 */
 .tag-btn:hover {
     background: rgba(0, 0, 0, 0.05);
 }
 
-/* 선택된 상태 */
 .tag-btn.active {
     background: #000;
     color: #fff;
 }
 
-/* 태그 버튼 전체적으로 살짝 작게 */
 .filter-tags button {
     font-size: 0.9rem;
 }
 
+/* 🔹 카드 그리드 */
 .card-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    /* ✅ 한 줄에 3개 */
     gap: 24px;
-    /* ✅ 카드 사이 간격 */
     justify-items: center;
-    /* ✅ 가운데 정렬 */
 }
 
 .project-card {
@@ -142,9 +162,7 @@ const filterByTag = (tag) => {
     padding: 20px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     width: 330px;
-    /* ✅ 가로 크기 고정 */
     box-sizing: border-box;
-    /* ✅ padding 포함 */
 }
 
 .project-title {
@@ -157,42 +175,32 @@ const filterByTag = (tag) => {
     color: #666;
     font-size: 0.8rem;
     margin: 5px 0 15px;
-    /* ✅ 아래 여백 줄이기 */
-    /* min-height: 40px; ✅ 삭제 또는 주석처리 */
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
 }
 
+/* 🔹 태그 리스트 */
 .tags {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    margin-top: 0;
     margin-bottom: 10px;
 }
 
+/* ✅ 태그 스타일 — JS에서 색상 적용 */
 .tag {
-    background: #000;
-    color: #fff;
     border-radius: 6px;
     padding: 6px 14px;
-    /* ✅ pill 형태 유지 */
     font-size: 0.7rem;
     font-weight: 500;
     display: inline-block;
     white-space: nowrap;
-
-    /* ✅ 세로 중앙 정렬 대체 방식 */
     line-height: 1.3;
-    /* 텍스트 높이 균형 */
-    vertical-align: middle;
-    /* 인접 요소 기준 맞춤 */
+    transition: all 0.2s ease;
 }
 
-
-
-/* 참여인원 + 버튼 라인 */
+/* 참여인원 + 버튼 */
 .member-row {
     display: flex;
     justify-content: space-between;
@@ -206,7 +214,7 @@ const filterByTag = (tag) => {
     margin-bottom: 0;
 }
 
-/* 참여하기 버튼 */
+/* 참여 버튼 */
 .join-btn {
     background: #fff;
     border: 1px solid #aaa;
@@ -216,21 +224,11 @@ const filterByTag = (tag) => {
     font-size: 0.8rem;
     cursor: pointer;
     transition: 0.2s;
-
-    display: inline-block;
-    vertical-align: middle;
-    /* ✅ 인라인 정렬 시 주변 기준선 맞춤 */
-    line-height: 1.3;
-    /* ✅ 버튼 내부 텍스트 세로 중앙 보정 */
 }
 
 .join-btn:hover {
     border-color: #000;
     background: #f9f9f9;
-}
-
-.join-btn:hover {
-    border-color: #000;
 }
 
 .empty-text {

@@ -73,7 +73,7 @@
             <!-- 기술 스택 -->
             <div class="form-group">
                 <label>기술 스택</label>
-                <TagSelector v-model="selectedTags" tagType="USER" />
+                <DualTagSelector v-model="selectedTags" />
             </div>
         </section>
 
@@ -94,6 +94,7 @@ import tagApi from "@/apis/tagApi";
 import TagSelector from "@/components/TagSelector.vue";
 import store from "@/store";
 import defaultProfileImg from "@/assets/default-profile.png";
+import DualTagSelector from "@/components/DualTagSelector.vue";
 
 const userId = store.state.userId;
 const defaultProfile = defaultProfileImg;
@@ -174,7 +175,7 @@ async function loadUserData() {
         // 태그 불러오기
         const tagRes = await tagApi.getUserTags(userId);
         selectedTags.value =
-            tagRes.data.tags?.map((t) => ({ tagId: t.tagId, tagName: t.tagName })) || [];
+            tagRes.data.tags?.map((t) => ({ tagId: t.tagId, tagName: t.tagName, tagType: t.tagType, })) || [];
     } catch (e) {
         console.error("❌ 유저 데이터 불러오기 실패:", e);
     }
