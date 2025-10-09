@@ -29,6 +29,8 @@ import { RouterView } from 'vue-router';
     width: 100%;
     /* 중앙 정렬할 경우 */
     margin: 0 auto;
+    overflow: visible !important;
+    position: static !important;
 }
 
 .page-body.no-padding {
