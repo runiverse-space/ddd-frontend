@@ -6,10 +6,6 @@ function createProjectMilestone(projectMilestone) {
   return axios.post("/api/projectmilestone/create", projectMilestone);
 }
 
-function getProjectMilestones(projectId){
-  return axios.get("/api/projectmilestone/list", { params: { projectId } });
-}
-
 /** ✅ 프로젝트별 마일스톤 목록 조회 */
 function getProjectMilestones(projectId) {
   return axios.get("/api/projectmilestone/list", { params: { projectId } });

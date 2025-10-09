@@ -17,7 +17,7 @@
             </div>
 
             <!-- 타임라인 -->
-            <HomeMilestone :projectId="projectIdNumber" />
+            <HomeMilestone :projectDetail="projectDetail" :milestones="milestones"/>
 
             <!-- 멤버 -->
             <HomeMember :projectId="projectIdNumber" />
@@ -64,7 +64,28 @@ async function loadProject() {
     }
 }
 
-onMounted(loadProject);
+const milestones = ref([]);
+
+/* ✅ 마일스톤 불러오기 */
+async function loadMilestones() {
+  try {
+    console.log("🔵 타임라인 로드:", projectDetail.value);
+    const res = await projectMilestoneApi.getProjectMilestones(projectDetail.value.projectId);
+    if (res.data.result === "success") {
+      milestones.value = res.data.data || [];
+      console.log("로드된 타임라인:", milestones.value)
+    } else {
+      console.warn("❌ 타임라인 로드 실패:", res.data.message);
+    }
+  } catch (err) {
+    console.error("❌ 타임라인 불러오기 오류:", err);
+  }
+}
+
+onMounted(async () => {
+    await loadProject();
+    await loadMilestones();
+});
 </script>
 
 <style scoped>
