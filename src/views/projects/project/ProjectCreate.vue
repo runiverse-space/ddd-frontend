@@ -23,20 +23,64 @@
     <!-- 3단계: 프로젝트 멤버 추가 -->
     <div class="form-section">
       <label class="form-label">
-        프로젝트 멤버 추가 <span class="text-danger">*</span>
+        프로젝트 멤버 추가 <span class="text-muted">(선택사항, 최대 5명)</span>
       </label>
-      <div class="member-section">
-        <div class="selected-member mb-3">
-          <div class="member-item">
-            <img src="/path/to/avatar.jpg" class="member-avatar" alt="member">
-            <span>노동하시우</span>
-            <button type="button" class="btn-close" @click="removeMember"></button>
+
+      <!-- 선택된 멤버 목록 표시 -->
+      <div v-if="selectedMembers.length > 0" class="selected-members-container mb-3">
+        <div v-for="member in selectedMembers" :key="member.userId" class="member-item">
+          <!-- ✨ 이미지 표시 방법 -->
+          <img :src="getUserImageUrl(member.userId)" class="member-avatar" :alt="member.userName" @error="handleImageError" />
+
+          <div class="member-info">
+            <span class="member-name">{{ member.userName }}</span>
+            <small class="member-email">{{ member.userEmail }}</small>
+          </div>
+
+          <button type="button" class="btn-close" @click="removeMember(member.userId)">
+            ×
+          </button>
+        </div>
+      </div>
+
+      <!-- 검색 입력창 -->
+      <div class="search-container">
+        <input type="text" class="form-control" placeholder="이메일로 멤버 검색 (최소 2글자 입력)" 
+        v-model="searchEmail" 
+       @input="searchUsers"
+      @focus="handleSearchFocus"
+      @blur="handleSearchBlur"
+      :disabled="selectedMembers.length >= 5" />
+
+        <!-- 검색 중 로딩 -->
+        <span v-if="isSearching" class="search-loading">
+          🔍 검색 중...
+        </span>
+
+        <!-- 검색 결과 드롭다운 -->
+        <div v-if="showDropdown && searchResults.length > 0" class="search-dropdown">
+          <div v-for="user in searchResults" :key="user.userId" class="search-result-item" @click="selectMember(user)">
+            <!-- ✨ 검색 결과 이미지 -->
+            <img :src="getUserImageUrl(user.userId)" class="result-avatar" :alt="user.userName" @error="handleImageError" />
+            <div class="result-info">
+              <span class="result-name">{{ user.userName }}</span>
+              <small class="result-email">{{ user.userEmail }}</small>
+            </div>
           </div>
         </div>
-        <input type="text" class="form-control" placeholder="회원 이메일 선택 가능합니다" />
+
+        <!-- 검색 결과 없음 -->
+        <div v-if="showDropdown && searchResults.length === 0 && searchEmail.length >= 2 && !isSearching" class="no-results">
+          검색 결과가 없습니다.
+        </div>
       </div>
-      <div class="alert alert-danger mt-2">
-        <small>⚠️ 기능을 보여주기위해, 한 화면에 구성하였습니다.</small>
+
+      <!-- 안내 메시지 -->
+      <div class="alert alert-info mt-2">
+        <small>
+          💡 팀장 포함 최대 6명까지 프로젝트에 참여할 수 있습니다.<br>
+          현재 선택: 팀장 1명 + 팀원 {{ selectedMembers.length }}/5명
+        </small>
       </div>
     </div>
 
@@ -76,8 +120,7 @@
       </div>
 
       <!-- 마일스톤 추가 버튼 -->
-      <button class="btn btn-outline-secondary w-100" @click="addMilestone()"
-        :disabled="project.projectMilestones.length >= 3">
+      <button class="btn btn-outline-secondary w-100" @click="addMilestone()" :disabled="project.projectMilestones.length >= 3">
         <i class="bi bi-plus"></i> 마일스톤 자리
       </button>
     </div>
@@ -95,9 +138,6 @@
           </button>
         </div>
       </div>
-
-
-
 
       <!-- 선택된 태그 표시 -->
       <div v-if="selectedTagIds.length > 0" class="selected-tags-section">
@@ -132,6 +172,7 @@ import { useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import tagApi from '@/apis/tagApi'
 import projectMilestoneApi from '@/apis/projectMilestoneApi';
+import usersApi from '@/apis/usersApi';
 
 
 const props = defineProps(['projectId']);
@@ -143,6 +184,14 @@ const userId = store.state.userId;
 const availableTags = ref([]);
 //선택된 태그 Id 배열
 const selectedTagIds = ref([]);
+
+const searchEmail = ref('');
+const searchResults = ref([]);
+const selectedMembers = ref([]);
+const isSearching = ref(false);
+const showDropdown = ref(false);
+
+
 
 
 const project = ref({
@@ -163,18 +212,36 @@ const project = ref({
 
 //프로젝트 생성하기
 async function createProject() {
-  console.log("프로젝트 생성하기 1. userId를 확인:", userId);
-  // console.log("타입은?: ",typeof userId);
+  console.log("=== 프로젝트 생성 시작 ===");
+  console.log("팀장 userId:", userId);
+  console.log("선택된 팀원:", selectedMembers.value);
+
+  //** 필수 입력 검증
+  if (!project.value.projectTitle.trim()) {
+    alert('프로젝트명을 입력해주세요.');
+    return;
+  }
+  
+  if (!project.value.projectContent.trim()) {
+    alert('프로젝트 개요를 입력해주세요.');
+    return;
+  }
 
   try {
 
+    const userIds=[];
+    for(const member of selectedMembers.value){
+      userIds.push(member.userId);
+    }
+
+    project.value.userIds=userIds;
     project.value.tagIds = selectedTagIds.value;
 
     const data = structuredClone(project.value);
 
     const response = await projectApi.createProject(data);
 
-    console.log("response의 값", response.data);
+    console.log("전송할 데이터", response.data);
 
     // 마일스톤 생성
     const result = response.data;
@@ -194,6 +261,115 @@ async function createProject() {
     console.log(error);
   }
 
+}
+
+async function searchUsers() {
+  if (searchEmail.value.length < 2) {
+    searchResults.value = [];
+    showDropdown.value = false;
+    return;
+  }
+
+  try {
+    isSearching.value = true;
+    
+    const response = await usersApi.usersSearch(searchEmail.value);
+    console.log('검색 응답:', response.data);
+    
+    if (response.data.result === 'success') {
+      const filteredResults = [];
+      
+      //** 검색 결과를 순회
+      for (const user of response.data.data) {
+        //** 1. 이미 선택된 멤버인지 확인
+        let isAlreadySelected = false;
+        
+        for (const member of selectedMembers.value) {
+          if (member.userId === user.userId) {
+            isAlreadySelected = true;
+            break;
+          }
+        }
+        
+        //** 2. 본인인지 확인
+        const isMe = (user.userId === userId);
+        
+        //** 3. 조건 만족 시 추가
+        if (!isAlreadySelected && !isMe) {
+          filteredResults.push(user);
+        }
+      }
+      
+      searchResults.value = filteredResults;
+      showDropdown.value = true;
+      console.log('검색 결과:', searchResults.value.length + '명');
+    }
+  } catch (error) {
+    console.error('사용자 검색 실패:', error);
+    alert('검색 중 오류가 발생했습니다.');
+  } finally {
+    isSearching.value = false;
+  }
+}
+
+
+function selectMember(user) {
+  if (selectedMembers.value.length >= 5) {
+    alert('최대 5명까지만 추가할수 있습니다.');
+    return;
+  }
+  //선택된 멤버 추가
+  selectedMembers.value.push({
+    userId: user.userId,
+    userEmail: user.userEmail,
+    userName: user.userName,
+    ufAttachoname: user.ufAttachoname
+  });
+  //초기화
+  searchEmail.value = '';
+  searchResults.value = [];
+  showDropdown.value = false;
+
+}
+
+
+//멤버 제거함수
+function removeMember(targetUserId) {
+  const newMember = [];
+  for (const member of selectedMembers.value) {
+    if (member.userId !== targetUserId) {
+      newMember.push(member);
+    }
+  }
+  selectedMembers.value = newMember;
+  console.log('멤버 제거됨, 남은 인원:', selectedMembers.value.length + '명');
+}
+
+//** ===== 검색창 포커스 처리 함수 =====
+function handleSearchFocus() {
+  //** 검색 결과가 있으면 드롭다운 표시
+  if (searchResults.value.length > 0) {
+    showDropdown.value = true;
+  }
+}
+
+//** ===== 검색창 블러 처리 함수 =====
+function handleSearchBlur() {
+  //** 200ms 후에 드롭다운 숨김 (클릭 이벤트 처리 시간 확보)
+   window.setTimeout(() => {
+    showDropdown.value = false;
+  }, 200);
+}
+
+//** ===== 이미지 로드 실패 처리 =====
+function handleImageError(event) {
+  //** 이미지 로드 실패 시 기본 아바타로 대체
+  //event.target.src = '/default-avatar.jpg';
+}
+
+async function getUserImageUrl(userId) {
+  const response = await usersApi.ufAttachDownload(userId);
+  console.log(response);
 }
 
 function handleCancel() {
@@ -273,34 +449,9 @@ function getTagName(tagId) {
 
 onMounted(() => {
   loadProjectTags();
+  console.log('ProjectCreate 마운트 완료, userId:', userId);
 })
 
-
-
-// //날짜 포맷 함수
-// function formData(dateString){
-//   if(!dateString) return '';
-
-//   const date=new Date(dateString);
-//   const now = new Date();
-//   const diff = now-date;
-
-//   // 1분 미만
-//   if (diff < 60000) return '방금 전';
-//   // 1시간 미만
-//   if (diff < 3600000) return Math.floor(diff / 60000) + '분 전';
-//   // 24시간 미만
-//   if (diff < 86400000) return Math.floor(diff / 3600000) + '시간 전';
-//   // 7일 미만
-//   if (diff < 604800000) return Math.floor(diff / 86400000) + '일 전';
-
-//   // 그 외: 날짜 표시
-//   const year = date.getFullYear();
-//   const month = String(date.getMonth() + 1).padStart(2, '0');
-//   const day = String(date.getDate()).padStart(2, '0');
-
-//   return `${year}.${month}.${day}`;
-// }
 
 
 </script>
@@ -535,7 +686,6 @@ onMounted(() => {
 .remove-icon:hover {
   opacity: 0.7;
 }
-
 
 .need-icon {
   weight: 24px;
