@@ -1,6 +1,13 @@
 <template>
   <div>
-    <h5>지식창고 태그</h5>
+    <h6>멤버 추가</h6>
+    <MemberSelector v-model="projectMembers" />
+  </div>
+
+  <br />
+
+  <div>
+    <h6>지식창고 태그</h6>
     <SingleTagSelector v-model="selectedProjectTags" tagType="KNOWLEDGE" />
   </div>
 
@@ -55,6 +62,10 @@ import {
   PlusIcon,
 } from "@heroicons/vue/24/outline";
 import SingleTagSelector from "@/components/SingleTagSelector.vue";
+import MemberSelector from "@/components/MemberSelector.vue";
+import { ref } from "vue";
+
+const projectMembers = ref([]);
 
 const columns = [
   {

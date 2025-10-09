@@ -1,9 +1,9 @@
 <template>
     <div class="home-schedule">
         <!-- 날짜 -->
-        <h3 class="right-title">
-            <span class="day">{{ todayLabel.split(',')[0] }},</span>
-            <span class="date">{{ todayLabel.split(',')[1] }}</span>
+        <h3 class="right-title" v-if="todayLabel">
+            <span class="day">{{ todayLabel?.split(',')[0] || "" }},</span>
+            <span class="date">{{ todayLabel?.split(',')[1] || "" }}</span>
         </h3>
 
         <!-- 일정 카드 -->
@@ -12,8 +12,7 @@
             'in-progress': schedule.status === 'IN PROGRESS',
             'done': schedule.status === 'DONE',
         }">
-
-            <!-- ✅ 상태 영역 -->
+            <!-- 상태 영역 -->
             <div class="status-header">
                 <div class="status-box">
                     <span class="status-dot"></span>
@@ -21,9 +20,8 @@
                 </div>
             </div>
 
-            <!-- ✅ 흰색 카드 -->
+            <!-- 흰색 카드 -->
             <div class="inner-card">
-                <!-- 시간 영역 (아이콘 + 텍스트 수평 정렬) -->
                 <div class="time-row">
                     <div class="time-icon-group">
                         <CalendarIcon class="calendar-icon" />
@@ -47,22 +45,74 @@
 </template>
 
 <script setup>
+import { ref, onMounted, computed } from "vue";
 import { CalendarIcon } from "@heroicons/vue/24/outline";
+import scheduleApi from "@/apis/scheduleApi";
+import defaultProfile from "@/assets/default-profile.png";
 
-defineProps({
-    recentSchedules: {
-        type: Array,
-        required: true,
-    },
-    todayLabel: {
-        type: String,
-        required: true,
-    },
+const props = defineProps({
+    projectId: { type: Number, required: true },
+});
+
+const recentSchedules = ref([]);
+
+// ✅ 일정 데이터 로드
+async function loadSchedules() {
+    try {
+        const res = await scheduleApi.getProjectScheduleList(props.projectId);
+        const list = res.data.data || res.data;
+
+        if (!Array.isArray(list)) return;
+
+        // 최신순 3개
+        const sorted = list.sort(
+            (a, b) => new Date(b.scheduleStartDate) - new Date(a.scheduleStartDate)
+        );
+        const sliced = sorted.slice(0, 3);
+
+        recentSchedules.value = sliced.map((s) => ({
+            scheduleId: s.scheduleId,
+            title: s.scheduleTitle,
+            time: `${formatTime(s.scheduleStartDate)} - ${formatTime(s.scheduleEndDate)}`,
+            status: s.scheduleStatus,
+            statusText:
+                s.scheduleStatus === "NOT STARTED"
+                    ? "시작되지 않음"
+                    : s.scheduleStatus === "IN PROGRESS"
+                        ? "진행 중"
+                        : s.scheduleStatus === "DONE"
+                            ? "완료"
+                            : "상태없음",
+            members: [defaultProfile, defaultProfile],
+        }));
+    } catch (error) {
+        console.error("일정 조회 실패:", error);
+    }
+}
+
+function formatTime(dateString) {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(
+        2,
+        "0"
+    )}`;
+}
+
+// ✅ 오늘 날짜 표시
+const todayLabel = computed(() => {
+    const now = new Date();
+    const weekday = now.toLocaleDateString("en-US", { weekday: "long" });
+    const month = now.toLocaleString("en-US", { month: "short" });
+    return `${weekday}, ${now.getDate()} ${month}`;
+});
+
+onMounted(() => {
+    loadSchedules();
 });
 </script>
 
 <style scoped>
-/* ✅ 날짜 헤더 */
 .right-title {
     font-size: 1.1rem;
     font-weight: 600;
@@ -81,7 +131,6 @@ defineProps({
     font-weight: 500;
 }
 
-/* ✅ 전체 카드 (상태별 배경) */
 .schedule-card {
     border-radius: 10px;
     padding: 12px;
@@ -89,7 +138,6 @@ defineProps({
     transition: 0.2s;
 }
 
-/* ✅ 상태별 배경 */
 .schedule-card.not-started {
     background-color: #f9f8f7;
 }
@@ -102,7 +150,6 @@ defineProps({
     background-color: #f6f9f7;
 }
 
-/* ✅ 상태 헤더 */
 .status-header {
     display: flex;
     justify-content: space-between;
@@ -120,7 +167,6 @@ defineProps({
     color: #333;
 }
 
-/* ✅ 상태별 점 색상 */
 .schedule-card.not-started .status-dot {
     background-color: #8e8b86;
 }
@@ -140,7 +186,6 @@ defineProps({
     display: inline-block;
 }
 
-/* ✅ 흰색 내부 카드 */
 .inner-card {
     background-color: #fff;
     border-radius: 12px;
@@ -148,11 +193,9 @@ defineProps({
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-/* ✅ 시간 아이콘 + 텍스트 한 줄 정렬 */
 .time-row {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
 }
 
 .time-icon-group {
@@ -175,14 +218,12 @@ defineProps({
     margin: 0;
 }
 
-/* ✅ 제목 */
 .title {
     font-weight: 700;
     color: #111;
     margin: 10px 0 12px;
 }
 
-/* ✅ 멤버 */
 .avatars {
     display: flex;
     gap: 4px;
@@ -196,7 +237,6 @@ defineProps({
     border: 2px solid #fff;
 }
 
-/* ✅ 일정 없음 */
 .empty-schedule {
     text-align: center;
     color: #aaa;
