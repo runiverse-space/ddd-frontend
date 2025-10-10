@@ -68,8 +68,11 @@
     </div>
   </div>
 
+  <BaseModal :show="showDeleteCompleted" type="default" title="일정 삭제 완료" @close="showDeleteCompleted = false">
+  </BaseModal>
+
   <!-- 일정 상세 모달 -->
-  <div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true" ref="detailModalRef">
+  <div class="modal fade" id="scheduleDetailModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true" ref="detailModalRef">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
@@ -173,6 +176,7 @@
 import projectApi from '@/apis/projectApi';
 import scheduleApi from '@/apis/scheduleApi';
 import usersApi from '@/apis/usersApi';
+import BaseModal from '@/components/BaseModal.vue';
 import { CalendarIcon, ListBulletIcon, PencilSquareIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { Modal } from 'bootstrap';
 import { onMounted, reactive } from 'vue';
@@ -214,6 +218,8 @@ const selectedSchedule = ref(null);
 const detailModalRef = ref(null);
 const deleteModalRef = ref(null);
 let modalInstance = null;
+
+const showDeleteCompleted = ref(false);
 
 const editMode = ref(false);
 
@@ -319,15 +325,16 @@ function formatDate(dataString) {
 }
 
 async function openModal(schedule) {
+  editMode.value = false;
   selectedSchedule.value = schedule;
   selectedSchedule.value.users = await loadScheduleMembers(schedule.scheduleId);
 
   scheduleMemberList.value = selectedSchedule.value.users.map(user => user.userId);
 
   console.groupEnd();
-  if (!modalInstance) {
+  // if (!modalInstance) {
     modalInstance = new Modal(detailModalRef.value);
-  }
+  // }
   modalInstance.show();
 }
 
@@ -356,9 +363,9 @@ async function handleUpdateConfirm() {
 
 function handleDelete(schedule) {
   selectedSchedule.value = schedule;
-  if (!modalInstance) {
+  // if (!modalInstance) {
     modalInstance = new Modal(deleteModalRef.value);
-  }
+  // }
   modalInstance.show();
 }
 
@@ -367,6 +374,7 @@ async function handleDeleteConfirm() {
     const response = await scheduleApi.scheduleDelete(selectedSchedule.value.scheduleId);
     const result = response.data;
     if (result.result === "success") {
+      showDeleteCompleted.value = true;
       await loadSchedule();
     } else {
       console.log("일정 삭제 실패:", result.message);
