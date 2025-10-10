@@ -1,93 +1,104 @@
 <template>
-  <div class="container-fluid my-3">
-    <h1>일정 등록</h1>
-    <form @submit.prevent="handleSubmit()">
-      <div class="row">
-        <div class="col-md-6">
+  <div class="schedule-container">
+    <h1 class="page-title">일정 등록</h1>
 
-          <!-- 일정 제목 -->
-          <div class="form-section mt-3">
-            <p class="text-muted small">일정 제목 <span class="text-danger">*</span></p>
-            <input type="text" class="form-control mb-3" placeholder="일정 제목을 입력합니다" v-model="schedule.scheduleTitle" />
-            <p v-if="isScheduleTitleBlank" class="text-danger small">일정 제목은 필수 입력 항목입니다.</p>
-          </div>
+    <form @submit.prevent="handleSubmit()" class="schedule-form">
 
-          <!-- 일정 내용 -->
-          <div class="form-section mt-3">
-            <p class="text-muted small">일정 내용</p>
-            <input type="text" class="form-control mb-3" placeholder="일정 내용을 입력합니다"
-              v-model="schedule.scheduleContent" />
-          </div>
+      <!-- 일정 제목 -->
+      <div class="form-group">
+        <label>일정 제목 <span class="required">*</span></label>
+        <input
+          type="text"
+          v-model="schedule.scheduleTitle"
+          placeholder="일정 제목을 입력합니다"
+          class="form-control title-input"
+        />
+      </div>
 
-          <!-- 일정 기간 -->
-          <div class="form-section mt-3">
-            <p class="text-muted small">일정 시작일자를 선택하세요. <span class="text-danger">*</span></p>
-            <input type="date" class="form-control mb-3" v-model="schedule.scheduleStartDate" />
-            <p v-if="isScheduleStartDateBlank" class="text-danger small">일정 시작일자는 필수 입력 항목입니다.</p>
+      <!-- 일정 내용 -->
+      <div class="form-group">
+        <label>내용</label>
+        <input
+          type="text"
+          v-model="schedule.scheduleContent"
+          placeholder="일정 내용을 입력합니다"
+          class="form-control content-input"
+        />
+      </div>
 
-            <p class="text-muted small ">일정 종료일자를 선택하세요. <span class="text-danger">*</span></p>
-            <input type="date" class="form-control mb-3" v-model="schedule.scheduleEndDate" />
-            <p v-if="isScheduleEndDateBlank" class="text-danger small">일정 종료일자는 필수 입력 항목입니다.</p>
-          </div>
-
-
+      <!-- 일정 기간 -->
+      <div class="form-group">
+        <label>기간 <span class="required">*</span></label>
+        <div class="date-row">
+          <input
+            type="date"
+            class="form-control date-input"
+            v-model="schedule.scheduleStartDate"
+          />
+          <span class="date-separator">~</span>
+          <input
+            type="date"
+            class="form-control date-input"
+            v-model="schedule.scheduleEndDate"
+            :min="schedule.scheduleStartDate"
+          />
         </div>
+      </div>
 
-        <div class="col-md-4">
-          <!-- 초기 상태 설정 -->
-          <div class="form-section mt-3">
-            <p class="text-muted small">초기 상태 설정</p>
-            <select class="form-select mb-3" v-model="schedule.scheduleStatus">
-              <option value="NOT STARTED">시작되지 않음</option>
-              <option value="IN PROGRESS">진행 중</option>
-              <option value="DONE">완료됨</option>
-            </select>
-          </div>
-
-          <!-- 추가 가능한 사용자(프로젝트 멤버) 조회 -->
-          <div class="form-section mt-3">
-            <p class="text-muted small">일정을 배정할 멤버 선택</p>
-            <span v-for="projectMember in projectMemberList" :key="projectMember">
-              <button type="button" class="btn btn-sm m-1"
-                :class="scheduleMemberList.includes(projectMember.userId) ? 'btn-primary' : 'btn-outline-primary'"
-                @click="toggleScheduleMember(projectMember)">
-                {{ projectMember.userLoginId }} {{ projectMember.userName }}
-              </button>
-            </span>
-          </div>
-
-          <div class="d-flex justify-content-end mt-4">
-            <button class="btn btn-dark btn-sm m-2">확인</button>
-            <button type="button" class="btn active btn-sm m-2" @click="handleCancel()">취소</button>
+      <!-- 초기 상태 설정 -->
+      <div class="form-group status-group">
+        <label>상태 설정</label>
+        <div class="status-options">
+          <div
+            v-for="option in statusOptions"
+            :key="option.value"
+            class="status-item"
+            @click="schedule.scheduleStatus = option.value"
+            :class="{ active: schedule.scheduleStatus === option.value }"
+          >
+            <span
+              class="status-dot"
+              :style="{ backgroundColor: option.color }"
+            ></span>
+            <span class="status-label">{{ option.label }}</span>
           </div>
         </div>
+      </div>
 
+      <!-- 프로젝트 멤버 선택 -->
+      <div class="form-group">
+        <label>멤버 선택</label>
+        <ProjectMemberSelector
+          v-model="selectedMembers"
+          :projectMembers="projectMemberList"
+        />
+      </div>
 
-
-
+      <!-- 버튼 -->
+      <div class="button-row">
+        <button class="btn btn-dark btn-sm">확인</button>
+        <button type="button" class="btn btn-outline-dark btn-sm" @click="handleCancel()">
+          취소
+        </button>
       </div>
     </form>
   </div>
-
 </template>
 
-<!--컴포넌트의 초기화 또는 이벤트 처리-->
 <script setup>
-import projectApi from '@/apis/projectApi';
-import scheduleApi from '@/apis/scheduleApi';
-import usersApi from '@/apis/usersApi';
-import { ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useStore } from 'vuex';
+import userprojectroleApi from "@/apis/userprojectroleApi";
+import usersApi from "@/apis/usersApi";
+import scheduleApi from "@/apis/scheduleApi";
+import ProjectMemberSelector from "@/components/ProjectMemberSelector.vue";
+import { ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useStore } from "vuex";
 
 const store = useStore();
-
 const router = useRouter();
-
 const route = useRoute();
 
 const projectId = route.params.projectId;
-
 const userId = store.state.userId;
 
 let isScheduleTitleBlank = ref(false);
@@ -104,66 +115,53 @@ const schedule = ref({
   scheduleStatus: route.query.status || "NOT STARTED",
 });
 
-const scheduleMemberList = ref([]);
-
+const selectedMembers = ref([]);
 const projectMemberList = ref([]);
 
-const userProjectRoleList = ref([]);
+/* 상태 옵션 리스트 */
+const statusOptions = [
+  { value: "NOT STARTED", label: "시작되지 않음", color: "#8e8b86" },
+  { value: "IN PROGRESS", label: "진행 중", color: "#2383e2" },
+  { value: "DONE", label: "완료됨", color: "#55a77c" },
+];
 
 async function handleSubmit() {
   try {
-    isScheduleTitleBlank.value = schedule.value.scheduleTitle === "" ? true : false;
-    isScheduleStartDateBlank.value = schedule.value.scheduleStartDate === "" ? true : false;
-    isScheduleEndDateBlank.value = schedule.value.scheduleEndDate === "" ? true : false;
+    isScheduleTitleBlank.value = schedule.value.scheduleTitle === "";
+    isScheduleStartDateBlank.value = schedule.value.scheduleStartDate === "";
+    isScheduleEndDateBlank.value = schedule.value.scheduleEndDate === "";
 
     if (!isScheduleTitleBlank.value && !isScheduleStartDateBlank.value && !isScheduleEndDateBlank.value) {
-      schedule.value.userIds = scheduleMemberList;
+      schedule.value.userIds = selectedMembers.value.map((m) => m.userId);
       const response = await scheduleApi.scheduleCreate(schedule.value);
-      const result = response.data;
-      if (result.result === "success") {
-        router.push(`/project/${route.params.projectId}/schedule`);
+      if (response.data.result === "success") {
+        router.push(`/project/${projectId}/schedule`);
       }
     }
-
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 
+/* 프로젝트 멤버 불러오기 */
 async function loadProjectMembers() {
   try {
-    const response = await projectApi.getProjectMembersList(projectId);
-    if (response.data.result === 'success') {
-      userProjectRoleList.value = response.data.data || [];
-
-      // projectMemberList에 사용자 정보 삽입
-      userProjectRoleList.value.forEach(async userProjectRole => {
-        const response = await usersApi.usersDetailById(userProjectRole.userId);
-        const result = response.data;
-        projectMemberList.value.push(result.data);
-      });
-    } else {
-      console.log('멤버 조회 실패:', response.data.message);
-      projectMemberList.value = [];
-    }
+    const response = await userprojectroleApi.getMemberList(projectId);
+    const uprList = Array.isArray(response.data) ? response.data : [];
+    const promises = uprList.map(async (upr) => {
+      try {
+        const userRes = await usersApi.usersDetailById(upr.userId);
+        return userRes.data?.data;
+      } catch {
+        return null;
+      }
+    });
+    const members = await Promise.all(promises);
+    projectMemberList.value = members.filter(Boolean);
   } catch (error) {
-    console.log('멤버 목록 조회 실패:', error);
+    console.error("멤버 목록 조회 실패:", error);
   }
 }
-
-// 일정 멤버 토글 함수
-function toggleScheduleMember(scheduleMember) {
-  if (scheduleMemberList.value.includes(scheduleMember.userId)) {
-    scheduleMemberList.value = scheduleMemberList.value.filter((t) => t !== scheduleMember.userId);
-  } else {
-    scheduleMemberList.value.push(scheduleMember.userId);
-  }
-}
-
-watch(scheduleMemberList, (newScheduleMemberList, oldScheduleMemberList) => {
-  console.log("선택된 멤버:", structuredClone(newScheduleMemberList));
-}, { deep: true }
-);
 
 function handleCancel() {
   router.back();
@@ -172,5 +170,111 @@ function handleCancel() {
 loadProjectMembers();
 </script>
 
-<!--컴포넌트의 스타일 정의-->
-<style scoped></style>
+<style scoped>
+.schedule-container {
+  max-width: 600px;
+  margin: 20px auto;
+  background: #fff;
+  padding: 0px 20px;
+}
+
+.page-title {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 28px;
+  text-align: left;
+}
+
+/* 세로 일렬 배치 */
+.schedule-form {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.required {
+  color: #dc3545;
+}
+
+.form-control {
+  font-size: 0.95rem;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.form-control:focus {
+  border-color: #666;
+  box-shadow: 0 0 0 2px rgba(103, 89, 244, 0.2);
+}
+
+/* placeholder 스타일 */
+::placeholder {
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+/* 날짜 입력 */
+.date-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.date-separator {
+  color: #666;
+}
+
+/* 상태 설정 */
+.status-options {
+  display: flex;
+  gap: 35px;
+  margin-top: 4px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #555;
+  transition: 0.2s;
+}
+
+.status-item:hover {
+  transform: scale(1.02);
+}
+
+.status-item.active .status-label {
+  font-weight: 600;
+  color: #222;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* 버튼 */
+.button-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+</style>

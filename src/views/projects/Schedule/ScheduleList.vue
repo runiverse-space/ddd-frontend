@@ -442,26 +442,31 @@ onMounted(async () => {
 <!--컴포넌트의 스타일 정의-->
 <style scoped>
 /* ✅ 전체 */
-.board-container {
+.schedule-page {
+  width: 100%;
   padding: 0px 40px;
-  display: flex;
-  justify-content: center;
+}
+
+.board-container {
+   display: flex;
+  flex-wrap: wrap;            /* ✅ 반응형으로 자동 줄바꿈 */
+  justify-content: flex-start; /* ✅ 가운데 정렬 제거 */
   align-items: flex-start;
-  /* 높이를 맞추지 않음 */
-  gap: 50px;
-  padding: 24px;
-  background-color: #fff;
+  gap: 30px;
+  padding: 24px 40px;
+  width: 100%;
+  box-sizing: border-box;      /* ✅ padding 포함 계산 */
 }
 
 /* ✅ 컬럼 공통 */
 .status-column {
-  flex: 0 0 480px; /* ← 각 칼럼의 가로 폭 */
+   flex: 1 1 320px;             /* ✅ 유연한 폭 (반응형) */
+  max-width: 480px;
   border-radius: 5px;
   padding: 10px;
   display: inline-flex;
   /* ✅ 높이를 자동으로 맞추려면 inline-flex */
   flex-direction: column;
-  width: 100%;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
   height: auto;
   /* ✅ 내용만큼만 높이 */
@@ -601,9 +606,9 @@ onMounted(async () => {
 }
 
 .add-schedule:hover {
-  background-color: #dfe3e8;
-  color: #111827;
-  border-color: #c5c9ce;
+   background-color: rgba(0, 0, 0, 0.05); /* ✅ 아주 옅은 반투명 어둠 */
+  color: #555;
+  border-color: rgba(0, 0, 0, 0.05);
 }
 
 .plus-icon {
@@ -614,11 +619,6 @@ onMounted(async () => {
 }
 
 /* 헤더 UI */
-.schedule-page {
-  width: 100%;
-  padding: 0px 40px;
-}
-
 .calendar-header-ui {
   display: flex;
   align-items: flex-end;
