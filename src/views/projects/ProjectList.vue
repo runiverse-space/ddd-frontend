@@ -90,7 +90,7 @@ async function loadUserProjects() {
         // 🔹 각 프로젝트에 멤버 / 그룹장 정보 추가
         for (const project of myProjectList.value) {
             try {
-                const uprResponse = await userprojectroleApi.getProjectAdmin(project.projectId)
+                const uprResponse = await userprojectroleApi.getAdmin(project.projectId)
                 const uprData = uprResponse.data
 
                 if (uprData.success && uprData.userId !== 0) {
@@ -115,6 +115,7 @@ async function loadUserProjects() {
             } catch (error) {
                 console.error(`프로젝트 ${project.projectId} 로딩 실패:`, error)
                 project.members = []
+                project.adminName = null
             }
         }
     } catch (error) {
@@ -127,6 +128,10 @@ function formatDate(dateStr) {
     const date = new Date(dateStr)
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
+
+// function handleProjectClick(projectId){
+//     console.log('projectId:',projectId);
+// }
 
 // ✅ 마운트 시 호출
 onMounted(async () => {
