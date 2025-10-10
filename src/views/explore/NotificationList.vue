@@ -20,6 +20,11 @@
                 <span class="project-title">{{ notice.projectTitle }}</span>
                 <span class="text">에 함께하고 싶어 합니다.</span>
               </div>
+
+              <div v-else-if="notice.paType === 'SYSTEM_NOTIFICATION' && notice.paStatus === 'APPROVED'">
+                <span class="project-title">{{ notice.projectTitle }}</span>
+                <span class="text"> 참여가 승인되었습니다. 환영합니다!</span>
+              </div>
               <p class="time align-self-end">{{ formatDate(notice.paCreatedAt) }}</p>
             </div>
             <div class="col-3 d-flex flex-row align-self-start">
@@ -87,20 +92,35 @@ async function getAlarms() {
 
 // 참여 허가
 async function handleAcceptParticipation(notice) {
-  console.group("handleAcceptParticipation()");
-  console.log(notice);
-  console.log("userProjectRole 행 추가");
-  let response = await userprojectroleApi.addMember(notice.projectId, notice.senderId);
-  if (response.data.result === "success") {
-    response = await projectActivityApi.approveProjectParticipation(notice);
-    console.log("알림 상태 변경");
-    console.log(response)
+  try {
+    console.group("handleAcceptParticipation()");
+    console.log(notice);
+    console.log("userProjectRole 행 추가");
+    let response = await userprojectroleApi.addMember(notice.projectId, notice.senderId);
+    if (response.data.result === "success") {
+      response = await projectActivityApi.approveProjectParticipation(notice);
+      console.log("알림 상태 변경");
+      console.log(response)
 
-    notifications.value = notifications.value.filter(
-      (n) => n.paId !== notice.paId
-    );
+      notifications.value = notifications.value.filter(
+        (n) => n.paId !== notice.paId
+      );
+
+      const projectId = notice.projectId;
+      const receiverId = notice.senderId; // 원본 알림을 보낸 사람 -> 답변 알림을 받을 사람
+      const res = await projectActivityApi.respondProjectParticipation({
+        projectId: projectId,
+        senderId: store.state.userId,
+        receiverId: receiverId,
+        paStatus: "APPROVED"
+      });
+      console.log(res);
+    }
+    console.groupEnd();
+  } catch (error) {
+    console.log(error);
   }
-  console.groupEnd();
+
 }
 
 // 참여 불허
