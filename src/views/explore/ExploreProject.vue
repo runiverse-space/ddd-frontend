@@ -23,7 +23,7 @@
 
                 <div class="member-row">
                     <p class="member-count">참여인원 {{ project.memberCount }} / 6</p>
-                    <button class="join-btn">참여하기</button>
+                    <button class="join-btn" @click="handleParticipationRequest(project)">참여하기</button>
                 </div>
             </div>
         </div>
@@ -38,10 +38,13 @@ import projectApi from "@/apis/projectApi";
 import userProjectRoleApi from "@/apis/userprojectroleApi";
 import tagApi from "@/apis/tagApi";
 import { getTagColors } from "@/utils/tagColor"; // ✅ 전역 색상 유틸 추가
+import projectActivityApi from "@/apis/projectActivityApi";
+import { useStore } from "vuex";
 
 const projectList = ref([]);
 const selectedTag = ref("전체");
 const tagList = ref([]);
+const store = useStore();
 
 /* ✅ 태그 스타일 계산 */
 function tagStyle(tag) {
@@ -51,6 +54,13 @@ function tagStyle(tag) {
         color,
         border: `1px solid ${border}`,
     };
+}
+
+// '참여하기' 버튼 클릭 시 그룹장에게 알림 발송
+async function handleParticipationRequest(project) {
+    const projectId = project.projectId
+    const res = await projectActivityApi.sendProjectParticipationRequestNotification(projectId, store.state.userId);
+    console.log(res);
 }
 
 onMounted(async () => {
