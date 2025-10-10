@@ -30,7 +30,7 @@
       <div v-if="selectedMembers.length > 0" class="selected-members-container mb-3">
         <div v-for="member in selectedMembers" :key="member.userId" class="member-item">
           <!-- ✨ 이미지 표시 방법 -->
-          <img :src="getUserImageUrl(member.userId)" class="member-avatar" :alt="member.userName" @error="handleImageError" />
+          <img :src="member.profileUrl || defaultImg" class="member-avatar" :alt="member.userName" @error="handleImageError" />
 
           <div class="member-info">
             <span class="member-name">{{ member.userName }}</span>
@@ -45,12 +45,8 @@
 
       <!-- 검색 입력창 -->
       <div class="search-container">
-        <input type="text" class="form-control" placeholder="이메일로 멤버 검색 (최소 2글자 입력)" 
-        v-model="searchEmail" 
-       @input="searchUsers"
-      @focus="handleSearchFocus"
-      @blur="handleSearchBlur"
-      :disabled="selectedMembers.length >= 5" />
+        <input type="text" class="form-control" placeholder="이메일로 멤버 검색 (최소 2글자 입력)" v-model="searchEmail" @input="searchUsers" @focus="handleSearchFocus" @blur="handleSearchBlur"
+          :disabled="selectedMembers.length >= 5" />
 
         <!-- 검색 중 로딩 -->
         <span v-if="isSearching" class="search-loading">
@@ -61,7 +57,7 @@
         <div v-if="showDropdown && searchResults.length > 0" class="search-dropdown">
           <div v-for="user in searchResults" :key="user.userId" class="search-result-item" @click="selectMember(user)">
             <!-- ✨ 검색 결과 이미지 -->
-            <img :src="getUserImageUrl(user.userId)" class="result-avatar" :alt="user.userName" @error="handleImageError" />
+            <img :src="user.profileUrl || defaultImg" class="result-avatar" :alt="user.userName" @error="handleImageError" />
             <div class="result-info">
               <span class="result-name">{{ user.userName }}</span>
               <small class="result-email">{{ user.userEmail }}</small>
@@ -126,41 +122,23 @@
     </div>
 
     <!-- 7단계: 태그 추가 -->
-    <div class="form-section">
-      <label class="form-label">프로젝트에 대한 태그를 추가해 주세요</label>
-      <p class="tag-description">태그는 프로젝트의 목적과 방향을 빠르게 이해할 수 있도록 도와줍니다.</p>
-      <!-- 전체 태그 리스트 -->
-      <div class="tag-category">
-        <h6 class="category-title">기능 역할</h6>
-        <div class="tag-list">
-          <button v-for="tag in availableTags" :key="tag.tagId" :class="['tag-button', { 'tag-selected': selectedTagIds.includes(tag.tagId) }]" @click="toggleTag(tag)">
-            {{ tag.tagName }}
-          </button>
-        </div>
-      </div>
+    <div class="tag-section">
+      <label>프로젝트 태그 선택(최대 3개)</label>
+      <DualTagSelector tagType="PROJECT" v-model="selectedTags" />
+    </div>
 
-      <!-- 선택된 태그 표시 -->
-      <div v-if="selectedTagIds.length > 0" class="selected-tags-section">
-        <h6 class="selected-title">선택된 태그</h6>
-        <div class="selected-tags-list">
-          <span v-for="tagId in selectedTagIds" :key="tagId" class="selected-tag-badge">
-            {{ getTagName(tagId) }}
-            <XCircleIcon class="remove-icon" @click="removeTag(tagId)" />
-          </span>
-        </div>
-      </div>
+    <!-- 생성 버튼 -->
+    <div class="form-section button-group">
+      <button class="btn btn-dark btn-lg" @click="createProject">
+        프로젝트 생성
+      </button>
+      <button class="btn btn-light btn-lg" @click="handleCancel">
+        취소
+      </button>
 
-      <!-- 생성 버튼 -->
-      <div class="form-section">
-        <button class="btn btn-dark btn-lg " @click="createProject">
-          프로젝트 생성
-        </button>
-        <button class="btn btn-light btn-lg " @click="handleCancel">
-          취소
-        </button>
-      </div>
     </div>
   </div>
+
 </template>
 
 
@@ -173,23 +151,25 @@ import { useStore } from 'vuex';
 import tagApi from '@/apis/tagApi'
 import projectMilestoneApi from '@/apis/projectMilestoneApi';
 import usersApi from '@/apis/usersApi';
-
+import DualTagSelector from '@/components/DualTagSelector.vue';
+import defaultImgSrc from '@/assets/default-profile.png';
 
 const props = defineProps(['projectId']);
 const router = useRouter();
 const projectName = ref('');
 const store = useStore();
 const userId = store.state.userId;
-//태그 테이블에서 가져온 전체 태그
-const availableTags = ref([]);
-//선택된 태그 Id 배열
-const selectedTagIds = ref([]);
+//태그
+const selectedTags = ref([]);
 
+
+const defaultImg = defaultImgSrc;
 const searchEmail = ref('');
 const searchResults = ref([]);
 const selectedMembers = ref([]);
 const isSearching = ref(false);
 const showDropdown = ref(false);
+
 
 
 
@@ -212,16 +192,14 @@ const project = ref({
 
 //프로젝트 생성하기
 async function createProject() {
-  console.log("=== 프로젝트 생성 시작 ===");
-  console.log("팀장 userId:", userId);
-  console.log("선택된 팀원:", selectedMembers.value);
+
 
   //** 필수 입력 검증
   if (!project.value.projectTitle.trim()) {
     alert('프로젝트명을 입력해주세요.');
     return;
   }
-  
+
   if (!project.value.projectContent.trim()) {
     alert('프로젝트 개요를 입력해주세요.');
     return;
@@ -229,19 +207,19 @@ async function createProject() {
 
   try {
 
-    const userIds=[];
-    for(const member of selectedMembers.value){
+    const userIds = [];
+    for (const member of selectedMembers.value) {
       userIds.push(member.userId);
     }
 
-    project.value.userIds=userIds;
-    project.value.tagIds = selectedTagIds.value;
+    project.value.userIds = userIds;
+
 
     const data = structuredClone(project.value);
 
     const response = await projectApi.createProject(data);
 
-    console.log("전송할 데이터", response.data);
+    // console.log("전송할 데이터", response.data);
 
     // 마일스톤 생성
     const result = response.data;
@@ -253,6 +231,14 @@ async function createProject() {
       console.log("마일스톤 생성하기:", milestone);
       const response = await projectMilestoneApi.createProjectMilestone(milestone);
       console.log(response.data);
+    }
+    //태그 연결 선택된 태그가 있을경우만.. 무조건 태그 선택하도록해야함
+    if (selectedTags.value.length > 0) {
+      const selectedTagIds = selectedTags.value.map(tag => tag.tagId);
+      await tagApi.updateProjectTags({
+        projectId: projectId,
+        tagIds: selectedTagIds
+      })
     }
 
     router.back();
@@ -272,34 +258,45 @@ async function searchUsers() {
 
   try {
     isSearching.value = true;
-    
+
     const response = await usersApi.usersSearch(searchEmail.value);
     console.log('검색 응답:', response.data);
-    
+
     if (response.data.result === 'success') {
       const filteredResults = [];
-      
+
       //** 검색 결과를 순회
       for (const user of response.data.data) {
         //** 1. 이미 선택된 멤버인지 확인
         let isAlreadySelected = false;
-        
+
         for (const member of selectedMembers.value) {
           if (member.userId === user.userId) {
             isAlreadySelected = true;
             break;
           }
         }
-        
+
         //** 2. 본인인지 확인
         const isMe = (user.userId === userId);
-        
+
         //** 3. 조건 만족 시 추가
         if (!isAlreadySelected && !isMe) {
+
+          try {
+
+            const profileResponse = await usersApi.ufAttachDownload(user.userId);
+            const blobUrl = URL.createObjectURL(profileResponse.data);
+            user.profileUrl = blobUrl;
+          } catch (error) {
+            console.warn(`⚠️ ${user.userName} 이미지 없음, 기본 이미지 사용`);
+            user.profileUrl = defaultImg;
+          }
+
           filteredResults.push(user);
         }
       }
-      
+
       searchResults.value = filteredResults;
       showDropdown.value = true;
       console.log('검색 결과:', searchResults.value.length + '명');
@@ -323,7 +320,8 @@ function selectMember(user) {
     userId: user.userId,
     userEmail: user.userEmail,
     userName: user.userName,
-    ufAttachoname: user.ufAttachoname
+    ufAttachoname: user.ufAttachoname,
+    profileUrl: user.profileUrl
   });
   //초기화
   searchEmail.value = '';
@@ -356,7 +354,7 @@ function handleSearchFocus() {
 //** ===== 검색창 블러 처리 함수 =====
 function handleSearchBlur() {
   //** 200ms 후에 드롭다운 숨김 (클릭 이벤트 처리 시간 확보)
-   window.setTimeout(() => {
+  window.setTimeout(() => {
     showDropdown.value = false;
   }, 200);
 }
@@ -364,13 +362,9 @@ function handleSearchBlur() {
 //** ===== 이미지 로드 실패 처리 =====
 function handleImageError(event) {
   //** 이미지 로드 실패 시 기본 아바타로 대체
-  //event.target.src = '/default-avatar.jpg';
+  event.target.src = defaultImg;
 }
 
-async function getUserImageUrl(userId) {
-  const response = await usersApi.ufAttachDownload(userId);
-  console.log(response);
-}
 
 function handleCancel() {
   router.back();
@@ -392,71 +386,29 @@ function removeMilestone(index) {
 }
 
 
-// 전체 태그 테이블에서 프로젝트용 태그 조회 
-async function loadProjectTags() {
-  try {
-    const response = await tagApi.getTags('PROJECT');
-    availableTags.value = response.data;
-  } catch (error) {
-    console.log('전체 태그 테이블에서 태그 조회 실패', error);
-  }
-}
-
-//태그 선택/해제 토글
-function toggleTag(tag) {
-  if (selectedTagIds.value.includes(tag.tagId)) {
-
-    const newArray = [];
-
-    //배열을 순회하면서 선택한 태그Id와 다른것만 새 배열에 추가
-    for (const tagId of selectedTagIds.value) {
-      if (tagId !== tag.tagId) {
-        newArray.push(tagId);
-      }
-    }
-
-    //기존 배열을 새 배열로 교체(클릭한 태그가 제거)
-    selectedTagIds.value = newArray;
-  } else {
-    selectedTagIds.value.push(tag.tagId);
-  }
-}
-
-//태그 삭제하기
-function removeTag(tagId) {
-
-  const newArray = [];
-
-  for (const id of selectedTagIds.value) {
-    if (id !== tagId) {//제거할 태그가 아니라면 유지
-      newArray.push(id);
-    }
-  }
-  selectedTagIds.value = newArray;
-}
-
-//태그 이름찾기
-function getTagName(tagId) {
-  for (const tag of availableTags.value) {
-    if (tag.tagId === tagId) {
-      return tag.tagName;
-    }
-  }
-
-  return ''; //못찾으면 빈문자열
-}
-
-
-onMounted(() => {
-  loadProjectTags();
-  console.log('ProjectCreate 마운트 완료, userId:', userId);
-})
-
 
 
 </script>
 
 <style scoped>
+.button-group {
+  display: flex;
+  justify-content: flex-end;
+  /* ✅ 오른쪽 정렬 */
+  gap: 12px;
+  /* 버튼 간격 */
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e0e0e0;
+  /* 구분선 (선택사항) */
+}
+
+.btn {
+  min-width: 120px;
+  /* 버튼 최소 너비 */
+}
+
+
 .project-create {
   max-width: 800px;
   margin: 0 auto;
@@ -520,6 +472,162 @@ onMounted(() => {
   width: 32px;
   height: 32px;
   border-radius: 50%;
+}
+
+
+/* ===========================
+   검색 결과 프로필 이미지 - 24px
+=========================== */
+
+.result-avatar {
+  width: 24px;
+  /* ✅ 24px로 변경 */
+  height: 24px;
+  /* ✅ 24px로 변경 */
+  border-radius: 50%;
+  /* 원형 */
+  object-fit: cover;
+  /* 비율 유지 */
+  flex-shrink: 0;
+  /* 축소 방지 */
+  border: 1px solid #ddd;
+  /* 얇은 테두리 */
+}
+
+/* ===========================
+   검색 컨테이너
+=========================== */
+
+.search-container {
+  position: relative;
+  width: 100%;
+}
+
+/* ===========================
+   검색 중 로딩
+=========================== */
+
+.search-loading {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+  font-size: 0.85rem;
+  pointer-events: none;
+  /* 클릭 방지 */
+}
+
+/* ===========================
+   검색 결과 드롭다운
+=========================== */
+
+.search-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ced4da;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  margin-top: 0;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* 이미지와 텍스트 간격 */
+  padding: 8px 12px;
+  /* 패딩 줄여서 더 컴팩트하게 */
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background: #f8f9fa;
+}
+
+/* ===========================
+   검색 결과 텍스트 정보
+=========================== */
+
+.result-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  /* 긴 텍스트 줄임표 처리 */
+}
+
+.result-name {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-email {
+  color: #6c757d;
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===========================
+   검색 결과 없음
+=========================== */
+
+.no-results {
+  padding: 16px;
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.9rem;
+  background: white;
+  border: 1px solid #ced4da;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+}
+
+/* ===========================
+   검색 input
+=========================== */
+
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  border-radius: 6px 6px 0 0;
+  /* 드롭다운 열릴 때 위쪽만 둥글게 */
+}
+
+.form-control:disabled {
+  background-color: #e9ecef;
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-close {
