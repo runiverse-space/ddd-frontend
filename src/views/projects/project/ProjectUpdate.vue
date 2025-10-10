@@ -103,6 +103,7 @@ import usersApi from '@/apis/usersApi';
 import DualTagSelector from '@/components/DualTagSelector.vue';
 import defaultImgSrc from '@/assets/default-profile.png';
 import MemberSelector from '@/components/MemberSelector.vue';
+import userprojectroleApi from '@/apis/userprojectroleApi';
 
 
 const props = defineProps(['projectId']);
@@ -116,11 +117,9 @@ const selectedTags = ref([]);
 const originalMemberIds = ref([]);
 
 const defaultImg = defaultImgSrc;
-const searchEmail = ref('');
-const searchResults = ref([]);
+
 const selectedMembers = ref([]);
-const isSearching = ref(false);
-const showDropdown = ref(false);
+
 const projectId = computed(() => route.query.projectId);
 const projectIdNumber = computed(() => parseInt(projectId.value, 10));
 // memberselecto로 수정
@@ -299,17 +298,18 @@ async function loadProjectDetail() {
     //** 3️⃣ 프로젝트 멤버 목록 불러오기
     console.log('🔍 3단계: 멤버 목록 조회 시작, projectId:', projectIdNumber.value);
     
-    const memberResponse = await projectApi.getProjectMembersList(projectIdNumber.value);
+    const memberResponse = await userprojectroleApi.getMemberList(projectIdNumber.value);
     // console.log('📥 멤버 API 전체 응답:', memberResponse);
     // console.log('📥 멤버 API result:', memberResponse.data.result);
     // console.log('📥 멤버 API data:', memberResponse.data.data);
 
-    if (memberResponse.data.result === 'success') {
-      const members = memberResponse.data.data || [];
+      const members = memberResponse.data.data ||  memberResponse.data ||[];
       // console.log('👥 불러온 멤버 목록 (전체):', members);
       // console.log('👥 멤버 수:', members.length);
 
       //** 각 멤버의 역할 확인
+
+      if (Array.isArray(members) && members.length > 0) {
       members.forEach((member, index) => {
         console.log(`  멤버 ${index + 1}:`, {
           userId: member.userId,
@@ -320,31 +320,31 @@ async function loadProjectDetail() {
 
       //** ADMIN이 아닌 멤버 필터링
       const nonAdminMembers = members.filter(m => m.uprRole !== 'ADMIN');
-      console.log('👥 ADMIN이 아닌 멤버:', nonAdminMembers);
-      console.log('👥 ADMIN이 아닌 멤버 수:', nonAdminMembers.length);
+      // console.log('👥 ADMIN이 아닌 멤버:', nonAdminMembers);
+      // console.log('👥 ADMIN이 아닌 멤버 수:', nonAdminMembers.length);
 
       //** 원본 멤버 ID 저장
       originalMemberIds.value = nonAdminMembers.map(m => m.userId);
-      console.log('💾 원본 멤버 ID 저장:', originalMemberIds.value);
+      // console.log('💾 원본 멤버 ID 저장:', originalMemberIds.value);
       //새배열을 생성
       const loadedMembers = []; 
       //** ADMIN이 아닌 멤버들의 상세 정보 불러오기
       for (const member of nonAdminMembers) {
-        console.log(`🔄 멤버 상세 정보 조회 중: userId=${member.userId}`);
+        // console.log(`🔄 멤버 상세 정보 조회 중: userId=${member.userId}`);
         
         const userResponse = await usersApi.usersDetailById(member.userId);
         const userData = userResponse.data.data;
-        console.log('  ✅ 상세 정보:', userData);
+        // console.log('  ✅ 상세 정보:', userData);
 
         //** 프로필 이미지 로드
         try {
           const profileResponse = await usersApi.ufAttachDownload(userData.userId);
           const blobUrl = URL.createObjectURL(profileResponse.data);
           userData.profileUrl = blobUrl;
-          console.log('  ✅ 프로필 이미지 로드 성공');
+          // console.log('  ✅ 프로필 이미지 로드 성공');
         } catch (error) {
           userData.profileUrl = defaultImg;
-          console.log('  ⚠️ 프로필 이미지 로드 실패, 기본 이미지 사용');
+          // console.log('  ⚠️ 프로필 이미지 로드 실패, 기본 이미지 사용');
         }
 
 
@@ -356,29 +356,24 @@ async function loadProjectDetail() {
             profileUrl: userData.profileUrl
         })
 
-        //** selectedMembers에 추가
-        // const memberData = {
-        //   userId: userData.userId,
-        //   userEmail: userData.userEmail,
-        //   userName: userData.userName,
-        //   ufAttachoname: userData.ufAttachoname,
-        //   profileUrl: userData.profileUrl
-        // };
+        //  console.log('  ✅ loadedMembers에 추가:', loadedMembers.length, '명');
         
-        selectedMembers.value=loadedMembers;
-        console.log('  ✅ selectedMembers에 추가:', selectedMembers.value.length,"명");
       }
-
-      console.log('✅ 최종 selectedMembers:', selectedMembers.value);
-      console.log('✅ 최종 selectedMembers 길이:', selectedMembers.value.length);
-
-    } else {
-      console.warn('⚠️ 멤버 API 호출 실패:', memberResponse.data);
+      selectedMembers.value=loadedMembers;
+      //   console.log('  ✅ selectedMembers에 추가:', selectedMembers.value.length,"명");
+      // console.log('✅ 최종 selectedMembers:', selectedMembers.value);
+      // console.log('✅ 최종 selectedMembers 길이:', selectedMembers.value.length);
+    }else {
+      //** 멤버가 없거나 배열이 아닌 경우
+      console.warn('⚠️ 멤버 데이터가 없거나 잘못된 형식입니다:', members);
+      selectedMembers.value = [];
+      originalMemberIds.value = [];
     }
+    
 
     //** 4️⃣ 마일스톤 불러오기
     const milestonesResponse = await projectMilestoneApi.getProjectMilestones(projectIdNumber.value);
-    console.log('📅 4단계: 마일스톤 응답', milestonesResponse.data);
+    // console.log('📅 4단계: 마일스톤 응답', milestonesResponse.data);
     
     if (milestonesResponse.data.result === 'success') {
       project.value.projectMilestones = (milestonesResponse.data.data || []).map(milestone => ({
@@ -391,17 +386,17 @@ async function loadProjectDetail() {
 
     //** 5️⃣ 태그 내용 불러오기
     const tagResponse = await tagApi.getProjectTags(projectIdNumber.value);
-    console.log('🏷️ 5단계: 태그 응답', tagResponse.data);
+    // console.log('🏷️ 5단계: 태그 응답', tagResponse.data);
     
     selectedTags.value = tagResponse.data.tags || [];
 
-    console.log('✅ 프로젝트 데이터 로드 완료');
-    console.log('원본 멤버 ID:', originalMemberIds.value);
-    console.log('현재 멤버:', selectedMembers.value);
+    // console.log('✅ 프로젝트 데이터 로드 완료');
+    // console.log('원본 멤버 ID:', originalMemberIds.value);
+    // console.log('현재 멤버:', selectedMembers.value);
 
   } catch (error) {
-    console.error('❌ 프로젝트 데이터 로드 실패:', error);
-    console.error('❌ 에러 상세:', error.response || error.message);
+    // console.error('❌ 프로젝트 데이터 로드 실패:', error);
+    // console.error('❌ 에러 상세:', error.response || error.message);
     alert('프로젝트 데이터를 불러오는데 실패했습니다.');
     router.back();
   }
