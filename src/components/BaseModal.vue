@@ -109,7 +109,7 @@ function handleButtonClick() {
   animation: fadeIn 0.25s ease;
   width: var(--modal-width, 440px);
   height: var(--modal-height, auto);
-  min-height: 220px;
+  min-height: 160px;
   max-height: 90vh;
 }
 
