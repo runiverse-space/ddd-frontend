@@ -2,7 +2,7 @@ const routes = [
   {
     path: "KnowledgeList",
     name: "KnowledgeHome",
-    component: () => import("@/views/projects/Knowledge/KnowledgeList.vue"),
+    component: () => import("@/views/projects/Knowledge/Knowledge.vue"),
     props: true,
   },
   
