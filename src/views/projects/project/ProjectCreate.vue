@@ -123,7 +123,7 @@
 
     <!-- 7단계: 태그 추가 -->
     <div class="tag-section">
-      <label>프로젝트 태그 선택(최대 3개)</label>
+      <label>프로젝트 태그(최대 3개)</label>
       <DualTagSelector tagType="PROJECT" v-model="selectedTags" />
     </div>
 
@@ -162,15 +162,12 @@ const userId = store.state.userId;
 //태그
 const selectedTags = ref([]);
 
-
 const defaultImg = defaultImgSrc;
 const searchEmail = ref('');
 const searchResults = ref([]);
 const selectedMembers = ref([]);
 const isSearching = ref(false);
 const showDropdown = ref(false);
-
-
 
 
 
@@ -189,8 +186,7 @@ const project = ref({
 
 
 
-
-//프로젝트 생성하기
+//프로젝트 수정하기
 async function createProject() {
 
 
@@ -216,6 +212,7 @@ async function createProject() {
 
 
     const data = structuredClone(project.value);
+    data.projectId = props.projectId;
 
     const response = await projectApi.createProject(data);
 
@@ -248,6 +245,7 @@ async function createProject() {
   }
 
 }
+
 
 async function searchUsers() {
   if (searchEmail.value.length < 2) {
