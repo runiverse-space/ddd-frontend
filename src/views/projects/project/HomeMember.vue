@@ -40,7 +40,7 @@
         </div>
 
         <BaseModal :show="showInviteModal" type="default" title="새 멤버 찾기" button-text="등록" button-action="confirm"
-            :height="250" @close="showInviteModal = false" @confirm="inviteMembers">
+            height="auto" @close="showInviteModal = false" @confirm="inviteMembers">
             함께 프로젝트를 진행할 팀원을 찾아보세요 👋
             <MemberSelector v-model="projectMembers" />
         </BaseModal>
@@ -174,7 +174,7 @@ function tagStyle(tag) {
 
 .member-card {
   position: relative; /* ✅ 카드 기준 배지 위치 */
-  width: 270px;
+  width: 280px;
   min-height: 160px;
   background: #fff;
   border-radius: 10px;

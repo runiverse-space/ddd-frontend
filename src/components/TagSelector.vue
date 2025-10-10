@@ -189,7 +189,7 @@ function removeTag(tagId) {
 /* 드롭다운 */
 .tag-dropdown {
   border: 1px solid #ccc;
-  border-top: none;
+  border-top: 1px solid #ddd;
   border-radius: 0 0 8px 8px;
   padding: 6px 10px 12px;
   background-color: #fff;
@@ -197,14 +197,13 @@ function removeTag(tagId) {
 
 .tag-divider {
   border: none;
-  border-top: 1.5px solid #999;
   width: 100%;
   margin: 4px 0 6px;
 }
 
 .tag-limit {
   color: #888;
-  font-size: 0.85rem;
+  font-size: 0.7rem;
   margin: 0 0 6px 3px;
 }
 

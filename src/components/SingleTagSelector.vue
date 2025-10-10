@@ -187,7 +187,7 @@ function tagOptionStyle(tag) {
 /* 드롭다운 */
 .tag-dropdown {
     border: 1px solid #ccc;
-    border-top: none;
+    border-top: 1px solid #ddd;
     border-radius: 0 0 8px 8px;
     padding: 10px 12px 14px;
     background-color: #fff;
@@ -196,13 +196,12 @@ function tagOptionStyle(tag) {
 
 .tag-divider {
     border: none;
-    border-top: 1px solid #ddd;
     margin: 6px 0 10px;
 }
 
 .tag-limit {
     color: #888;
-    font-size: 0.85rem;
+    font-size: 0.7rem;
     margin-bottom: 10px;
 }
 
