@@ -1,11 +1,11 @@
 <template>
   <div class="schedule-page">
     <div class="calendar-header-ui">
-      <!-- 왼쪽: 캘린더 탭 텍스트 (활성 상태로 표시) -->
-      <button class="tab-btn active">일정</button>
-
-      <!-- 오른쪽: 글쓰기 버튼 -->
-      <button class="write-btn">새 일정 등록</button>
+      <!-- ✅ 요일 + 날짜 -->
+      <h3 class="today-title" v-if="todayLabel">
+        <span class="day">{{ todayLabel?.split(",")[0] || "" }},</span>
+        <span class="date">{{ todayLabel?.split(",")[1] || "" }}</span>
+      </h3>
     </div>
   </div>
 
@@ -183,7 +183,7 @@ import usersApi from "@/apis/usersApi";
 import BaseModal from "@/components/BaseModal.vue";
 import { CalendarIcon, ListBulletIcon, PencilSquareIcon, XMarkIcon } from "@heroicons/vue/24/outline";
 import { Modal } from "bootstrap";
-import { onMounted, reactive } from "vue";
+import { computed, onMounted, reactive } from "vue";
 import { ref } from "vue";
 import { VueDraggableNext } from "vue-draggable-next";
 import { useRoute, useRouter } from "vue-router";
@@ -202,6 +202,13 @@ const projectInfo = ref(null);
 const projectMemberList = ref([]);
 const userProjectRoleList = ref([]);
 const scheduleMemberList = ref([]);
+
+const todayLabel = computed(() => {
+  const now = new Date();
+  const weekday = now.toLocaleDateString("en-US", { weekday: "long" });
+  const month = now.toLocaleString("en-US", { month: "short" });
+  return `${weekday}, ${now.getDate()} ${month}`;
+});
 
 const statuses = ["NOT STARTED", "IN PROGRESS", "DONE"];
 
@@ -442,26 +449,31 @@ onMounted(async () => {
 <!--컴포넌트의 스타일 정의-->
 <style scoped>
 /* ✅ 전체 */
-.board-container {
+.schedule-page {
+  width: 100%;
   padding: 0px 40px;
+}
+
+.board-container {
   display: flex;
-  justify-content: center;
+  flex-wrap: wrap; /* ✅ 반응형으로 자동 줄바꿈 */
+  justify-content: flex-start; /* ✅ 가운데 정렬 제거 */
   align-items: flex-start;
-  /* 높이를 맞추지 않음 */
-  gap: 50px;
-  padding: 24px;
-  background-color: #fff;
+  gap: 30px;
+  padding: 10px 40px;
+  width: 100%;
+  box-sizing: border-box; /* ✅ padding 포함 계산 */
 }
 
 /* ✅ 컬럼 공통 */
 .status-column {
-  flex: 0 0 480px; /* ← 각 칼럼의 가로 폭 */
+  flex: 1 1 320px; /* ✅ 유연한 폭 (반응형) */
+  max-width: 480px;
   border-radius: 5px;
   padding: 10px;
   display: inline-flex;
   /* ✅ 높이를 자동으로 맞추려면 inline-flex */
   flex-direction: column;
-  width: 100%;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
   height: auto;
   /* ✅ 내용만큼만 높이 */
@@ -601,9 +613,9 @@ onMounted(async () => {
 }
 
 .add-schedule:hover {
-  background-color: #dfe3e8;
-  color: #111827;
-  border-color: #c5c9ce;
+  background-color: rgba(0, 0, 0, 0.05); /* ✅ 아주 옅은 반투명 어둠 */
+  color: #555;
+  border-color: rgba(0, 0, 0, 0.05);
 }
 
 .plus-icon {
@@ -614,11 +626,6 @@ onMounted(async () => {
 }
 
 /* 헤더 UI */
-.schedule-page {
-  width: 100%;
-  padding: 0px 40px;
-}
-
 .calendar-header-ui {
   display: flex;
   align-items: flex-end;
@@ -663,5 +670,33 @@ onMounted(async () => {
 
 .write-btn:hover {
   background: #4d3df0;
+}
+
+/* 날짜 */
+.calendar-header-ui {
+  display: flex;
+  align-items: center;
+  padding: 0px;
+  border-bottom: 1px #eee;
+}
+
+/* ✅ 날짜 스타일 */
+.today-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.today-title .day {
+  color: #111111;
+}
+
+.today-title .date {
+  color: #e2e2e2;
+  font-weight: 500;
+  font-size: 1.4rem;
 }
 </style>

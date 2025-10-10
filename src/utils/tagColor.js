@@ -11,9 +11,9 @@ export const TAG_COLORS = {
     border: "#4789B5",
   },
   KNOWLEDGE: {
-    bg: "#FFF5E8",
-    color: "#D79B4D",
-    border: "#D79B4D",
+    bg: "#000000",
+    color: "#eeeeeeff",
+    border: "#ffffff",
   },
   DEFAULT: {
     bg: "#E5E5E5",
