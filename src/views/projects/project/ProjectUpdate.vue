@@ -1,7 +1,7 @@
 <!-- src/views/projects/ProjectCreate.vue -->
 <template>
   <div class="project-create">
-    <h1 class="page-title">프로젝트 생성</h1>
+    <h1 class="page-title">프로젝트 수정하기</h1>
 
     <!-- 1단계: 프로젝트명 -->
     <div class="form-section">
@@ -17,7 +17,7 @@
         프로젝트 개요 <span class="text-danger">*</span>
       </label>
       <textarea class="form-control" rows="6" placeholder="프로젝트 소개를 입력합니다. (최대 150자 제한)" v-model="project.projectContent" maxlength="150"></textarea>
-      <small class="text-muted">{{ project.projectContent.length }}/150 characters</small>
+      <small class="text-muted">{{ project.projectContent?.length || 0 }}/150 characters</small>
     </div>
 
     <!-- 3단계: 프로젝트 멤버 추가 -->
@@ -104,7 +104,7 @@
       <p class="text-muted small">프로젝트 일정을 등록해주세요. (최대 3개 가능)</p>
 
       <!-- 마일스톤 입력 필드 -->
-      <div v-for="(milestone, index) in project.projectMilestones" :key="index" class="mb-3 border rounded p-3">
+      <div v-for="(milestone, index) in project.projectMilestones || []" :key="index" class="mb-3 border rounded p-3">
         <label class="form-label fw-semibold">마일스톤 {{ index + 1 }}</label>
         <input type="date" class="form-control mb-2" v-model="milestone.milestoneDate" placeholder="날짜를 선택하세요" />
         <input type="text" class="form-control" v-model="milestone.milestoneTitle" placeholder="마일스톤 내용을 입력하세요" />
@@ -116,21 +116,21 @@
       </div>
 
       <!-- 마일스톤 추가 버튼 -->
-      <button class="btn btn-outline-secondary w-100" @click="addMilestone()" :disabled="project.projectMilestones.length >= 3">
+      <button class="btn btn-outline-secondary w-100" @click="addMilestone()" :disabled="(project.projectMilestones?.length || 0) >= 3">
         <i class="bi bi-plus"></i> 마일스톤 자리
       </button>
     </div>
 
     <!-- 7단계: 태그 추가 -->
     <div class="tag-section">
-      <label>프로젝트 태그 선택(최대 3개)</label>
+      <label>프로젝트 태그</label>
       <DualTagSelector tagType="PROJECT" v-model="selectedTags" />
     </div>
 
     <!-- 생성 버튼 -->
     <div class="form-section button-group">
-      <button class="btn btn-dark btn-lg" @click="createProject">
-        프로젝트 생성
+      <button class="btn btn-dark btn-lg" @click="updateProject">
+        프로젝트 수정
       </button>
       <button class="btn btn-light btn-lg" @click="handleCancel">
         취소
@@ -153,6 +153,7 @@ import projectMilestoneApi from '@/apis/projectMilestoneApi';
 import usersApi from '@/apis/usersApi';
 import DualTagSelector from '@/components/DualTagSelector.vue';
 import defaultImgSrc from '@/assets/default-profile.png';
+import userprojectroleApi from '@/apis/userprojectroleApi';
 
 const props = defineProps(['projectId']);
 const router = useRouter();
@@ -190,11 +191,8 @@ const project = ref({
 });
 
 
-
-
-//프로젝트 생성하기
+//프로젝트 수정하기
 async function updateProject() {
-
 
   //** 필수 입력 검증
   if (!project.value.projectTitle.trim()) {
@@ -206,46 +204,69 @@ async function updateProject() {
     alert('프로젝트 개요를 입력해주세요.');
     return;
   }
-
   try {
-
     const userIds = [];
     for (const member of selectedMembers.value) {
       userIds.push(member.userId);
     }
 
+      //** ✅ 디버깅: 전송 전 데이터 확인
+    console.group('=== 프로젝트 수정 데이터 확인 ===');
+    console.log('선택된 멤버:', selectedMembers.value);
+    console.log('추출한 userIds:', userIds);
+    console.log('userIds 길이:', userIds.length);
+    console.log('중복 확인:', new Set(userIds).size !== userIds.length ? '중복 있음!' : '중복 없음');
+    console.groupEnd();
+
+
+
+
+
     project.value.userIds = userIds;
 
-
-   
-
-    const data={
-      ...project.value,
+    const data = {
       projectId: projectIdNumber.value,
-      userId: userIds
+      projectTitle: project.value.projectTitle,
+      projectContent: project.value.projectContent,
+      projectStartDate: project.value.projectStartDate,
+      projectEndDate: project.value.projectEndDate,
+      userIds: userIds,  
+      projectMilestones: []  
     }
+
+    console.log('백엔드로 전송할 데이터:', data);
     const response = await projectApi.updateProject(data);
 
-    // console.log("전송할 데이터", response.data);
+  
+    //기존의 마일스톤 있으면 수정, 없으면 생성
+if(project.value.projectMilestones && project.value.projectMilestones.length>0){
+  for (let milestone of project.value.projectMilestones) {
+        milestone.projectId = projectIdNumber.value;
+        console.log(projectIdNumber.value);
 
-    // 마일스톤 생성
-    const result = response.data;
-    const projectId = result.data.projectId
-    console.log(project.value.projectMilestones);
-    for (let milestone of project.value.projectMilestones) {
-      console.log(projectId);
-      milestone.projectId = projectId;
-      console.log("마일스톤 생성하기:", milestone);
-      const response = await projectMilestoneApi.createProjectMilestone(milestone);
-      console.log(response.data);
+        if (!milestone.milestoneId) {
+        
+          const response = await projectMilestoneApi.createProjectMilestone(milestone);
+          console.log(response.data);
+          console.log('✅ 마일스톤 생성:', milestone.milestoneTitle);
+        
+        }else{
+          const response = await projectMilestoneApi.updateProjectMilestone(milestone);
+          console.log(response.data);
+          console.log('✅ 마일스톤 생성:', milestone.milestoneTitle);
+        }
+        
     }
+}
+
+   
     //태그 연결 선택된 태그가 있을경우만.. 무조건 태그 선택하도록해야함
     if (selectedTags.value.length > 0) {
-      const selectedTagIds = selectedTags.value.map(tag => tag.tagId);
+      // const selectedTagIds = selectedTags.value.map(tag => tag.tagId);
       await tagApi.updateProjectTags({
-        projectId: projectId,
-        tagIds: selectedTagIds
-      })
+        projectId: projectIdNumber.value,
+        tagIds: selectedTags.value.map(tag => tag.tagId)
+      });
     }
 
     router.back();
@@ -254,6 +275,105 @@ async function updateProject() {
     console.log(error);
   }
 
+}
+
+//기존 프로젝트 내용 조회하기
+async function loadProjectDetail() {
+  try {
+    //프로젝트 내용 받기
+  const response = await projectApi.getProjectDetail(projectIdNumber.value);
+  const data = response.data.data;
+
+  project.value = {
+    ...data,
+    projectStartDate: formatDateForInput(data.projectStartDate),
+    projectEndDate: formatDateForInput(data.projectEndDate),
+    tagType: "PROJECT"
+    
+  };
+
+  //프로젝트 멤버 목록 불러오기
+  const memberResponse = await projectApi.getProjectMembersList(projectIdNumber.value);
+  if (memberResponse.data.result === 'success') {
+    const members = memberResponse.data.data || [];
+
+    for (const member of members) {
+      if (member.uprRole !== 'ADMIN') {
+        const userResponse = await usersApi.usersDetailById(member.userId);
+        const userData = userResponse.data.data;
+
+        try {
+          const profileResponse = await usersApi.ufAttachDownload(userData.userId);
+          const blobUrl = URL.createObjectURL(profileResponse.data);
+          userData.profileUrl = blobUrl;
+        } catch (error) {
+          userData.profileUrl = defaultImg;
+        }
+
+        selectedMembers.value.push({
+          userId: userData.userId,
+          userEmail: userData.userEmail,
+          userName: userData.userName,
+          ufAttachoname: userData.ufAttachoname,
+          profileUrl: userData.profileUrl
+        });
+      }
+
+    }
+  }
+  //마일스톤 불러오기
+  const milestonesResponse = await projectMilestoneApi.getProjectMilestones(projectIdNumber.value);
+  if (milestonesResponse.data.result === 'success') {
+    
+      project.value.projectMilestones = (milestonesResponse.data.data || []).map(milestone => ({
+        ...milestone,
+        milestoneDate: formatDateForInput(milestone.milestoneDate)
+      }));
+    } else {
+      project.value.projectMilestones = [];
+    }
+
+  //태그 내용 받기
+  const tagResponse = await tagApi.getProjectTags(projectIdNumber.value);
+    //  console.log("태그 응답 전체:", tagResponse.data);
+    // console.log("태그 목록:", tagResponse.data.tags);
+  
+    selectedTags.value = tagResponse.data.tags || [];
+  
+  
+  //  console.log('프로젝트 데이터 로드 완료:', project.value);
+  //  console.log('선택된 태그:', selectedTags.value);
+
+  } catch (error) {
+    console.error('프로젝트 데이터 로드 실패:', error);
+    alert('프로젝트 데이터를 불러오는데 실패했습니다.');
+    router.back();
+  }
+  
+}
+
+//** ===== 날짜 포맷 변환 함수 추가 =====
+function formatDateForInput(dateValue) {
+  //** null, undefined, 빈 문자열 체크
+  if (!dateValue) return '';
+  
+  try {
+    //** Date 객체로 변환
+    const date = new Date(dateValue);
+    
+    //** 유효한 날짜인지 확인
+    if (isNaN(date.getTime())) return '';
+    
+    //** "YYYY-MM-DD" 형식으로 변환
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  } catch (error) {
+    console.error('날짜 변환 오류:', error);
+    return '';
+  }
 }
 
 
@@ -319,7 +439,6 @@ async function searchUsers() {
   }
 }
 
-
 function selectMember(user) {
   if (selectedMembers.value.length >= 5) {
     alert('최대 5명까지만 추가할수 있습니다.');
@@ -339,7 +458,6 @@ function selectMember(user) {
   showDropdown.value = false;
 
 }
-
 
 //멤버 제거함수
 function removeMember(targetUserId) {
@@ -395,6 +513,16 @@ function removeMilestone(index) {
   project.value.projectMilestones.splice(index, 1);
 }
 
+onMounted(() => {
+  //** ✅ 한 번만 호출
+  if (projectId.value) {
+    loadProjectDetail();
+  } else {
+    console.error('projectId가 없습니다.');
+    alert('잘못된 접근입니다.');
+    router.back();
+  }
+});
 
 
 
