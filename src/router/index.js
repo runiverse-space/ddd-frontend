@@ -21,6 +21,7 @@ import Edit from "@/views/users/Edit.vue";
 
 import ProjectManagementLayout from "@/layout/ProjectManagementLayout.vue";
 import ProjectCreate from "@/views/projects/project/ProjectCreate.vue";
+import ProjectUpdate from "@/views/projects/project/ProjectUpdate.vue";
 
 const routes = [
   {
@@ -50,6 +51,13 @@ const routes = [
             name: "ProjectCreate",
             component: ProjectCreate,
           },
+          
+          {
+            path: "update",
+            name: "ProjectUpdate",
+            component: ProjectUpdate,
+          },
+
         ],
       },
       {

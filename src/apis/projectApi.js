@@ -22,9 +22,22 @@ function createProject(data){
   return axios.post("/api/project/create",data);
 }
 
+//수정하기
+function updateProject(data){
+  return axios.put("/api/project/update",data);
+}
+
+//삭제하기
+function deleteProject(projectId){
+  return axios.delete("/api/project/delete",{params:{projectId}});
+}
+
+
 function getUserProjectList(userId){
   return axios.get("/api/project/list/user", { params: { userId } });
 }
+
+
 
 export default{
   getProjectList,
@@ -32,6 +45,8 @@ export default{
   getProjectSchedulesList,
   getProjectMembersList,
   createProject,
-  getUserProjectList
+  getUserProjectList,
+  updateProject,
+  deleteProject
 
 }
