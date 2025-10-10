@@ -12,8 +12,7 @@
         {{ statusLabels[status] }}
       </div>
 
-      <VueDraggableNext v-model="schedulesByStatus[status]" group="schedules" @end="onDragEnd($event)"
-        :data-status="status" tag="div" class="p-2">
+      <VueDraggableNext v-model="schedulesByStatus[status]" group="schedules" @end="onDragEnd($event)" :data-status="status" tag="div" class="p-2">
 
         <!-- 일정 카드 -->
         <div v-for="schedule in schedulesByStatus[status]" :key="schedule.scheduleId" class="schedule-card">
@@ -24,13 +23,11 @@
             </div>
             <div class="card-icons">
               <ListBulletIcon class="action-icon" title="상세보기" @click="openModal(schedule)" />
-              <PencilSquareIcon class="action-icon" title="수정하기"
-                @click="() => {
-                  openModal(schedule);
-                  handleEdit();
-                }" />
-              <XMarkIcon class="action-icon" title="삭제하기"
-                @click="handleDelete(schedule)" />
+              <PencilSquareIcon class="action-icon" title="수정하기" @click="() => {
+                openModal(schedule);
+                handleEdit();
+              }" />
+              <XMarkIcon class="action-icon" title="삭제하기" @click="handleDelete(schedule)" />
             </div>
           </div>
 
@@ -53,8 +50,7 @@
   </div>
 
   <!-- 일정 삭제 모달 -->
-  <div class="modal fade" id="scheduleDeleteModal" tabindex="-1" aria-labelledby="scheduleDeleteModalLabel"
-    aria-hidden="true" ref="deleteModalRef">
+  <div class="modal fade" id="scheduleDeleteModal" tabindex="-1" aria-labelledby="scheduleDeleteModalLabel" aria-hidden="true" ref="deleteModalRef">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -73,16 +69,14 @@
   </div>
 
   <!-- 일정 상세 모달 -->
-  <div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true"
-    ref="detailModalRef">
+  <div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true" ref="detailModalRef">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="scheduleModalLabel">
             일정 상세보기
           </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
-            @click="editMode = false"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @click="editMode = false"></button>
         </div>
         <div class="modal-body" v-if="selectedSchedule">
           <!-- 일정 제목 -->
@@ -94,8 +88,7 @@
           <!-- 일정 내용 -->
           <div class="mb-3">
             <label class="form-label">일정 내용</label>
-            <textarea class="form-control" v-model="selectedSchedule.scheduleContent" rows="3"
-              :disabled="!editMode"></textarea>
+            <textarea class="form-control" v-model="selectedSchedule.scheduleContent" rows="3" :disabled="!editMode"></textarea>
           </div>
 
           <!-- 일정 기간(수정 모드) -->
@@ -111,8 +104,7 @@
             <label class="form-label">일정 기간</label>
             <div class="row m-1">
               <div class="col-6">
-                <input type="text" class="form-control" :value="formatDate(selectedSchedule.scheduleStartDate)"
-                  :disabled="!editMode" />
+                <input type="text" class="form-control" :value="formatDate(selectedSchedule.scheduleStartDate)" :disabled="!editMode" />
               </div>
               <div class="col-md-1 d-flex align-items-center justify-content-center">
                 <span>부터</span>
@@ -120,8 +112,7 @@
             </div>
             <div class="row m-1">
               <div class="col-6">
-                <input type="text" class="form-control" :value="formatDate(selectedSchedule.scheduleEndDate)"
-                  :disabled="!editMode" />
+                <input type="text" class="form-control" :value="formatDate(selectedSchedule.scheduleEndDate)" :disabled="!editMode" />
               </div>
               <div class="col-md-1 d-flex align-items-center justify-content-center">
                 <span>까지</span>
@@ -140,10 +131,8 @@
           <!-- 담당자(수정 모드) -->
           <div class="mb-3" v-if="editMode">
             <label class="form-label">담당자 선택</label><br />
-            <span v-for="projectMember in projectMemberList" :key="projectMember.userId" style="cursor: pointer;"
-              class="badge me-1"
-              :class="scheduleMemberList.includes(projectMember.userId) ? 'bg-secondary' : 'bg-light text-dark'"
-              @click="toggleScheduleMember(projectMember)">
+            <span v-for="projectMember in projectMemberList" :key="projectMember.userId" style="cursor: pointer;" class="badge me-1"
+              :class="scheduleMemberList.includes(projectMember.userId) ? 'bg-secondary' : 'bg-light text-dark'" @click="toggleScheduleMember(projectMember)">
               {{ projectMember.userName }}
               ({{ projectMember.userLoginId }})
             </span>
@@ -164,12 +153,10 @@
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="editMode = false">
               닫기
             </button>
-            <button type="button" class="btn btn-primary" @click="handleEdit()"
-              v-if="!editMode">
+            <button type="button" class="btn btn-primary" @click="handleEdit()" v-if="!editMode">
               수정하기
             </button>
-            <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @click="handleUpdateConfirm()"
-              v-if="editMode">
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @click="handleUpdateConfirm()" v-if="editMode">
               수정확인
             </button>
           </div>
@@ -406,6 +393,16 @@ async function onDragEnd(event) {
 
     movedSchedule.value.users = await loadScheduleMembers(movedSchedule.value.scheduleId);
     movedSchedule.value.userIds = movedSchedule.value.users.map(user => user.userId);
+
+    for (const user of movedSchedule.value.users) {
+      try {
+        const res = await usersApi.ufAttachDownload(user.userId);
+        const blob = new Blob([res.data], { type: res.headers['content-type'] });
+        user.profileUrl = URL.createObjectURL(blob);
+      } catch {
+        user.profileUrl = null; // 이미지 없으면 기본 아바타 표시 가능
+      }
+    }
 
     if (!movedSchedule.value) return;
 
