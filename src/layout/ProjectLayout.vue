@@ -37,58 +37,77 @@
 <script setup>
 import { HomeIcon, CalendarIcon, DocumentTextIcon, CommandLineIcon } from "@heroicons/vue/24/outline";
 
-import { RouterView } from 'vue-router';
-import { RouterLink } from 'vue-router';
+import { RouterView } from "vue-router";
+import { RouterLink } from "vue-router";
 
-const props = defineProps(['projectId']);
+const props = defineProps(["projectId"]);
 </script>
 
 <style scoped>
+/* ✅ 레이아웃 전체 */
 .project-layout {
   display: flex;
-  padding: 0px;
+  width: 97%;
+  min-height: 100vh;
+  background: #fff;
+  box-sizing: border-box;
 }
 
+/* ✅ 사이드바 */
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  padding: 10px 50px; /* 위·아래 / 좌·우 패딩 */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* 왼쪽 정렬 */
+  gap: 24px; /* 메뉴 간격 */
+  background: #fff;
+  border-right: 1px #eee;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+/* ✅ 메인 콘텐츠 */
 .project-layout main {
   flex: 1;
   width: 100%;
-  max-width: none;
-  padding-right: 0;
-  overflow: visible !important;
-  position: static !important;
-}
-
-.sidebar {
-  width: 160px;
-  /* 사이드바 너비 */
-  padding: 20px 20px;
-  margin-right: 40px;
+  max-width: 1800px; /* 전체 너비 제한 */
+  margin: 0 auto;
+  padding: 0px; /* 내부 여백 */
+  box-sizing: border-box;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 40px;
-  /* 메뉴 간격 */
-  background-color: #fff;
+  align-items: stretch;
+  background: #fff;
 }
 
+/* ✅ 메뉴 항목 */
 .menu-item {
   display: flex;
   align-items: center;
-  /* 아이콘과 텍스트 수직 가운데 정렬 */
-  gap: 12px;
-  /* 아이콘과 텍스트 간격 */
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
   text-decoration: none;
-  color: black;
+  color: #000;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
-
 .menu-item:hover {
-  color: #6759F4;
-  /* hover 시 파란색 */
+  color: #6759f4;
 }
 
+/* ✅ 아이콘 */
 .menu-icon {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
 }
 </style>

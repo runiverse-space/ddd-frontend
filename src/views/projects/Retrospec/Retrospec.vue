@@ -3,18 +3,12 @@
     <!-- 상단 탭 헤더 -->
     <div class="tab-header">
       <!-- ✅ 캘린더 / 리스트 탭 (프로젝트/멤버 스타일 동일) -->
-      <button class="tab-btn" :class="{ active: activeTab === 'calendar' }" @click="activeTab = 'calendar'">
-        캘린더
-      </button>
+      <button class="tab-btn" :class="{ active: activeTab === 'calendar' }" @click="activeTab = 'calendar'">캘린더</button>
 
-      <button class="tab-btn" :class="{ active: activeTab === 'list' }" @click="activeTab = 'list'">
-        리스트
-      </button>
+      <button class="tab-btn" :class="{ active: activeTab === 'list' }" @click="activeTab = 'list'">리스트</button>
 
       <!-- ✅ 오른쪽 끝의 회고 작성 버튼 -->
-      <button class="write-btn" @click="goWritePage">
-        글쓰기
-      </button>
+      <button class="write-btn" @click="goWritePage">✏️ 글쓰기</button>
     </div>
 
     <!-- 콘텐츠 -->
@@ -72,8 +66,10 @@ onMounted(async () => {
 
 <style scoped>
 .retrospec-page {
+  padding: 0px 10px;
   width: 100%;
-  padding: 0px 40px;
+  box-sizing: border-box;
+  background: #fff;
 }
 
 /* 🔹탭 헤더 전체 영역 */
@@ -115,25 +111,26 @@ onMounted(async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #000;
-  color: #fff;
+  background: rgba(255, 255, 255, 10.9); /* ✅ 흰색 배경 */
+  color: #000;
+  border: 0px solid #000;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.10);
   margin-left: auto;
   margin-bottom: 10px;
   border: none;
   border-radius: 999px;
+  padding: 20px 20px;
   height: 36px;
-  /* ✅ 고정 높이 */
-  padding: 0 16px;
-  /* ✅ 좌우만 패딩 */
   line-height: 1;
   /* ✅ 텍스트가 정확히 가운데 오게 */
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: 0.95rem;
+  font-weight: 700;
   cursor: pointer;
   transition: background 0.25s ease, transform 0.1s ease;
 }
 
 .tab-header .write-btn:hover {
-  background: #4d3df0;
+  background: #000;
+  color: #fff;
 }
 </style>
