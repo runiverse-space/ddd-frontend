@@ -450,8 +450,10 @@ onMounted(async () => {
 <style scoped>
 /* ✅ 전체 */
 .schedule-page {
+  padding: 0px 10px;
   width: 100%;
-  padding: 0px 40px;
+  box-sizing: border-box;
+  background: #fff;
 }
 
 .board-container {
@@ -459,7 +461,7 @@ onMounted(async () => {
   flex-wrap: wrap; /* ✅ 반응형으로 자동 줄바꿈 */
   justify-content: flex-start; /* ✅ 가운데 정렬 제거 */
   align-items: flex-start;
-  gap: 30px;
+  gap: 40px;
   padding: 10px 40px;
   width: 100%;
   box-sizing: border-box; /* ✅ padding 포함 계산 */

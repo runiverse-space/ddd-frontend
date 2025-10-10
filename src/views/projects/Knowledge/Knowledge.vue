@@ -46,7 +46,7 @@
       </div>
 
       <!-- 글쓰기 버튼 -->
-      <button class="write-btn" @click="createKnowledge">글쓰기</button>
+      <button class="write-btn" @click="createKnowledge">✏️ 글쓰기</button>
     </div>
 
     <!-- 🔹 빈 상태 -->
@@ -183,8 +183,10 @@ onMounted(async () => {
 
 <style scoped>
 .knowledge-page {
+  padding: 0px 10px;
   width: 100%;
-  padding: 0 40px;
+  box-sizing: border-box;
+  background: #fff;
 }
 
 /* 🔹 태그 필터 */
@@ -217,6 +219,16 @@ onMounted(async () => {
 .masonry-grid {
   column-count: 4;
   column-gap: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+  .masonry-grid { column-count: 3; }
+}
+@media (max-width: 900px) {
+  .masonry-grid { column-count: 2; }
+}
+@media (max-width: 600px) {
+  .masonry-grid { column-count: 1; }
 }
 .masonry-item {
   break-inside: avoid;
@@ -313,18 +325,21 @@ onMounted(async () => {
 
 /* 버튼 */
 .write-btn {
-  position: fixed;
+   position: fixed;
   bottom: 24px;
   right: 24px;
-  background: #e0e0e0;
-  color: #000;
+  background: rgba(255, 255, 255, 10.9);              /* ✅ 흰색 배경 */
+  color: #000;                 
+  border: 0px solid #f8f8f8;
+  min-width: 100px;      
   padding: 12px 20px;
   border-radius: 50px;
   font-weight: 600;
-  border: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  font-size: 0.95rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
+  z-index: 1000;
 }
 .write-btn:hover {
   background: #000;

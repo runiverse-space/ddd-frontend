@@ -1,6 +1,6 @@
 const routes = [
   {
-    path: "KnowledgeList",
+    path: "Knowledge",
     name: "KnowledgeHome",
     component: () => import("@/views/projects/Knowledge/Knowledge.vue"),
     props: true,
