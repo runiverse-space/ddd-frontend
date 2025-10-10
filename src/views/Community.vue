@@ -18,6 +18,11 @@
     <BaseModal :show="showError" type="error" title="Error title" :width="600" :height="500" @close="showError = false">
       파일 업로드 중 문제가 발생했습니다. 다시 시도해주세요.
     </BaseModal>
+
+    <button @click="showDual = true" class="btn dual btn-dark btn-sm">버튼 두개</button>
+    <BaseModal :show="showDual" type="default-dual" title="버튼이 두개지요" closeButtonText="버튼명이 바뀌나요?" @close="showDual = false" @confirm="onConfirm">
+      정말로 진행하시겠습니까?
+    </BaseModal>
   </div>
 
   <br>
@@ -94,6 +99,7 @@ import BaseModal from "@/components/BaseModal.vue";
 const showInfo = ref(false);
 const showError = ref(false);
 const showDefault = ref(false);
+const showDual = ref(false);
 
 // 멤버 추가 
 const projectMembers = ref([]);

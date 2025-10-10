@@ -22,11 +22,25 @@
                 </div>
 
                 <!-- 하단 버튼 -->
-                <div class="modal-footer">
-                    <button class="confirm-btn" :class="type" @click="handleButtonClick">
-                        {{ buttonText }}
-                    </button>
+                 <div class="modal-footer">
+                    <!-- dual 버튼 -->
+                    <template v-if="type === 'default-dual'">
+                        <button class="confirm-btn default" @click="emitConfirm">
+                            {{ confirmButtonText || '확인' }}
+                        </button>
+                        <button class="close-btn-dual" @click="close">
+                            {{ closeButtonText || '닫기' }}
+                        </button>
+                    </template>
+
+                    <!-- 단일 버튼 -->
+                    <template v-else>
+                        <button class="confirm-btn" :class="type" @click="handleButtonClick">
+                            {{ buttonText }}
+                        </button>
+                    </template>
                 </div>
+
             </div>
         </div>
     </Teleport>
@@ -46,10 +60,15 @@ const props = defineProps({
     show: Boolean,
     type: { type: String, default: "default" },
     title: String,
+    
     width: { type: [Number, String], default: 480 },
     height: { type: [Number, String], default: 160 },
+
     buttonText: { type: String, default: "확인" },
     buttonAction: { type: String, default: "close" },
+
+    confirmButtonText: { type: String, default: "확인" },
+    closeButtonText: { type: String, default: "닫기" },
 });
 
 const emits = defineEmits(["close", "confirm"]);
@@ -84,6 +103,10 @@ function close() {
     emits("close");
 }
 
+function confirm() {
+    emits("confirm");
+}
+
 function handleButtonClick() {
     props.buttonAction === "close" ? emits("close") : emits("confirm");
 }
@@ -100,7 +123,6 @@ function handleButtonClick() {
     z-index: 20000;
 }
 
-/* ✅ 불필요한 고정값 제거, overflow 해제 */
 .base-modal {
     background: #fff;
     border-radius: 10px;
@@ -109,7 +131,6 @@ function handleButtonClick() {
     flex-direction: column;
     overflow: visible;
     animation: fadeIn 0.25s ease;
-
     width: var(--modal-width, 440px);
     height: var(--modal-height, auto);
 }
@@ -121,7 +142,6 @@ function handleButtonClick() {
     justify-content: space-between;
     padding: 8px 14px;
     min-height: 42px;
-
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
 }
@@ -136,7 +156,8 @@ function handleButtonClick() {
     color: #fff;
 }
 
-.modal-header.default {
+.modal-header.default,
+.modal-header.default-dual {
     background: transparent;
     border-bottom: 1px solid #eee;
     color: #111;
@@ -158,7 +179,6 @@ function handleButtonClick() {
     font-weight: 700;
 }
 
-/* CLOSE 버튼 */
 .close-btn {
     background: none;
     border: none;
@@ -196,7 +216,8 @@ function handleButtonClick() {
 .modal-footer {
     display: flex;
     justify-content: center;
-    padding: 0px 0 22px;
+    gap: 10px;
+    padding: 0 0 22px;
 }
 
 .confirm-btn {
@@ -222,6 +243,23 @@ function handleButtonClick() {
     background: #252525;
 }
 
+/* ✅ dual 모드 닫기 버튼 */
+.close-btn-dual {
+    padding: 8px 22px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    color: #333;
+    font-weight: 500;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.close-btn-dual:hover {
+    background: #f2f2f2;
+}
+
 .confirm-btn:hover {
     opacity: 0.9;
 }
@@ -231,7 +269,6 @@ function handleButtonClick() {
         opacity: 0;
         transform: translateY(10px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
