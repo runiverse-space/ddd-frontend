@@ -7,26 +7,30 @@
 
         <div class="member-grid">
             <!-- ✅ 기존 멤버 카드 -->
-            <div v-for="member in members" :key="member.userId" class="member-card">
-                <div class="card-top">
-                    <img :src="member.profileUrl" class="profile-img" alt="profile" />
-                    <div class="user-info">
-                        <h4 class="name">{{ member.userName }}</h4>
-                        <p class="email">{{ member.userEmail }}</p>
-                    </div>
-                </div>
+             <div v-for="member in members" :key="member.userId" class="member-card">
+            <!-- ✅ 팀장 배지 -->
+            <CheckBadgeIcon
+                v-if="member.userId === adminId"
+                class="admin-badge"
+            />
 
-                <!-- 태그 -->
-                <div class="tags">
-                    <span v-for="tag in member.tags" :key="tag.tagId" class="tag" :style="tagStyle(tag)">
-                        {{ tag.tagName }}
-                    </span>
+            <div class="card-top">
+                <img :src="member.profileUrl" class="profile-img" alt="profile" />
+                <div class="user-info">
+                <h4 class="name">{{ member.userName }}</h4>
+                <p class="email">{{ member.userEmail }}</p>
                 </div>
+            </div>
 
-                <!-- 한마디 -->
-                <p class="oneline">
-                    {{ member.userIntro || "한마디를 작성해주세요." }}
-                </p>
+            <!-- 태그 -->
+            <div class="tags">
+                <span v-for="tag in member.tags" :key="tag.tagId" class="tag" :style="tagStyle(tag)">
+                {{ tag.tagName }}
+                </span>
+            </div>
+
+            <!-- 한마디 -->
+            <p class="oneline">{{ member.userIntro || "한마디를 작성해주세요." }}</p>
             </div>
 
             <!-- ✅ 새 멤버 초대 카드 -->
@@ -46,6 +50,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { UserPlusIcon } from "@heroicons/vue/24/outline";
+import { CheckBadgeIcon } from "@heroicons/vue/24/solid";
 import BaseModal from "@/components/BaseModal.vue";
 import MemberSelector from "@/components/MemberSelector.vue";
 import userprojectroleApi from "@/apis/userprojectroleApi";
@@ -61,14 +66,16 @@ const props = defineProps({
 const members = ref([]);
 const showInviteModal = ref(false); // ✅ 모달 상태
 const projectMembers = ref([]); // ✅ 멤버 선택 결과
+const adminId = ref(null);
 
 function openInviteModal() {
     projectMembers.value = [];
     showInviteModal.value = true;
 }
 
-onMounted(() => {
-    loadMembers();
+onMounted(async () => {
+  await loadAdmin();
+  await loadMembers();
 });
 
 async function loadMembers() {
@@ -111,6 +118,21 @@ async function loadMembers() {
     }
 }
 
+async function loadAdmin() {
+  try {
+    const res = await userprojectroleApi.getAdmin(props.projectId);
+    const data = res.data.data || res.data; 
+    if (Array.isArray(data) && data.length > 0) {
+      adminId.value = data[0].user_id || data[0].userId; // ✅ 첫 번째 관리자
+    } else {
+      adminId.value = data.user_id || data.userId || null;
+    }
+    console.log("관리자 ID:", adminId.value); // ✅ 콘솔 확인용
+  } catch (e) {
+    console.error("관리자 조회 실패:", e);
+  }
+}
+
 async function inviteMembers() {
     for (const user of projectMembers.value) {
         await userprojectroleApi.addMember(props.projectId, user.userId);
@@ -151,16 +173,31 @@ function tagStyle(tag) {
 }
 
 .member-card {
-    width: 270px;
-    min-height: 160px;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    transition: all 0.2s ease;
+  position: relative; /* ✅ 카드 기준 배지 위치 */
+  width: 270px;
+  min-height: 160px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  transition: all 0.2s ease;
+}
+
+/* ✅ 팀장 뱃지 */
+.admin-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 25px;
+  height: 25px;
+  color: #3897F0;
+  background: #fff;
+  border-radius: 50%;
+  padding: 2px;
+  
 }
 
 .member-card:hover {
