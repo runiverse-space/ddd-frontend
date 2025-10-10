@@ -144,7 +144,7 @@ function tagStyle(tag) {
 <style scoped>
 .member-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     column-gap: 15px;
     row-gap: 35px;
     margin-top: 20px;
