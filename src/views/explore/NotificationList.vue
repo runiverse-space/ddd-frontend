@@ -11,11 +11,24 @@
         <!-- <p class="text">{{ notice.message }}</p> -->
         <!-- <span class="time">{{ notice.time }}</span> -->
         <!-- <p class="text">{{ notice }}</p> -->
-        <span class="sender-name">{{ notice.senderName }}</span>
-        <span class="text"> 님이 </span>
-        <span class="project-title">{{ notice.projectTitle }}</span>
-        <span class="text">에 함께하고 싶어 합니다.</span>
-        <p class="text">{{ formatDate(notice.paCreatedAt) }}</p>
+        <div v-if="notice.paIsRead === 'N'" class="container-fluid" style="height: 80px; max-height: 80px;">
+          <div class="row">
+            <div class="col-9 d-flex flex-column h-100">
+              <div v-if="notice.paType='JOIN_REQUEST'">
+                <span class="sender-name">{{ notice.senderName }}</span>
+                <span class="text"> 님이 </span>
+                <span class="project-title">{{ notice.projectTitle }}</span>
+                <span class="text">에 함께하고 싶어 합니다.</span>
+              </div>
+              <p class="time align-self-end">{{ formatDate(notice.paCreatedAt) }}</p>
+            </div>
+            <div class="col-3 d-flex flex-row align-self-start">
+              <CheckCircleIcon style="width: 20px; " class="me-2" @click="handleAcceptParticipation(notice)"></CheckCircleIcon>
+              <XMarkIcon style="width: 20px;" @click="handleRejectParticipation(notice)"></XMarkIcon>
+            </div>
+          </div>
+        </div>
+
       </li>
     </ul>
   </div>
@@ -23,9 +36,10 @@
 
 <script setup>
 import { onMounted, ref } from "vue";
-import { BellIcon } from "@heroicons/vue/24/outline"; // ✅ 아이콘 추가
+import { BellIcon, CheckCircleIcon, XMarkIcon } from "@heroicons/vue/24/outline"; // ✅ 아이콘 추가
 import { useStore } from "vuex";
 import projectActivityApi from "@/apis/projectActivityApi";
+import userprojectroleApi from "@/apis/userprojectroleApi";
 
 const store = useStore();
 
@@ -69,6 +83,30 @@ async function getAlarms() {
     // notifications.value.push({message: alarm.paMessage, time: formatDate(alarm.paCreatedAt)});
     notifications.value.push(alarm);
   }
+}
+
+// 참여 허가
+async function handleAcceptParticipation(notice) {
+  console.group("handleAcceptParticipation()");
+  console.log(notice);
+  console.log("userProjectRole 행 추가");
+  let response = await userprojectroleApi.addMember(notice.projectId, notice.senderId);
+  if (response.data.result === "success") {
+    response = await projectActivityApi.approveProjectParticipation(notice);
+    console.log("알림 상태 변경");
+    console.log(response)
+
+    notifications.value = notifications.value.filter(
+      (n) => n.paId !== notice.paId
+    );
+  }
+  console.groupEnd();
+}
+
+// 참여 불허
+function handleRejectParticipation() {
+  console.group("handleRejectParticipation");
+  console.groupEnd()
 }
 
 // 날짜 형식

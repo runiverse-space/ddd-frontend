@@ -59,7 +59,7 @@ function tagStyle(tag) {
 // '참여하기' 버튼 클릭 시 그룹장에게 알림 발송
 async function handleParticipationRequest(project) {
     const projectId = project.projectId
-    const res = await projectActivityApi.sendProjectParticipationRequestNotification(projectId, store.state.userId);
+    const res = await projectActivityApi.sendProjectParticipationRequestNotification({projectId: projectId, senderId: store.state.userId});
     console.log(res);
 }
 

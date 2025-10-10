@@ -5,9 +5,14 @@ function sendScheduleAssignmentNotification(scheduleId, projectId, senderId, use
   return axios.post("/api/project-activity/schedule-assignment", userIds, { params: { scheduleId, projectId, senderId } });
 }
 
-function sendProjectParticipationRequestNotification(projectId, senderId) {
-  console.log(projectId, senderId);
-  return axios.post("/api/project-activity/participate", null, { params: { projectId, senderId } })
+// 프로젝트 참여 요청
+function sendProjectParticipationRequestNotification(request) {
+  return axios.post("/api/project-activity/participate", request)
+}
+
+// 프로젝트 참여 허가 시 해당 알림 상태 변경
+function approveProjectParticipation(notice) {
+  return axios.put("/api/project-activity/approve-participation", notice)
 }
 
 function getAlarms(receiverId) {
@@ -18,5 +23,6 @@ function getAlarms(receiverId) {
 export default {
   sendScheduleAssignmentNotification,
   sendProjectParticipationRequestNotification,
+  approveProjectParticipation,
   getAlarms
 }
