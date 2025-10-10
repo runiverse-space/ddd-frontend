@@ -14,7 +14,7 @@
         <div v-if="notice.paIsRead === 'N'" class="container-fluid" style="height: 80px; max-height: 80px;">
           <div class="row">
             <div class="col-9 d-flex flex-column h-100">
-              <div v-if="notice.paType='JOIN_REQUEST'">
+              <div v-if="notice.paType === 'JOIN_REQUEST'">
                 <span class="sender-name">{{ notice.senderName }}</span>
                 <span class="text"> 님이 </span>
                 <span class="project-title">{{ notice.projectTitle }}</span>
@@ -104,8 +104,14 @@ async function handleAcceptParticipation(notice) {
 }
 
 // 참여 불허
-function handleRejectParticipation() {
+async function handleRejectParticipation(notice) {
   console.group("handleRejectParticipation");
+  const response = await projectActivityApi.rejectProjectParticipation(notice);
+  console.log(response);
+
+  notifications.value = notifications.value.filter(
+    (n) => n.paId !== notice.paId
+  );
   console.groupEnd()
 }
 

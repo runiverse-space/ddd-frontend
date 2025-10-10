@@ -15,6 +15,11 @@ function approveProjectParticipation(notice) {
   return axios.put("/api/project-activity/approve-participation", notice)
 }
 
+// 프로젝트 참여 불허 시 해당 알림 상태 변경
+function rejectProjectParticipation(notice) {
+  return axios.put("/api/project-activity/reject-participation", notice)
+}
+
 function getAlarms(receiverId) {
   return axios.get("/api/project-activity/list", { params: { receiverId } });
 }
@@ -24,5 +29,6 @@ export default {
   sendScheduleAssignmentNotification,
   sendProjectParticipationRequestNotification,
   approveProjectParticipation,
+  rejectProjectParticipation,
   getAlarms
 }
