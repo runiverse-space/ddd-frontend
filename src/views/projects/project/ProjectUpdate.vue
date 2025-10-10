@@ -20,73 +20,22 @@
       <small class="text-muted">{{ project.projectContent?.length || 0 }}/150 characters</small>
     </div>
 
+
+
     <!-- 3단계: 프로젝트 멤버 추가 -->
+    <!-- 기존 멤버 -->
     <div class="form-section">
-      <label class="form-label">
-        프로젝트 멤버 추가 <span class="text-muted">(선택사항, 최대 5명)</span>
-      </label>
-
-      <!-- 선택된 멤버 목록 표시 -->
-      <div v-if="selectedMembers.length > 0" class="selected-members-container mb-3">
-        <div v-for="member in selectedMembers" :key="member.userId" class="member-item">
-          <!-- ✨ 이미지 표시 방법 -->
-          <img :src="member.profileUrl || defaultImg" class="member-avatar" :alt="member.userName" @error="handleImageError" />
-
-          <div class="member-info">
-            <span class="member-name">{{ member.userName }}</span>
-            <small class="member-email">{{ member.userEmail }}</small>
-          </div>
-
-          <button type="button" class="btn-close" @click="removeMember(member.userId)">
-            ×
-          </button>
-        </div>
-      </div>
-
-      <!-- 검색 입력창 -->
-      <div class="search-container">
-        <input type="text" class="form-control" placeholder="이메일로 멤버 검색 (최소 2글자 입력)" v-model="searchEmail" @input="searchUsers" @focus="handleSearchFocus" @blur="handleSearchBlur"
-          :disabled="selectedMembers.length >= 5" />
-
-        <!-- 검색 중 로딩 -->
-        <span v-if="isSearching" class="search-loading">
-          🔍 검색 중...
-        </span>
-
-        <!-- 검색 결과 드롭다운 -->
-        <div v-if="showDropdown && searchResults.length > 0" class="search-dropdown">
-          <div v-for="user in searchResults" :key="user.userId" class="search-result-item" @click="selectMember(user)">
-            <!-- ✨ 검색 결과 이미지 -->
-            <img :src="user.profileUrl || defaultImg" class="result-avatar" :alt="user.userName" @error="handleImageError" />
-            <div class="result-info">
-              <span class="result-name">{{ user.userName }}</span>
-              <small class="result-email">{{ user.userEmail }}</small>
-            </div>
-          </div>
-        </div>
-
-        <!-- 검색 결과 없음 -->
-        <div v-if="showDropdown && searchResults.length === 0 && searchEmail.length >= 2 && !isSearching" class="no-results">
-          검색 결과가 없습니다.
-        </div>
-      </div>
-
-      <!-- 안내 메시지 -->
-      <div class="alert alert-info mt-2">
-        <small>
-          💡 팀장 포함 최대 6명까지 프로젝트에 참여할 수 있습니다.<br>
-          현재 선택: 팀장 1명 + 팀원 {{ selectedMembers.length }}/5명
-        </small>
-      </div>
+      <label class="form-label">프로젝트 멤버</label>
+      <!-- ✅ 수정: projectMembers → selectedMembers -->
+      <MemberSelector v-model="selectedMembers" />
     </div>
-
     <!-- 4단계: 만든이 -->
     <div class="form-section">
-      <label class="form-label">
-        프로젝트 만든 사람
-      </label>
+      <label class="form-label mt-3"></label>
       <div class="creator-info">
-        <span>만든이: {{ project.userId }}</span>
+        <!-- ✅ 프로필 이미지 + 이름 표시 -->
+        <img :src="creatorInfo.profileUrl" alt="profile" class="creator-img" />
+        <span class="creator-name">{{ creatorInfo.userName || '로딩 중...' }}</span>
       </div>
     </div>
 
@@ -153,7 +102,8 @@ import projectMilestoneApi from '@/apis/projectMilestoneApi';
 import usersApi from '@/apis/usersApi';
 import DualTagSelector from '@/components/DualTagSelector.vue';
 import defaultImgSrc from '@/assets/default-profile.png';
-import userprojectroleApi from '@/apis/userprojectroleApi';
+import MemberSelector from '@/components/MemberSelector.vue';
+
 
 const props = defineProps(['projectId']);
 const router = useRouter();
@@ -163,7 +113,7 @@ const store = useStore();
 const userId = store.state.userId;
 //태그
 const selectedTags = ref([]);
-
+const originalMemberIds = ref([]);
 
 const defaultImg = defaultImgSrc;
 const searchEmail = ref('');
@@ -171,11 +121,10 @@ const searchResults = ref([]);
 const selectedMembers = ref([]);
 const isSearching = ref(false);
 const showDropdown = ref(false);
-
-
 const projectId = computed(() => route.query.projectId);
 const projectIdNumber = computed(() => parseInt(projectId.value, 10));
-
+// memberselecto로 수정
+const projectMembers = ref([]);
 
 const project = ref({
   projectId: "",
@@ -188,6 +137,25 @@ const project = ref({
   projectMilestones: [],  // ← 이것도 추가
   tagIds: []
 
+});
+
+const creatorInfo = ref({
+  userId: userId,
+  userName: "",
+  profileUrl: defaultImg
+})
+
+//** 오늘 날짜를 YYYY-MM-DD 형식으로 생성
+const today = computed(() => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+});
+
+const minEndDate = computed(() => {
+  return project.value.projectStartDate || today.value;
 });
 
 
@@ -205,24 +173,22 @@ async function updateProject() {
     return;
   }
   try {
-    const userIds = [];
-    for (const member of selectedMembers.value) {
-      userIds.push(member.userId);
-    }
+    const currentMemberIds = selectedMembers.value.map(member => member.userId);
 
-      //** ✅ 디버깅: 전송 전 데이터 확인
-    console.group('=== 프로젝트 수정 데이터 확인 ===');
-    console.log('선택된 멤버:', selectedMembers.value);
-    console.log('추출한 userIds:', userIds);
-    console.log('userIds 길이:', userIds.length);
-    console.log('중복 확인:', new Set(userIds).size !== userIds.length ? '중복 있음!' : '중복 없음');
-    console.groupEnd();
+    //새로운 멤버 추가
+    const newMemberIds = currentMemberIds.filter(
+      id => !originalMemberIds.value.includes(id)
+    );
 
+    // 삭제된 멤버
+    const removedMemberIds = originalMemberIds.value.filter(
+      id => !currentMemberIds.includes(id)
+    );
 
-
-
-
-    project.value.userIds = userIds;
+    console.log('원본 멤버:', originalMemberIds.value);
+    console.log('현재 멤버:', currentMemberIds);
+    console.log('추가할 멤버:', newMemberIds);
+    console.log('삭제할 멤버:', removedMemberIds);
 
     const data = {
       projectId: projectIdNumber.value,
@@ -230,36 +196,50 @@ async function updateProject() {
       projectContent: project.value.projectContent,
       projectStartDate: project.value.projectStartDate,
       projectEndDate: project.value.projectEndDate,
-      userIds: userIds,  
-      projectMilestones: []  
+      userIds: newMemberIds,
+      projectMilestones: []
     }
+
+    // ✅ 삭제할 멤버가 있으면 removeUserIds 추가
+    if (removedMemberIds.length > 0) {
+      data.removeUserIds = removedMemberIds;
+      console.log('🗑️ 삭제할 멤버 추가:', removedMemberIds);
+    }
+
+    // ✅ 로그 출력
+    if (newMemberIds.length > 0) {
+      console.log('➕ 새로 추가할 멤버:', newMemberIds);
+    }
+
+    if (newMemberIds.length === 0 && removedMemberIds.length === 0) {
+      console.log('✅ 멤버 변경 없음');
+    }
+
 
     console.log('백엔드로 전송할 데이터:', data);
     const response = await projectApi.updateProject(data);
+    console.log('프로젝트 수정 응답:', response);
+    console.log('응답 상태:', response.data);
 
-  
+    if (response.data.result !== 'success') {
+      throw new Error(response.data.message || '프로젝트 수정 실패');
+    }
+
     //기존의 마일스톤 있으면 수정, 없으면 생성
-if(project.value.projectMilestones && project.value.projectMilestones.length>0){
-  for (let milestone of project.value.projectMilestones) {
+    if (project.value.projectMilestones && project.value.projectMilestones.length > 0) {
+      for (let milestone of project.value.projectMilestones) {
         milestone.projectId = projectIdNumber.value;
-        console.log(projectIdNumber.value);
+        // console.log(projectIdNumber.value);
 
         if (!milestone.milestoneId) {
-        
           const response = await projectMilestoneApi.createProjectMilestone(milestone);
-          console.log(response.data);
-          console.log('✅ 마일스톤 생성:', milestone.milestoneTitle);
-        
-        }else{
+        } else {
           const response = await projectMilestoneApi.updateProjectMilestone(milestone);
-          console.log(response.data);
-          console.log('✅ 마일스톤 생성:', milestone.milestoneTitle);
         }
-        
-    }
-}
 
-   
+      }
+    }
+
     //태그 연결 선택된 태그가 있을경우만.. 무조건 태그 선택하도록해야함
     if (selectedTags.value.length > 0) {
       // const selectedTagIds = selectedTags.value.map(tag => tag.tagId);
@@ -278,53 +258,129 @@ if(project.value.projectMilestones && project.value.projectMilestones.length>0){
 }
 
 //기존 프로젝트 내용 조회하기
+//** ===== 기존 프로젝트 내용 조회하기 (디버깅 버전) =====
 async function loadProjectDetail() {
   try {
-    //프로젝트 내용 받기
-  const response = await projectApi.getProjectDetail(projectIdNumber.value);
-  const data = response.data.data;
+    //** 1️⃣ 프로젝트 기본 정보 불러오기
+    const response = await projectApi.getProjectDetail(projectIdNumber.value);
+    const data = response.data.data;
+    console.log('📦 1단계: 프로젝트 기본 정보', data);
 
-  project.value = {
-    ...data,
-    projectStartDate: formatDateForInput(data.projectStartDate),
-    projectEndDate: formatDateForInput(data.projectEndDate),
-    tagType: "PROJECT"
+    project.value = {
+      ...data,
+      projectStartDate: formatDateForInput(data.projectStartDate),
+      projectEndDate: formatDateForInput(data.projectEndDate),
+      tagType: "PROJECT"
+    };
+
+    //** 2️⃣ 만든이 정보 불러오기
+    try {
+      const creatorResponse = await usersApi.usersDetailById(data.userId);
+      const creatorData = creatorResponse.data.data;
+      console.log('👤 2단계: 만든이 정보', creatorData);
+      
+      try {
+        const profileResponse = await usersApi.ufAttachDownload(creatorData.userId);
+        const blobUrl = URL.createObjectURL(profileResponse.data);
+        creatorInfo.value = {
+          userName: creatorData.userName,
+          profileUrl: blobUrl
+        };
+      } catch {
+        creatorInfo.value = {
+          userName: creatorData.userName,
+          profileUrl: defaultImg
+        };
+      }
+    } catch (error) {
+      console.error('❌ 만든이 정보 로드 실패:', error);
+    }
+
+    //** 3️⃣ 프로젝트 멤버 목록 불러오기
+    console.log('🔍 3단계: 멤버 목록 조회 시작, projectId:', projectIdNumber.value);
     
-  };
+    const memberResponse = await projectApi.getProjectMembersList(projectIdNumber.value);
+    // console.log('📥 멤버 API 전체 응답:', memberResponse);
+    // console.log('📥 멤버 API result:', memberResponse.data.result);
+    // console.log('📥 멤버 API data:', memberResponse.data.data);
 
-  //프로젝트 멤버 목록 불러오기
-  const memberResponse = await projectApi.getProjectMembersList(projectIdNumber.value);
-  if (memberResponse.data.result === 'success') {
-    const members = memberResponse.data.data || [];
+    if (memberResponse.data.result === 'success') {
+      const members = memberResponse.data.data || [];
+      // console.log('👥 불러온 멤버 목록 (전체):', members);
+      // console.log('👥 멤버 수:', members.length);
 
-    for (const member of members) {
-      if (member.uprRole !== 'ADMIN') {
+      //** 각 멤버의 역할 확인
+      members.forEach((member, index) => {
+        console.log(`  멤버 ${index + 1}:`, {
+          userId: member.userId,
+          uprRole: member.uprRole,
+          isAdmin: member.uprRole === 'ADMIN'
+        });
+      });
+
+      //** ADMIN이 아닌 멤버 필터링
+      const nonAdminMembers = members.filter(m => m.uprRole !== 'ADMIN');
+      console.log('👥 ADMIN이 아닌 멤버:', nonAdminMembers);
+      console.log('👥 ADMIN이 아닌 멤버 수:', nonAdminMembers.length);
+
+      //** 원본 멤버 ID 저장
+      originalMemberIds.value = nonAdminMembers.map(m => m.userId);
+      console.log('💾 원본 멤버 ID 저장:', originalMemberIds.value);
+      //새배열을 생성
+      const loadedMembers = []; 
+      //** ADMIN이 아닌 멤버들의 상세 정보 불러오기
+      for (const member of nonAdminMembers) {
+        console.log(`🔄 멤버 상세 정보 조회 중: userId=${member.userId}`);
+        
         const userResponse = await usersApi.usersDetailById(member.userId);
         const userData = userResponse.data.data;
+        console.log('  ✅ 상세 정보:', userData);
 
+        //** 프로필 이미지 로드
         try {
           const profileResponse = await usersApi.ufAttachDownload(userData.userId);
           const blobUrl = URL.createObjectURL(profileResponse.data);
           userData.profileUrl = blobUrl;
+          console.log('  ✅ 프로필 이미지 로드 성공');
         } catch (error) {
           userData.profileUrl = defaultImg;
+          console.log('  ⚠️ 프로필 이미지 로드 실패, 기본 이미지 사용');
         }
 
-        selectedMembers.value.push({
+
+        loadedMembers.push({
           userId: userData.userId,
-          userEmail: userData.userEmail,
-          userName: userData.userName,
-          ufAttachoname: userData.ufAttachoname,
-          profileUrl: userData.profileUrl
-        });
+            userEmail: userData.userEmail,
+            userName: userData.userName,
+            ufAttachoname: userData.ufAttachoname,
+            profileUrl: userData.profileUrl
+        })
+
+        //** selectedMembers에 추가
+        // const memberData = {
+        //   userId: userData.userId,
+        //   userEmail: userData.userEmail,
+        //   userName: userData.userName,
+        //   ufAttachoname: userData.ufAttachoname,
+        //   profileUrl: userData.profileUrl
+        // };
+        
+        selectedMembers.value=loadedMembers;
+        console.log('  ✅ selectedMembers에 추가:', selectedMembers.value.length,"명");
       }
 
+      console.log('✅ 최종 selectedMembers:', selectedMembers.value);
+      console.log('✅ 최종 selectedMembers 길이:', selectedMembers.value.length);
+
+    } else {
+      console.warn('⚠️ 멤버 API 호출 실패:', memberResponse.data);
     }
-  }
-  //마일스톤 불러오기
-  const milestonesResponse = await projectMilestoneApi.getProjectMilestones(projectIdNumber.value);
-  if (milestonesResponse.data.result === 'success') {
+
+    //** 4️⃣ 마일스톤 불러오기
+    const milestonesResponse = await projectMilestoneApi.getProjectMilestones(projectIdNumber.value);
+    console.log('📅 4단계: 마일스톤 응답', milestonesResponse.data);
     
+    if (milestonesResponse.data.result === 'success') {
       project.value.projectMilestones = (milestonesResponse.data.data || []).map(milestone => ({
         ...milestone,
         milestoneDate: formatDateForInput(milestone.milestoneDate)
@@ -333,164 +389,47 @@ async function loadProjectDetail() {
       project.value.projectMilestones = [];
     }
 
-  //태그 내용 받기
-  const tagResponse = await tagApi.getProjectTags(projectIdNumber.value);
-    //  console.log("태그 응답 전체:", tagResponse.data);
-    // console.log("태그 목록:", tagResponse.data.tags);
-  
+    //** 5️⃣ 태그 내용 불러오기
+    const tagResponse = await tagApi.getProjectTags(projectIdNumber.value);
+    console.log('🏷️ 5단계: 태그 응답', tagResponse.data);
+    
     selectedTags.value = tagResponse.data.tags || [];
-  
-  
-  //  console.log('프로젝트 데이터 로드 완료:', project.value);
-  //  console.log('선택된 태그:', selectedTags.value);
+
+    console.log('✅ 프로젝트 데이터 로드 완료');
+    console.log('원본 멤버 ID:', originalMemberIds.value);
+    console.log('현재 멤버:', selectedMembers.value);
 
   } catch (error) {
-    console.error('프로젝트 데이터 로드 실패:', error);
+    console.error('❌ 프로젝트 데이터 로드 실패:', error);
+    console.error('❌ 에러 상세:', error.response || error.message);
     alert('프로젝트 데이터를 불러오는데 실패했습니다.');
     router.back();
   }
-  
 }
+
 
 //** ===== 날짜 포맷 변환 함수 추가 =====
 function formatDateForInput(dateValue) {
   //** null, undefined, 빈 문자열 체크
   if (!dateValue) return '';
-  
+
   try {
     //** Date 객체로 변환
     const date = new Date(dateValue);
-    
+
     //** 유효한 날짜인지 확인
     if (isNaN(date.getTime())) return '';
-    
+
     //** "YYYY-MM-DD" 형식으로 변환
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    
+
     return `${year}-${month}-${day}`;
   } catch (error) {
     console.error('날짜 변환 오류:', error);
     return '';
   }
-}
-
-
-
-
-async function searchUsers() {
-  if (searchEmail.value.length < 2) {
-    searchResults.value = [];
-    showDropdown.value = false;
-    return;
-  }
-
-  try {
-    isSearching.value = true;
-
-    const response = await usersApi.usersSearch(searchEmail.value);
-    console.log('검색 응답:', response.data);
-
-    if (response.data.result === 'success') {
-      const filteredResults = [];
-
-      //** 검색 결과를 순회
-      for (const user of response.data.data) {
-        //** 1. 이미 선택된 멤버인지 확인
-        let isAlreadySelected = false;
-
-        for (const member of selectedMembers.value) {
-          if (member.userId === user.userId) {
-            isAlreadySelected = true;
-            break;
-          }
-        }
-
-        //** 2. 본인인지 확인
-        const isMe = (user.userId === userId);
-
-        //** 3. 조건 만족 시 추가
-        if (!isAlreadySelected && !isMe) {
-
-          try {
-
-            const profileResponse = await usersApi.ufAttachDownload(user.userId);
-            const blobUrl = URL.createObjectURL(profileResponse.data);
-            user.profileUrl = blobUrl;
-          } catch (error) {
-            console.warn(`⚠️ ${user.userName} 이미지 없음, 기본 이미지 사용`);
-            user.profileUrl = defaultImg;
-          }
-
-          filteredResults.push(user);
-        }
-      }
-
-      searchResults.value = filteredResults;
-      showDropdown.value = true;
-      console.log('검색 결과:', searchResults.value.length + '명');
-    }
-  } catch (error) {
-    console.error('사용자 검색 실패:', error);
-    alert('검색 중 오류가 발생했습니다.');
-  } finally {
-    isSearching.value = false;
-  }
-}
-
-function selectMember(user) {
-  if (selectedMembers.value.length >= 5) {
-    alert('최대 5명까지만 추가할수 있습니다.');
-    return;
-  }
-  //선택된 멤버 추가
-  selectedMembers.value.push({
-    userId: user.userId,
-    userEmail: user.userEmail,
-    userName: user.userName,
-    ufAttachoname: user.ufAttachoname,
-    profileUrl: user.profileUrl
-  });
-  //초기화
-  searchEmail.value = '';
-  searchResults.value = [];
-  showDropdown.value = false;
-
-}
-
-//멤버 제거함수
-function removeMember(targetUserId) {
-  const newMember = [];
-  for (const member of selectedMembers.value) {
-    if (member.userId !== targetUserId) {
-      newMember.push(member);
-    }
-  }
-  selectedMembers.value = newMember;
-  console.log('멤버 제거됨, 남은 인원:', selectedMembers.value.length + '명');
-}
-
-//** ===== 검색창 포커스 처리 함수 =====
-function handleSearchFocus() {
-  //** 검색 결과가 있으면 드롭다운 표시
-  if (searchResults.value.length > 0) {
-    showDropdown.value = true;
-  }
-}
-
-//** ===== 검색창 블러 처리 함수 =====
-function handleSearchBlur() {
-  //** 200ms 후에 드롭다운 숨김 (클릭 이벤트 처리 시간 확보)
-  window.setTimeout(() => {
-    showDropdown.value = false;
-  }, 200);
-}
-
-//** ===== 이미지 로드 실패 처리 =====
-function handleImageError(event) {
-  //** 이미지 로드 실패 시 기본 아바타로 대체
-  event.target.src = defaultImg;
 }
 
 
@@ -514,16 +453,8 @@ function removeMilestone(index) {
 }
 
 onMounted(() => {
-  //** ✅ 한 번만 호출
-  if (projectId.value) {
-    loadProjectDetail();
-  } else {
-    console.error('projectId가 없습니다.');
-    alert('잘못된 접근입니다.');
-    router.back();
-  }
+  loadProjectDetail();
 });
-
 
 
 </script>

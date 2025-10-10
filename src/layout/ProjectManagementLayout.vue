@@ -72,9 +72,9 @@ function toggleProjects() {
 
 
 async function loadProjectsList() {
-  console.log(`메인 사이드바 프로젝트 조회${props.projectId}`)
+ // console.log(`메인 사이드바 프로젝트 조회${props.projectId}`)
   const response = await projectApi.getUserProjectList(userId);
-  console.log('response의 구조 : ', response.data);
+ // console.log('response의 구조 : ', response.data);
   if (response.data !== null) {
     myProjectList.value = response.data;
   } else {
@@ -87,12 +87,12 @@ async function loadProjectsList() {
 
 
 function handleProjectClick(projectId) {
-  console.log('projectId:', projectId);
+ // console.log('projectId:', projectId);
 }
 
 
 onMounted(async () => {
-  console.log("프로젝트 메인홈 사이드바 컴포넌트 마운트");
+  //console.log("프로젝트 메인홈 사이드바 컴포넌트 마운트");
 
   await loadProjectsList();
 

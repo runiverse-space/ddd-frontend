@@ -377,6 +377,8 @@ onMounted(async () => {
 
 
 .masonry-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   column-count: 3;
 
   column-gap: 10px;

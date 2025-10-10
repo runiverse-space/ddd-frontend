@@ -138,6 +138,10 @@ function removeMember(userId) {
   selectedMembers.value = selectedMembers.value.filter((m) => m.userId !== userId);
   emits("update:modelValue", selectedMembers.value);
 }
+
+
+
+
 </script>
 
 <style scoped>

@@ -420,9 +420,9 @@ async function getKnowledge() {
 
       try {
         const tagResponse = await tagApi.getKnowledgeTags(knowledgeId.value);
-        console.log("태그 응답:", tagResponse.data);
+        //console.log("태그 응답:", tagResponse.data);
         knowledgeTags.value = tagResponse.data.tags || [];
-        console.log("태그목록", knowledgeTags.value);
+        //console.log("태그목록", knowledgeTags.value);
 
       } catch (error) {
         console.log("태그 가져오기 실패", error);
