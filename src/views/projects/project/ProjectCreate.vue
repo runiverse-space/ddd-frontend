@@ -103,18 +103,13 @@ import MemberSelector from '@/components/MemberSelector.vue';
 
 const props = defineProps(['projectId']);
 const router = useRouter();
-const projectName = ref('');
 const store = useStore();
 const userId = store.state.userId;
 //태그
 const selectedTags = ref([]);
-
 const defaultImg = defaultImgSrc;
-const searchEmail = ref('');
-const searchResults = ref([]);
 const selectedMembers = ref([]);
-const isSearching = ref(false);
-const showDropdown = ref(false);
+
 // memberselecto로 수정
 const projectMembers = ref([]);
 
@@ -189,11 +184,19 @@ async function createProject() {
   }
 
   try {
+    // console.log("=== 멤버 데이터 흐름 시작 ===");
+    // console.log("1. selectedMembers.value:", projectMembers.value);
+
+
     const userIds = [];
-    for (const member of selectedMembers.value) {
+    for (const member of projectMembers.value) {
       userIds.push(member.userId);
+      // console.log("생성되는 프로젝트 멤버",member.userId);
     }
     project.value.userIds = userIds;
+
+    //  console.log("2. 추출된 userIds 배열:", userIds);
+    // console.log("3. project.value.userIds:", project.value.userIds);
 
     const data = {
       ...project.value,
@@ -201,20 +204,26 @@ async function createProject() {
       members: projectMembers.value.map(m => m.userId)
     };
 
+    //   //** 3. API 전송 직전 최종 데이터 확인 (가장 중요!)
+    // console.log("4. API 전송 직전 data 객체:", JSON.stringify(data, null, 2));
+    // console.log("   - data.userIds:", data.userIds);
+    // console.log("   - data.members:", data.members);
+
     const response = await projectApi.createProject(data);
 
-    console.log("전송할 데이터", response.data);
+    // console.log("5. 서버 응답 전체:", response.data);
+    // console.log("=== 멤버 데이터 흐름 종료 ===");
 
     // 마일스톤 생성
     const result = response.data;
     const projectId = result.data.projectId
     console.log(project.value.projectMilestones);
     for (let milestone of project.value.projectMilestones) {
-      console.log(projectId);
+      // console.log(projectId);
       milestone.projectId = projectId;
-      console.log("마일스톤 생성하기:", milestone);
+      // console.log("마일스톤 생성하기:", milestone);
       const response = await projectMilestoneApi.createProjectMilestone(milestone);
-      console.log(response.data);
+      // console.log(response.data);
     }
     //태그 연결 선택된 태그가 있을경우만.. 무조건 태그 선택하도록해야함
     if (selectedTags.value.length > 0) {
