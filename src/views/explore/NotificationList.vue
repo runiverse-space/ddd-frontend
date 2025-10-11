@@ -6,8 +6,11 @@
       <h3 class="title">알림</h3>
     </div>
 
+    <div v-if="filteredNotifications.length === 0" class="text-secondary">
+      <p>읽지 않은 알림이 없습니다.</p>
+    </div>
     <ul>
-      <li v-for="(notice, i) in notifications" :key="i">
+      <li v-for="(notice, i) in filteredNotifications" :key="i">
         <!-- <p class="text">{{ notice.message }}</p> -->
         <!-- <span class="time">{{ notice.time }}</span> -->
         <!-- <p class="text">{{ notice }}</p> -->
@@ -19,17 +22,31 @@
                 <span class="text"> 님이 </span>
                 <span class="project-title">{{ notice.projectTitle }}</span>
                 <span class="text">에 함께하고 싶어 합니다.</span>
+                <p class="time align-self-end">{{ formatDate(notice.paCreatedAt) }}</p>
               </div>
 
-              <div v-else-if="notice.paType === 'SYSTEM_NOTIFICATION' && notice.paStatus === 'APPROVED'">
+              <div v-if="notice.paType === 'SYSTEM_NOTIFICATION' && notice.paStatus === 'APPROVED'">
                 <span class="project-title">{{ notice.projectTitle }}</span>
                 <span class="text"> 참여가 승인되었습니다. 환영합니다!</span>
+                <p class="time align-self-end">{{ formatDate(notice.paCreatedAt) }}</p>
               </div>
-              <p class="time align-self-end">{{ formatDate(notice.paCreatedAt) }}</p>
+
+              <div v-if="notice.paType === 'SYSTEM_NOTIFICATION' && notice.paStatus === 'REJECTED'">
+                <span class="project-title">{{ notice.projectTitle }}</span>
+                <span class="text">에 대한 참여 요청이 거절되었습니다.</span>
+                <p class="time align-self-end">{{ formatDate(notice.paCreatedAt) }}</p>
+              </div>
             </div>
-            <div class="col-3 d-flex flex-row align-self-start">
-              <CheckCircleIcon style="width: 20px; " class="me-2" @click="handleAcceptParticipation(notice)"></CheckCircleIcon>
-              <XMarkIcon style="width: 20px;" @click="handleRejectParticipation(notice)"></XMarkIcon>
+
+            <div v-if="notice.paType === 'JOIN_REQUEST'" class="col-3 d-flex flex-row align-self-start">
+              <CheckCircleIcon style="width: 20px; " class="me-2 cursor-pointer"
+                @click="handleAcceptParticipation(notice)"></CheckCircleIcon>
+              <XMarkIcon style="width: 20px;" class="cursor-pointer" @click="handleRejectParticipation(notice)">
+              </XMarkIcon>
+            </div>
+
+            <div v-else-if="notice.paType === 'SYSTEM_NOTIFICATION'" class="col-3 d-flex flex-row align-self-start">
+              <CheckIcon style="width: 20px;" class="cursor-pointer" @click="handleRead(notice)"></CheckIcon>
             </div>
           </div>
         </div>
@@ -40,8 +57,8 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
-import { BellIcon, CheckCircleIcon, XMarkIcon } from "@heroicons/vue/24/outline"; // ✅ 아이콘 추가
+import { computed, onMounted, ref } from "vue";
+import { BellIcon, CheckCircleIcon, CheckIcon, XMarkIcon } from "@heroicons/vue/24/outline"; // ✅ 아이콘 추가
 import { useStore } from "vuex";
 import projectActivityApi from "@/apis/projectActivityApi";
 import userprojectroleApi from "@/apis/userprojectroleApi";
@@ -54,6 +71,10 @@ const notifications = ref([
   // { message: "가나다 프로젝트에 초대 받았습니다.", time: "3시간 전" },
 ]);
 
+const filteredNotifications = computed(() =>
+  notifications.value.filter(n => n.paIsRead === 'N')
+);
+
 // 알림 구독
 function connectNotificationStream(userId, onMessage) {
   const eventSource = new EventSource(`http://localhost:8080/api/project-activity/subscribe?userId=${userId}`);
@@ -64,6 +85,11 @@ function connectNotificationStream(userId, onMessage) {
 
   eventSource.addEventListener("project-participation", (event) => {
     console.log("참여 요청 알림 수신:", event.data);
+    onMessage(event.data);
+  });
+
+  eventSource.addEventListener("participation-response", (event) => {
+    console.log("참여 응답 알림 수신:", event.data);
     onMessage(event.data);
   });
 
@@ -125,8 +151,34 @@ async function handleAcceptParticipation(notice) {
 
 // 참여 불허
 async function handleRejectParticipation(notice) {
-  console.group("handleRejectParticipation");
-  const response = await projectActivityApi.rejectProjectParticipation(notice);
+  try {
+    console.group("handleRejectParticipation()");
+    const response = await projectActivityApi.rejectProjectParticipation(notice);
+    console.log(response);
+
+    notifications.value = notifications.value.filter(
+      (n) => n.paId !== notice.paId
+    );
+
+    const projectId = notice.projectId;
+    const receiverId = notice.senderId; // 원본 알림을 보낸 사람 -> 답변 알림을 받을 사람
+    const res = await projectActivityApi.respondProjectParticipation({
+      projectId: projectId,
+      senderId: store.state.userId,
+      receiverId: receiverId,
+      paStatus: "REJECTED"
+    });
+    console.log(res);
+    console.groupEnd();
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+// 읽음 처리
+async function handleRead(notice) {
+  console.group("handleRead()");
+  const response = await projectActivityApi.readResponse(notice);
   console.log(response);
 
   notifications.value = notifications.value.filter(
@@ -223,5 +275,9 @@ li {
 .time {
   color: #888;
   font-size: 0.75rem;
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }
 </style>
