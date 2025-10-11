@@ -26,7 +26,7 @@
       <HomeMilestone :projectDetail="projectDetail" :milestones="milestones" />
 
       <!-- 멤버 -->
-      <HomeMember :projectId="projectIdNumber" />
+      <HomeMember :projectDetail="projectDetail" :projectId="projectIdNumber" />
     </div>
 
     <!-- 세로 분리선 -->

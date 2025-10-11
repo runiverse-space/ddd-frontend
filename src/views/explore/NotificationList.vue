@@ -11,9 +11,6 @@
     </div>
     <ul>
       <li v-for="(notice, i) in filteredNotifications" :key="i">
-        <!-- <p class="text">{{ notice.message }}</p> -->
-        <!-- <span class="time">{{ notice.time }}</span> -->
-        <!-- <p class="text">{{ notice }}</p> -->
         <div v-if="notice.paIsRead === 'N'" class="container-fluid" style="height: 80px; max-height: 80px;">
           <div class="row">
             <div class="col-9 d-flex flex-column h-100">
@@ -36,16 +33,31 @@
                 <span class="text">에 대한 참여 요청이 거절되었습니다.</span>
                 <p class="time align-self-end">{{ formatDate(notice.paCreatedAt) }}</p>
               </div>
+
+              <div v-if="notice.paType === 'INVITATION'">
+                <span class="project-title">{{ notice.projectTitle }}</span>
+                <span class="text">에 초대되었습니다. 함께하시겠어요?</span>
+                <p class="time align-self-end">{{ formatDate(notice.paCreatedAt) }}</p>
+              </div>
             </div>
+
+
 
             <div v-if="notice.paType === 'JOIN_REQUEST'" class="col-3 d-flex flex-row align-self-start">
               <CheckCircleIcon style="width: 20px; " class="me-2 cursor-pointer"
-                @click="handleAcceptParticipation(notice)"></CheckCircleIcon>
+                @click="handleApproveParticipation(notice)"></CheckCircleIcon>
               <XMarkIcon style="width: 20px;" class="cursor-pointer" @click="handleRejectParticipation(notice)">
               </XMarkIcon>
             </div>
 
-            <div v-else-if="notice.paType === 'SYSTEM_NOTIFICATION'" class="col-3 d-flex flex-row align-self-start">
+            <div v-if="notice.paType === 'INVITATION'" class="col-3 d-flex flex-row align-self-start">
+              <CheckCircleIcon style="width: 20px; " class="me-2 cursor-pointer"
+                @click="handleAcceptInvitation(notice)"></CheckCircleIcon>
+              <XMarkIcon style="width: 20px;" class="cursor-pointer" @click="handleDeclineInvitation(notice)">
+              </XMarkIcon>
+            </div>
+
+            <div v-if="notice.paType === 'SYSTEM_NOTIFICATION'" class="col-3 d-flex flex-row align-self-start">
               <CheckIcon style="width: 20px;" class="cursor-pointer" @click="handleRead(notice)"></CheckIcon>
             </div>
           </div>
@@ -62,49 +74,22 @@ import { BellIcon, CheckCircleIcon, CheckIcon, XMarkIcon } from "@heroicons/vue/
 import { useStore } from "vuex";
 import projectActivityApi from "@/apis/projectActivityApi";
 import userprojectroleApi from "@/apis/userprojectroleApi";
+import { useNotificationStream } from "@/composables/useNotificationStream";
+const { notifications, connect } = useNotificationStream();
 
 const store = useStore();
 
-const notifications = ref([
-  // { message: "새 프로젝트 ‘UI 개선’이 생성되었습니다.", time: "5분 전" },
-  // { message: "가나다 프로젝트에 참여 신청 하였습니다.", time: "1시간 전" },
-  // { message: "가나다 프로젝트에 초대 받았습니다.", time: "3시간 전" },
-]);
+notifications.value = [];
+
+// const notifications = ref([
+// { message: "새 프로젝트 ‘UI 개선’이 생성되었습니다.", time: "5분 전" },
+// { message: "가나다 프로젝트에 참여 신청 하였습니다.", time: "1시간 전" },
+// { message: "가나다 프로젝트에 초대 받았습니다.", time: "3시간 전" },
+// ]);
 
 const filteredNotifications = computed(() =>
   notifications.value.filter(n => n.paIsRead === 'N')
 );
-
-// 알림 구독
-function connectNotificationStream(userId, onMessage) {
-  const eventSource = new EventSource(`http://localhost:8080/api/project-activity/subscribe?userId=${userId}`);
-
-  eventSource.addEventListener("connect", (event) => {
-    console.log("SSE 연결 성공:", event.data);
-  });
-
-  eventSource.addEventListener("project-participation", (event) => {
-    console.log("참여 요청 알림 수신:", event.data);
-    onMessage(event.data);
-  });
-
-  eventSource.addEventListener("participation-response", (event) => {
-    console.log("참여 응답 알림 수신:", event.data);
-    onMessage(event.data);
-  });
-
-  eventSource.addEventListener("schedule-assignment", (event) => {
-    console.log("일정 알림 수신:", event.data);
-    onMessage(event.data);
-  });
-
-  eventSource.onerror = (error) => {
-    console.error("SSE 연결 오류:", error);
-    eventSource.close();
-  };
-
-  return eventSource;
-}
 
 // 알림 불러오기
 async function getAlarms() {
@@ -117,9 +102,9 @@ async function getAlarms() {
 }
 
 // 참여 허가
-async function handleAcceptParticipation(notice) {
+async function handleApproveParticipation(notice) {
   try {
-    console.group("handleAcceptParticipation()");
+    console.group("handleApproveParticipation()");
     console.log(notice);
     console.log("userProjectRole 행 추가");
     let response = await userprojectroleApi.addMember(notice.projectId, notice.senderId);
@@ -175,6 +160,32 @@ async function handleRejectParticipation(notice) {
   }
 }
 
+// 초대 수락
+async function handleAcceptInvitation(notice) {
+  try {
+    await userprojectroleApi.addMember(notice.projectId, notice.receiverId);
+
+    await projectActivityApi.acceptProjectInvitation(notice);
+    notifications.value = notifications.value.filter(
+      (n) => n.paId !== notice.paId
+    );
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+// 초대 거절
+async function handleDeclineInvitation(notice) {
+  try {
+    await projectActivityApi.declineProjectInvitation(notice);
+    notifications.value = notifications.value.filter(
+      (n) => n.paId !== notice.paId
+    );
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 // 읽음 처리
 async function handleRead(notice) {
   console.group("handleRead()");
@@ -199,12 +210,8 @@ function formatDate(dataString) {
 }
 
 onMounted(async () => {
-  const userId = store.state.userId;
-  connectNotificationStream(userId, (message) => {
-    notifications.value.push(message);
-  });
+  connect(store.state.userId);
   await getAlarms();
-  console.log("알림 목록:", notifications.value);
 });
 </script>
 

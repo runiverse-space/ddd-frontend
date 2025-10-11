@@ -1,50 +1,47 @@
 <template>
-    <div class="section-header">
-        <div class="icon-title">
-            <UserPlusIcon class="icon" />
-            <span class="small-title">멤버</span>
-        </div>
-
-        <div class="member-grid">
-            <!-- ✅ 기존 멤버 카드 -->
-             <div v-for="member in members" :key="member.userId" class="member-card">
-            <!-- ✅ 팀장 배지 -->
-            <CheckBadgeIcon
-                v-if="member.userId === adminId"
-                class="admin-badge"
-            />
-
-            <div class="card-top">
-                <img :src="member.profileUrl" class="profile-img" alt="profile" />
-                <div class="user-info">
-                <h4 class="name">{{ member.userName }}</h4>
-                <p class="email">{{ member.userEmail }}</p>
-                </div>
-            </div>
-
-            <!-- 태그 -->
-            <div class="tags">
-                <span v-for="tag in member.tags" :key="tag.tagId" class="tag" :style="tagStyle(tag)">
-                {{ tag.tagName }}
-                </span>
-            </div>
-
-            <!-- 한마디 -->
-            <p class="oneline">{{ member.userIntro || "한마디를 작성해주세요." }}</p>
-            </div>
-
-            <!-- ✅ 새 멤버 초대 카드 -->
-            <div class="member-card add-member" @click="openInviteModal">
-                <span>+ 새 멤버 초대</span>
-            </div>
-        </div>
-
-        <BaseModal :show="showInviteModal" type="default" title="새 멤버 찾기" button-text="등록" button-action="confirm"
-            height="auto" @close="showInviteModal = false" @confirm="inviteMembers">
-            함께 프로젝트를 진행할 팀원을 찾아보세요 👋
-            <MemberSelector v-model="projectMembers" />
-        </BaseModal>
+  <div class="section-header">
+    <div class="icon-title">
+      <UserPlusIcon class="icon" />
+      <span class="small-title">멤버</span>
     </div>
+
+    <div class="member-grid">
+      <!-- ✅ 기존 멤버 카드 -->
+      <div v-for="member in members" :key="member.userId" class="member-card">
+        <!-- ✅ 팀장 배지 -->
+        <CheckBadgeIcon v-if="member.userId === adminId" class="admin-badge" />
+
+        <div class="card-top">
+          <img :src="member.profileUrl" class="profile-img" alt="profile" />
+          <div class="user-info">
+            <h4 class="name">{{ member.userName }}</h4>
+            <p class="email">{{ member.userEmail }}</p>
+          </div>
+        </div>
+
+        <!-- 태그 -->
+        <div class="tags">
+          <span v-for="tag in member.tags" :key="tag.tagId" class="tag" :style="tagStyle(tag)">
+            {{ tag.tagName }}
+          </span>
+        </div>
+
+        <!-- 한마디 -->
+        <p class="oneline">{{ member.userIntro || "한마디를 작성해주세요." }}</p>
+      </div>
+
+      <!-- ✅ 새 멤버 초대 카드 -->
+      <div class="member-card add-member" @click="openInviteModal">
+        <span>+ 새 멤버 초대</span>
+      </div>
+    </div>
+
+    <BaseModal :show="showInviteModal" type="default" title="새 멤버 찾기" button-text="등록" button-action="confirm"
+      height="auto" @close="showInviteModal = false" @confirm="inviteMembers">
+      함께 프로젝트를 진행할 팀원을 찾아보세요 👋
+      <MemberSelector v-model="projectMembers" />
+    </BaseModal>
+  </div>
 </template>
 
 <script setup>
@@ -58,9 +55,12 @@ import usersApi from "@/apis/usersApi";
 import tagApi from "@/apis/tagApi";
 import defaultProfile from "@/assets/default-profile.png";
 import { getTagColors } from "@/utils/tagColor";
+import projectActivityApi from "@/apis/projectActivityApi";
+import { useStore } from "vuex";
 
 const props = defineProps({
-    projectId: Number,
+  projectId: Number,
+  projectDetail: Object
 });
 
 const members = ref([]);
@@ -68,9 +68,11 @@ const showInviteModal = ref(false); // ✅ 모달 상태
 const projectMembers = ref([]); // ✅ 멤버 선택 결과
 const adminId = ref(null);
 
+const store = useStore();
+
 function openInviteModal() {
-    projectMembers.value = [];
-    showInviteModal.value = true;
+  projectMembers.value = [];
+  showInviteModal.value = true;
 }
 
 onMounted(async () => {
@@ -79,49 +81,49 @@ onMounted(async () => {
 });
 
 async function loadMembers() {
-    try {
-        const res = await userprojectroleApi.getMemberList(props.projectId);
-        const data = res.data.data || res.data;
+  try {
+    const res = await userprojectroleApi.getMemberList(props.projectId);
+    const data = res.data.data || res.data;
 
-        members.value = await Promise.all(
-            data.map(async (m) => {
-                const userRes = await usersApi.usersDetailById(m.userId);
-                const userData = userRes.data.data || userRes.data;
+    members.value = await Promise.all(
+      data.map(async (m) => {
+        const userRes = await usersApi.usersDetailById(m.userId);
+        const userData = userRes.data.data || userRes.data;
 
-                let profileUrl = defaultProfile;
-                try {
-                    const imgRes = await usersApi.ufAttachDownload(m.userId);
-                    const blob = new Blob([imgRes.data], {
-                        type: imgRes.headers["content-type"],
-                    });
-                    profileUrl = URL.createObjectURL(blob);
-                } catch (error) {
-                    console.log(error);
-                }
+        let profileUrl = defaultProfile;
+        try {
+          const imgRes = await usersApi.ufAttachDownload(m.userId);
+          const blob = new Blob([imgRes.data], {
+            type: imgRes.headers["content-type"],
+          });
+          profileUrl = URL.createObjectURL(blob);
+        } catch (error) {
+          console.log(error);
+        }
 
-                const tagRes = await tagApi.getUserTags(m.userId);
-                userData.tags =
-                    tagRes.data.tags?.map((t) => ({
-                        tagId: t.tagId ?? t.tag_id,
-                        tagName: t.tagName ?? t.tag_name,
-                        tagType: t.tagType ?? t.tag_type ?? "USER",
-                    })) || [];
+        const tagRes = await tagApi.getUserTags(m.userId);
+        userData.tags =
+          tagRes.data.tags?.map((t) => ({
+            tagId: t.tagId ?? t.tag_id,
+            tagName: t.tagName ?? t.tag_name,
+            tagType: t.tagType ?? t.tag_type ?? "USER",
+          })) || [];
 
-                return {
-                    ...userData,
-                    profileUrl,
-                };
-            })
-        );
-    } catch (e) {
-        console.error("멤버 조회 실패:", e);
-    }
+        return {
+          ...userData,
+          profileUrl,
+        };
+      })
+    );
+  } catch (e) {
+    console.error("멤버 조회 실패:", e);
+  }
 }
 
 async function loadAdmin() {
   try {
     const res = await userprojectroleApi.getAdmin(props.projectId);
-    const data = res.data.data || res.data; 
+    const data = res.data.data || res.data;
     if (Array.isArray(data) && data.length > 0) {
       adminId.value = data[0].user_id || data[0].userId; // ✅ 첫 번째 관리자
     } else {
@@ -134,11 +136,19 @@ async function loadAdmin() {
 }
 
 async function inviteMembers() {
-    for (const user of projectMembers.value) {
-        await userprojectroleApi.addMember(props.projectId, user.userId);
-    }
-    showInviteModal.value = false;
-    loadMembers(); // 리스트 새로고침
+  let res;
+  for (const user of projectMembers.value) {
+    // await userprojectroleApi.addMember(props.projectId, user.userId);
+    res = await projectActivityApi.sendInvitation({ 
+      projectId: props.projectId, 
+      senderId: store.state.userId, 
+      receiverId: user.userId });
+    
+    console.log("초대 알림 발송 결과");
+    console.log(res);
+  }
+  showInviteModal.value = false;
+  loadMembers(); // 리스트 새로고침
 }
 /*
 async function removeMember(member) {
@@ -150,30 +160,31 @@ async function removeMember(member) {
 */
 
 function tagStyle(tag) {
-    const { bg, color, border } = getTagColors(tag.tagType);
-    return {
-        backgroundColor: bg,
-        color,
-        border: `1px solid ${border}`,
-        borderRadius: "3px",
-        padding: "6px 12px",
-        fontWeight: "500",
-        fontSize: "0.65rem",
-    };
+  const { bg, color, border } = getTagColors(tag.tagType);
+  return {
+    backgroundColor: bg,
+    color,
+    border: `1px solid ${border}`,
+    borderRadius: "3px",
+    padding: "6px 12px",
+    fontWeight: "500",
+    fontSize: "0.65rem",
+  };
 }
 </script>
 
 <style scoped>
 .member-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    column-gap: 15px;
-    row-gap: 35px;
-    margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  column-gap: 15px;
+  row-gap: 35px;
+  margin-top: 20px;
 }
 
 .member-card {
-  position: relative; /* ✅ 카드 기준 배지 위치 */
+  position: relative;
+  /* ✅ 카드 기준 배지 위치 */
   width: 280px;
   min-height: 160px;
   background: #fff;
@@ -197,85 +208,85 @@ function tagStyle(tag) {
   background: #fff;
   border-radius: 50%;
   padding: 2px;
-  
+
 }
 
 .member-card:hover {
-    box-shadow: 0 5px 14px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
 }
 
 .card-top {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-height: 52px;
 }
 
 .profile-img {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    object-fit: cover;
-    flex-shrink: 0;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
 .user-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .name {
-    font-weight: 700;
-    color: #111;
-    font-size: 1rem;
-    margin: 0;
+  font-weight: 700;
+  color: #111;
+  font-size: 1rem;
+  margin: 0;
 }
 
 .email {
-    font-size: 0.7rem;
-    color: #777;
-    margin: 3px 0 0 0;
+  font-size: 0.7rem;
+  color: #777;
+  margin: 3px 0 0 0;
 }
 
 .tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .tag {
-    display: inline-block;
-    white-space: nowrap;
-    transition: all 0.2s ease;
+  display: inline-block;
+  white-space: nowrap;
+  transition: all 0.2s ease;
 }
 
 .oneline {
-    margin-top: 15px;
-    color: #555;
-    font-size: 0.9rem;
-    line-height: 1.4;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+  margin-top: 15px;
+  color: #555;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .add-member {
-    justify-content: center;
-    align-items: center;
-    display: flex;
-    color: #999;
-    font-weight: 500;
-    cursor: pointer;
-    border: 1px dashed #ddd;
-    background: #fefefe;
-    transition: all 0.2s ease;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  color: #999;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px dashed #ddd;
+  background: #fefefe;
+  transition: all 0.2s ease;
 }
 
 .add-member:hover {
-    border-color: #ddd;
-    color: #555;
+  border-color: #ddd;
+  color: #555;
 }
 </style>
