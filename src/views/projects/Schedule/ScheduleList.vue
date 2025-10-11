@@ -84,7 +84,9 @@
     </div>
   </div>
 
-  <BaseModal :show="showDeleteCompleted" type="default" title="일정 삭제 완료" @close="showDeleteCompleted = false"> </BaseModal>
+  <BaseModal :show="showDeleteCompleted" type="default" title="일정 삭제 완료" @close="showDeleteCompleted = false">
+    일정이 삭제되었습니다.
+  </BaseModal>
 
   <!-- 일정 상세 모달 -->
   <div class="modal fade" id="scheduleDetailModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true" ref="detailModalRef">
