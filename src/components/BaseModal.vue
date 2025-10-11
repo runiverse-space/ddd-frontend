@@ -28,7 +28,7 @@
         <div class="modal-footer">
           <!-- dual 버튼 -->
           <template v-if="type === 'default-dual'">
-            <button class="confirm-btn default" @click="emitConfirm">
+            <button class="confirm-btn default" @click="confirm">
               {{ confirmButtonText || "확인" }}
             </button>
             <button class="close-btn-dual" @click="close">

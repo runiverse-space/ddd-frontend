@@ -23,12 +23,23 @@
 
                 <div class="member-row">
                     <p class="member-count">참여인원 {{ project.memberCount }} / 6</p>
-                    <button class="join-btn" @click="handleParticipationRequest(project)">참여하기</button>
+                    <button class="join-btn" @click="openParticipationRequest(project)">참여하기</button>
                 </div>
             </div>
         </div>
 
         <p v-else class="empty-text">해당 태그의 프로젝트가 없습니다.</p>
+
+        <!-- 참여하기 버튼 클릭 시 -->
+        <BaseModal :show="showRequestModal" type="default-dual" title="프로젝트 참여 요청" confirm-button-text="예"
+            close-button-text="아니요" @confirm="sendParticipationRequest()" @close="showRequestModal = false">
+            {{ selectedProject.projectTitle }}에 참여 요청을 보내시겠습니까?
+        </BaseModal>
+
+        <!-- 위 모달에서 '예' 바튼 클릭 시 -->
+        <BaseModal :show="showRequestDoneModal" type="default" title="프로젝트 참여 요청" @close="showRequestDoneModal = false">
+            참여 요청이 전송되었습니다.
+        </BaseModal>
     </div>
 </template>
 
@@ -40,10 +51,16 @@ import tagApi from "@/apis/tagApi";
 import { getTagColors } from "@/utils/tagColor"; // ✅ 전역 색상 유틸 추가
 import projectActivityApi from "@/apis/projectActivityApi";
 import { useStore } from "vuex";
+import BaseModal from "@/components/BaseModal.vue";
 
 const projectList = ref([]);
 const selectedTag = ref("전체");
 const tagList = ref([]);
+
+const showRequestModal = ref(false);
+const showRequestDoneModal = ref(false);
+const selectedProject = ref(null);
+
 const store = useStore();
 
 /* ✅ 태그 스타일 계산 */
@@ -56,11 +73,22 @@ function tagStyle(tag) {
     };
 }
 
-// '참여하기' 버튼 클릭 시 그룹장에게 알림 발송
-async function handleParticipationRequest(project) {
-    const projectId = project.projectId
-    const res = await projectActivityApi.sendProjectParticipationRequestNotification({projectId: projectId, senderId: store.state.userId});
+// '참여하기' 버튼 클릭 시 요청 확인을 묻는 모달 띄우기
+function openParticipationRequest(project) {
+    showRequestModal.value = true;
+    selectedProject.value = project;
+    // const projectId = project.projectId
+    // const res = await projectActivityApi.sendProjectParticipationRequestNotification({projectId: projectId, senderId: store.state.userId});
+    // console.log(res);
+}
+
+// 모달에서 '예' 버튼 누르면 프로젝트의 그룹장에게 참여 알림 발송
+async function sendParticipationRequest() {
+    const projectId = selectedProject.value.projectId;
+    const res = await projectActivityApi.sendProjectParticipationRequestNotification({ projectId: projectId, senderId: store.state.userId });
     console.log(res);
+    showRequestModal.value = false;
+    showRequestDoneModal.value = true;
 }
 
 onMounted(async () => {
