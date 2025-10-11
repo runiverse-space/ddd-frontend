@@ -23,7 +23,14 @@
 
                 <div class="member-row">
                     <p class="member-count">참여인원 {{ project.memberCount }} / 6</p>
-                    <button class="join-btn" @click="openParticipationRequest(project)">참여하기</button>
+                    <button v-if="!project.members.map(member => member.userId).includes(store.state.userId)" class="join-btn" 
+                    @click="openParticipationRequest(project)">
+                        참여하기
+                    </button>
+                    <!-- 이미 참여 중인 경우 참여 버튼 비활성화 -->
+                    <button v-else class="join-btn" disabled>
+                        참여 중
+                    </button>
                 </div>
             </div>
         </div>
@@ -106,6 +113,7 @@ onMounted(async () => {
         for (const project of projects) {
             const memberRes = await userProjectRoleApi.getMemberList(project.projectId);
             project.memberCount = memberRes.data.length || 0;
+            project.members = memberRes.data;
 
             const projectTagRes = await tagApi.getProjectTags(project.projectId);
             if (projectTagRes.data && projectTagRes.data.tags) {
