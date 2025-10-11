@@ -25,6 +25,11 @@ function respondProjectParticipation(request) {
   return axios.post("/api/project-activity/respond-participation", request)
 }
 
+// 답변 알림 읽음 처리
+function readResponse(notice) {
+  return axios.put("/api/project-activity/read-response", notice)
+}
+
 function getAlarms(receiverId) {
   return axios.get("/api/project-activity/list", { params: { receiverId } });
 }
@@ -36,5 +41,6 @@ export default {
   approveProjectParticipation,
   rejectProjectParticipation,
   respondProjectParticipation,
+  readResponse,
   getAlarms
 }
