@@ -3,20 +3,28 @@
   <div class="project-create">
     <h1 class="page-title">프로젝트 생성</h1>
 
-    <!-- 1단계: 프로젝트명 -->
+    <!-- 1단계: 프로젝트명 (✨ 유효성 검사 추가) -->
     <div class="form-section">
       <label class="form-label">
         프로젝트명 <span class="text-danger">*</span>
       </label>
-      <input type="text" class="form-control" placeholder="프로젝트명을 입력하세요" v-model="project.projectTitle" />
+      <input type="text" class="form-control" :class="{ 'is-invalid': touched.projectTitle && errors.projectTitle }" placeholder="프로젝트명을 입력하세요" v-model="project.projectTitle" @focus="handleTitleFocus"
+        @blur="handleTitleBlur" @input="handleTitleInput" />
+      <div v-if="touched.projectTitle && errors.projectTitle" class="invalid-feedback">
+        {{ errors.projectTitle }}
+      </div>
     </div>
 
-    <!-- 2단계: 프로젝트 개요 -->
+    <!-- 2단계: 프로젝트 개요 (✨ 유효성 검사 추가) -->
     <div class="form-section">
       <label class="form-label">
         프로젝트 개요 <span class="text-danger">*</span>
       </label>
-      <textarea class="form-control" rows="6" placeholder="프로젝트 소개를 입력합니다. (최대 150자 제한)" v-model="project.projectContent" maxlength="150"></textarea>
+      <textarea class="form-control" :class="{ 'is-invalid': touched.projectContent && errors.projectContent }" rows="6" placeholder="프로젝트 소개를 입력합니다. (최대 150자 제한)" v-model="project.projectContent"
+        maxlength="150" @focus="handleContentFocus" @blur="handleContentBlur" @input="handleContentInput"></textarea>
+      <div v-if="touched.projectContent && errors.projectContent" class="invalid-feedback">
+        {{ errors.projectContent }}
+      </div>
       <small class="text-muted">{{ project.projectContent.length }}/150 characters</small>
     </div>
 
@@ -24,11 +32,11 @@
     <div>
       <MemberSelector v-model="projectMembers" />
     </div>
+
     <!-- 4단계: 만든이 -->
     <div class="form-section">
       <label class="form-label mt-3"></label>
       <div class="creator-info">
-        <!-- ✅ 프로필 이미지 + 이름 표시 -->
         <img :src="creatorInfo.profileUrl" alt="profile" class="creator-img" />
         <span class="creator-name">{{ creatorInfo.userName || '로딩 중...' }}</span>
       </div>
@@ -38,10 +46,9 @@
     <div class="form-section">
       <label class="form-label">프로젝트 일정을 추가해 주세요</label>
       <p class="text-muted small">프로젝트 시작일자를 선택해주세요.</p>
-
       <input type="date" class="form-control mb-3" v-model="project.projectStartDate" :min="today" />
 
-      <p class="text-muted small ">프로젝트 종료일자를 선택해주세요.</p>
+      <p class="text-muted small">프로젝트 종료일자를 선택해주세요.</p>
       <input type="date" class="form-control mb-3" :min="minEndDate" v-model="project.projectEndDate" />
     </div>
 
@@ -49,28 +56,32 @@
     <div class="form-section">
       <p class="text-muted small">프로젝트 일정을 등록해주세요. (최대 3개 가능)</p>
 
-      <!-- 마일스톤 입력 필드 -->
       <div v-for="(milestone, index) in project.projectMilestones" :key="index" class="mb-3 border rounded p-3">
         <label class="form-label fw-semibold">마일스톤 {{ index + 1 }}</label>
         <input type="date" class="form-control mb-2" v-model="milestone.milestoneDate" placeholder="날짜를 선택하세요" />
         <input type="text" class="form-control" v-model="milestone.milestoneTitle" placeholder="마일스톤 내용을 입력하세요" />
 
-        <!-- 마일스톤 취소 버튼 -->
         <button type="button" class="btn btn-outline-danger btn-sm mt-2 w-100" @click="removeMilestone(index)">
           <i class="bi bi-trash"></i> 마일스톤 취소
         </button>
       </div>
 
-      <!-- 마일스톤 추가 버튼 -->
       <button class="btn btn-outline-secondary w-100" @click="addMilestone()" :disabled="project.projectMilestones.length >= 3">
         <i class="bi bi-plus"></i> 마일스톤 자리
       </button>
     </div>
 
-    <!-- 7단계: 태그 추가 -->
+    <!-- 7단계: 태그 추가 (✨ 유효성 검사 추가) -->
     <div class="tag-section">
-      <label>프로젝트 태그(최대 3개)</label>
-      <DualTagSelector tagType="PROJECT" v-model="selectedTags" />
+      <label>
+        프로젝트 태그(최대 3개)<span class="text-danger">*</span>
+      </label>
+      <div :class="{ 'border border-danger rounded p-2': touched.tags && errors.tags }">
+        <DualTagSelector tagType="PROJECT" v-model="selectedTags" @update:modelValue="handleTagsChange" />
+      </div>
+      <div v-if="touched.tags && errors.tags" class="text-danger small mt-1">
+        {{ errors.tags }}
+      </div>
     </div>
 
     <!-- 생성 버튼 -->
@@ -81,10 +92,30 @@
       <button class="btn btn-light btn-lg" @click="handleCancel">
         취소
       </button>
-
     </div>
-  </div>
 
+    <!-- 프로젝트 등록 -->
+    <BaseModal 
+    :show="showDefault" 
+    buttonAction="confirm"
+    buttonText="등록"
+    type="default" 
+    title="프로젝트 등록" 
+    @close="showDefault = false"
+    @confirm="createConfirm">
+      프로젝트를 등록하시겠습니까?
+    </BaseModal>
+
+    <!-- 프로젝트 등록 완료 모달 -->
+    <BaseModal :show="showDefaultCompleted" type="default" title="등록 완료" @close="showDefaultCompleted = false; router.push('/project')">
+      프로젝트 등록이 완료되었습니다.
+    </BaseModal>
+
+    <!-- ✨ 에러 모달 추가 -->
+    <BaseModal :show="showErrorModal" type="error" title="등록 실패" @close="showErrorModal = false">
+      {{ modalMessage }}
+    </BaseModal>
+  </div>
 </template>
 
 
@@ -100,6 +131,7 @@ import usersApi from '@/apis/usersApi';
 import DualTagSelector from '@/components/DualTagSelector.vue';
 import defaultImgSrc from '@/assets/default-profile.png';
 import MemberSelector from '@/components/MemberSelector.vue';
+import BaseModal from '@/components/BaseModal.vue';
 
 const props = defineProps(['projectId']);
 const router = useRouter();
@@ -113,6 +145,112 @@ const selectedMembers = ref([]);
 // memberselecto로 수정
 const projectMembers = ref([]);
 
+//모달창 등록
+const showDefault = ref(false);
+const showDefaultCompleted = ref(false);
+
+const showErrorModal = ref(false);    // ⭐ 에러 모달
+const modalMessage = ref('');
+
+//유효성검사 빨갛게 띄우기
+
+//에러 상태 추가
+const errors = ref({
+  projectTitle: "",
+  projectContent: "",
+  tags: ""
+});
+
+// 터치 상태
+const touched = ref({
+  projectTitle: false,
+  projectContent: false,
+  tags: false
+})
+
+//제목 검증 함수
+function validateTitle() {
+
+  if (!project.value.projectTitle || project.value.projectTitle.trim() === '') {
+    errors.value.projectTitle = '제목은 필수 입력 항목입니다.';
+    return false;
+  }
+  errors.value.projectTitle = '';
+  return true;
+}
+
+//내용 검증 함수
+function validateContent() {
+  if (!project.value.projectContent || project.value.projectContent.trim() === '') {
+    errors.value.projectContent = '내용은 필수 입력 항목입니다.';
+    return false;
+  }
+  errors.value.projectContent = '';
+  return true;
+}
+
+// ✨ 태그 검증 함수 
+function validateTags() {
+  if (!selectedTags.value || selectedTags.value.length === 0) {
+    errors.value.tags = '최소 1개 이상의 태그를 선택해주세요.';
+    return false;
+  }
+  if (selectedTags.value.length > 3) {
+    errors.value.tags = '태그는 최대 3개까지 선택 가능합니다.';
+    return false;
+  }
+  errors.value.tags = '';
+  return true;
+}
+
+//전체 폼 검증
+function validateForm() {
+  const isTitleValid = validateTitle();
+  const isContentValid = validateContent();
+  const isTagsValid = validateTags();
+  return isTitleValid && isContentValid && isTagsValid;
+}
+
+
+// ✨ 제목 focus (지나갈 때 바로 touched 설정)
+function handleTitleFocus() {
+  touched.value.projectTitle = true;
+}
+
+// 제목 blur (검증 실행)
+function handleTitleBlur() {
+  validateTitle();
+}
+
+// 제목 input (실시간 에러 제거)
+function handleTitleInput() {
+  if (touched.value.projectTitle) {
+    validateTitle();
+  }
+}
+
+// ✨ 내용 focus (지나갈 때 바로 touched 설정)
+function handleContentFocus() {
+  touched.value.projectContent = true;
+}
+
+// 내용 blur (검증 실행)
+function handleContentBlur() {
+  validateContent();
+}
+
+// 내용 input (실시간 에러 제거)
+function handleContentInput() {
+  if (touched.value.projectContent) {
+    validateContent();
+  }
+}
+
+// ✨ 태그 변경 핸들러 (선택/해제 시 즉시 검증)
+function handleTagsChange() {
+  touched.value.tags = true;
+  validateTags();
+}
 
 //** 오늘 날짜를 YYYY-MM-DD 형식으로 생성
 const today = computed(() => {
@@ -172,31 +310,46 @@ async function getCreatorInfo() {
 
 //프로젝트 생성하기
 async function createProject() {
-  //** 필수 입력 검증
-  if (!project.value.projectTitle.trim()) {
-    alert('프로젝트명을 입력해주세요.');
-    return;
-  }
+  console.log("1.프로젝트 생성하기 1단계 유효성검사")
+   console.log("=== 유효성 검사 시작 ===");
+  console.log("제목:", project.value.projectTitle);
+  console.log("내용:", project.value.projectContent);
+  console.log("태그:", selectedTags.value);
 
-  if (!project.value.projectContent.trim()) {
-    alert('프로젝트 개요를 입력해주세요.');
+  touched.value.projectTitle = true;
+  touched.value.projectContent = true;
+  touched.value.tags = true;
+
+  // 전체 유효성 검사
+  if (!validateForm()) {
+    showErrorModal.value = true;
+    modalMessage.value = '필수 항목을 모두 입력해주세요.';
+    console.log("2. 유효성검사완료");
     return;
   }
+console.log("3. 유효성검사 진짜 완료");
+  showDefault.value = true;
+
+}
+
+async function createConfirm() {
+  console.log("3.등록하기 버튼 누르고 난후에 실제 api 호출하기")
+  showDefault.value = false;
 
   try {
-    // console.log("=== 멤버 데이터 흐름 시작 ===");
-    // console.log("1. selectedMembers.value:", projectMembers.value);
+    console.log("=== 멤버 데이터 흐름 시작 ===");
+    console.log("1. selectedMembers.value:", projectMembers.value);
 
 
     const userIds = [];
     for (const member of projectMembers.value) {
       userIds.push(member.userId);
-      // console.log("생성되는 프로젝트 멤버",member.userId);
+      console.log("생성되는 프로젝트 멤버",member.userId);
     }
     project.value.userIds = userIds;
 
-    //  console.log("2. 추출된 userIds 배열:", userIds);
-    // console.log("3. project.value.userIds:", project.value.userIds);
+     console.log("2. 추출된 userIds 배열:", userIds);
+    console.log("3. project.value.userIds:", project.value.userIds);
 
     const data = {
       ...project.value,
@@ -204,26 +357,26 @@ async function createProject() {
       members: projectMembers.value.map(m => m.userId)
     };
 
-    //   //** 3. API 전송 직전 최종 데이터 확인 (가장 중요!)
-    // console.log("4. API 전송 직전 data 객체:", JSON.stringify(data, null, 2));
-    // console.log("   - data.userIds:", data.userIds);
-    // console.log("   - data.members:", data.members);
+      //** 3. API 전송 직전 최종 데이터 확인 (가장 중요!)
+    console.log("4. API 전송 직전 data 객체:", JSON.stringify(data, null, 2));
+    console.log("   - data.userIds:", data.userIds);
+    console.log("   - data.members:", data.members);
 
     const response = await projectApi.createProject(data);
 
-    // console.log("5. 서버 응답 전체:", response.data);
-    // console.log("=== 멤버 데이터 흐름 종료 ===");
+    console.log("5. 서버 응답 전체:", response.data);
+    console.log("=== 멤버 데이터 흐름 종료 ===");
 
     // 마일스톤 생성
     const result = response.data;
     const projectId = result.data.projectId
     console.log(project.value.projectMilestones);
     for (let milestone of project.value.projectMilestones) {
-      // console.log(projectId);
+      console.log(projectId);
       milestone.projectId = projectId;
-      // console.log("마일스톤 생성하기:", milestone);
+      console.log("마일스톤 생성하기:", milestone);
       const response = await projectMilestoneApi.createProjectMilestone(milestone);
-      // console.log(response.data);
+      console.log(response.data);
     }
     //태그 연결 선택된 태그가 있을경우만.. 무조건 태그 선택하도록해야함
     if (selectedTags.value.length > 0) {
@@ -233,17 +386,22 @@ async function createProject() {
         tagIds: selectedTagIds
       })
     }
-
-    router.back();
+    console.log("4. showDefaultCompleted 완료")
+    showDefaultCompleted.value = true;
 
   } catch (error) {
     console.log(error);
+    showErrorModal.value = true;
+    modalMessage.value = '오류가 발생했습니다.'
   }
+
 
 }
 
+
+
 function handleCancel() {
-  router.back();
+  router.push('/project');
 }
 
 // 마일스톤 추가
