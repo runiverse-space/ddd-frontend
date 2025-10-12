@@ -298,7 +298,7 @@ async function getCreatorInfo() {
         const imgRes = await usersApi.ufAttachDownload(userId);
         creatorInfo.value.profileUrl = URL.createObjectURL(imgRes.data);
       } catch (err) {
-        console.log('프로필 이미지 로드 실패, 기본 이미지 사용');
+        // console.log('프로필 이미지 로드 실패, 기본 이미지 사용');
         creatorInfo.value.profileUrl = defaultImg;
       }
     }
@@ -310,11 +310,11 @@ async function getCreatorInfo() {
 
 //프로젝트 생성하기
 async function createProject() {
-  console.log("1.프로젝트 생성하기 1단계 유효성검사")
-   console.log("=== 유효성 검사 시작 ===");
-  console.log("제목:", project.value.projectTitle);
-  console.log("내용:", project.value.projectContent);
-  console.log("태그:", selectedTags.value);
+  // console.log("1.프로젝트 생성하기 1단계 유효성검사")
+  //  console.log("=== 유효성 검사 시작 ===");
+  // console.log("제목:", project.value.projectTitle);
+  // console.log("내용:", project.value.projectContent);
+  // console.log("태그:", selectedTags.value);
 
   touched.value.projectTitle = true;
   touched.value.projectContent = true;
@@ -333,23 +333,23 @@ console.log("3. 유효성검사 진짜 완료");
 }
 
 async function createConfirm() {
-  console.log("3.등록하기 버튼 누르고 난후에 실제 api 호출하기")
+  // console.log("3.등록하기 버튼 누르고 난후에 실제 api 호출하기")
   showDefault.value = false;
 
   try {
-    console.log("=== 멤버 데이터 흐름 시작 ===");
-    console.log("1. selectedMembers.value:", projectMembers.value);
+    // console.log("=== 멤버 데이터 흐름 시작 ===");
+    // console.log("1. selectedMembers.value:", projectMembers.value);
 
 
     const userIds = [];
     for (const member of projectMembers.value) {
       userIds.push(member.userId);
-      console.log("생성되는 프로젝트 멤버",member.userId);
+      // console.log("생성되는 프로젝트 멤버",member.userId);
     }
     project.value.userIds = userIds;
 
-     console.log("2. 추출된 userIds 배열:", userIds);
-    console.log("3. project.value.userIds:", project.value.userIds);
+    //  console.log("2. 추출된 userIds 배열:", userIds);
+    // console.log("3. project.value.userIds:", project.value.userIds);
 
     const data = {
       ...project.value,
@@ -357,26 +357,22 @@ async function createConfirm() {
       members: projectMembers.value.map(m => m.userId)
     };
 
-      //** 3. API 전송 직전 최종 데이터 확인 (가장 중요!)
-    console.log("4. API 전송 직전 data 객체:", JSON.stringify(data, null, 2));
-    console.log("   - data.userIds:", data.userIds);
-    console.log("   - data.members:", data.members);
+    
 
     const response = await projectApi.createProject(data);
 
-    console.log("5. 서버 응답 전체:", response.data);
-    console.log("=== 멤버 데이터 흐름 종료 ===");
+    
 
     // 마일스톤 생성
     const result = response.data;
     const projectId = result.data.projectId
-    console.log(project.value.projectMilestones);
+    
     for (let milestone of project.value.projectMilestones) {
-      console.log(projectId);
+      
       milestone.projectId = projectId;
-      console.log("마일스톤 생성하기:", milestone);
+      
       const response = await projectMilestoneApi.createProjectMilestone(milestone);
-      console.log(response.data);
+   
     }
     //태그 연결 선택된 태그가 있을경우만.. 무조건 태그 선택하도록해야함
     if (selectedTags.value.length > 0) {
@@ -386,11 +382,11 @@ async function createConfirm() {
         tagIds: selectedTagIds
       })
     }
-    console.log("4. showDefaultCompleted 완료")
+    // console.log("4. showDefaultCompleted 완료")
     showDefaultCompleted.value = true;
 
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     showErrorModal.value = true;
     modalMessage.value = '오류가 발생했습니다.'
   }
