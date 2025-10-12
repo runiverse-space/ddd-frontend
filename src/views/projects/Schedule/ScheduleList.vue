@@ -11,23 +11,19 @@
 
   <!-- <button class="btn btn-dark btn-sm m-2" @click="handleWrite()">새 일정 작성</button> -->
   <div class="board-container">
-    <div
-      v-for="status in statuses"
-      :key="status"
-      class="status-column"
-      :class="{
-        'not-started': status === 'NOT STARTED',
-        'in-progress': status === 'IN PROGRESS',
-        done: status === 'DONE',
-      }"
-    >
+    <div v-for="status in statuses" :key="status" class="status-column" :class="{
+      'not-started': status === 'NOT STARTED',
+      'in-progress': status === 'IN PROGRESS',
+      done: status === 'DONE',
+    }">
       <!-- 상태 제목 -->
       <div class="column-header">
         <span class="status-dot"></span>
         {{ statusLabels[status] }}
       </div>
 
-      <VueDraggableNext v-model="schedulesByStatus[status]" group="schedules" @end="onDragEnd($event)" :data-status="status" tag="div" class="p-2">
+      <VueDraggableNext v-model="schedulesByStatus[status]" group="schedules" @end="onDragEnd($event)"
+        :data-status="status" tag="div" class="p-2">
         <!-- 일정 카드 -->
         <div v-for="schedule in schedulesByStatus[status]" :key="schedule.scheduleId" class="schedule-card">
           <div class="card-top">
@@ -37,16 +33,12 @@
             </div>
             <div class="card-icons">
               <ListBulletIcon class="action-icon" title="상세보기" @click="openModal(schedule)" />
-              <PencilSquareIcon
-                class="action-icon"
-                title="수정하기"
-                @click="
-                  () => {
-                    openModal(schedule);
-                    handleEdit();
-                  }
-                "
-              />
+              <PencilSquareIcon class="action-icon" title="수정하기" @click="
+                () => {
+                  openModal(schedule);
+                  handleEdit();
+                }
+              " />
               <XMarkIcon class="action-icon" title="삭제하기" @click="handleDelete(schedule)" />
             </div>
           </div>
@@ -68,7 +60,11 @@
   </div>
 
   <!-- 일정 삭제 모달 -->
-  <div class="modal fade" id="scheduleDeleteModal" tabindex="-1" aria-labelledby="scheduleDeleteModalLabel" aria-hidden="true" ref="deleteModalRef">
+  <BaseModal :show="showDeleteModal" type="default-dual" title="일정 삭제" confirm-button-text="예"
+    close-button-text="아니요" @confirm="handleDeleteConfirm()" @close="showDeleteModal = false">
+    삭제된 일정은 복구할 수 없습니다. 정말 삭제하시겠습니까?
+  </BaseModal>
+  <!-- <div class="modal fade" id="scheduleDeleteModal" tabindex="-1" aria-labelledby="scheduleDeleteModalLabel" aria-hidden="true" ref="deleteModalRef">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -82,19 +78,22 @@
         </div>
       </div>
     </div>
-  </div>
+  </div> -->
 
+  <!-- 일정 삭제 완료 모달 -->
   <BaseModal :show="showDeleteCompleted" type="default" title="일정 삭제 완료" @close="showDeleteCompleted = false">
     일정이 삭제되었습니다.
   </BaseModal>
 
   <!-- 일정 상세 모달 -->
-  <div class="modal fade" id="scheduleDetailModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true" ref="detailModalRef">
+  <div class="modal fade" id="scheduleDetailModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true"
+    ref="detailModalRef">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="scheduleModalLabel">일정 상세보기</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @click="editMode = false"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+            @click="editMode = false"></button>
         </div>
         <div class="modal-body" v-if="selectedSchedule">
           <!-- 일정 제목 -->
@@ -106,7 +105,8 @@
           <!-- 일정 내용 -->
           <div class="mb-3">
             <label class="form-label">일정 내용</label>
-            <textarea class="form-control" v-model="selectedSchedule.scheduleContent" rows="3" :disabled="!editMode"></textarea>
+            <textarea class="form-control" v-model="selectedSchedule.scheduleContent" rows="3"
+              :disabled="!editMode"></textarea>
           </div>
 
           <!-- 일정 기간(수정 모드) -->
@@ -122,7 +122,8 @@
             <label class="form-label">일정 기간</label>
             <div class="row m-1">
               <div class="col-6">
-                <input type="text" class="form-control" :value="formatDate(selectedSchedule.scheduleStartDate)" :disabled="!editMode" />
+                <input type="text" class="form-control" :value="formatDate(selectedSchedule.scheduleStartDate)"
+                  :disabled="!editMode" />
               </div>
               <div class="col-md-1 d-flex align-items-center justify-content-center">
                 <span>부터</span>
@@ -130,7 +131,8 @@
             </div>
             <div class="row m-1">
               <div class="col-6">
-                <input type="text" class="form-control" :value="formatDate(selectedSchedule.scheduleEndDate)" :disabled="!editMode" />
+                <input type="text" class="form-control" :value="formatDate(selectedSchedule.scheduleEndDate)"
+                  :disabled="!editMode" />
               </div>
               <div class="col-md-1 d-flex align-items-center justify-content-center">
                 <span>까지</span>
@@ -149,7 +151,10 @@
           <!-- 담당자(수정 모드) -->
           <div class="mb-3" v-if="editMode">
             <label class="form-label">담당자 선택</label><br />
-            <span v-for="projectMember in projectMemberList" :key="projectMember.userId" style="cursor: pointer" class="badge me-1" :class="scheduleMemberList.includes(projectMember.userId) ? 'bg-secondary' : 'bg-light text-dark'" @click="toggleScheduleMember(projectMember)">
+            <span v-for="projectMember in projectMemberList" :key="projectMember.userId" style="cursor: pointer"
+              class="badge me-1"
+              :class="scheduleMemberList.includes(projectMember.userId) ? 'bg-secondary' : 'bg-light text-dark'"
+              @click="toggleScheduleMember(projectMember)">
               {{ projectMember.userName }}
               ({{ projectMember.userLoginId }})
             </span>
@@ -167,9 +172,11 @@
 
           <!-- 하단 버튼 구역 -->
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="editMode = false">닫기</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+              @click="editMode = false">닫기</button>
             <button type="button" class="btn btn-primary" @click="handleEdit()" v-if="!editMode">수정하기</button>
-            <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @click="handleUpdateConfirm()" v-if="editMode">수정확인</button>
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @click="handleUpdateConfirm()"
+              v-if="editMode">수정확인</button>
           </div>
         </div>
       </div>
@@ -232,6 +239,7 @@ const detailModalRef = ref(null);
 const deleteModalRef = ref(null);
 let modalInstance = null;
 
+const showDeleteModal = ref(false);
 const showDeleteCompleted = ref(false);
 
 const editMode = ref(false);
@@ -376,12 +384,14 @@ async function handleUpdateConfirm() {
 function handleDelete(schedule) {
   selectedSchedule.value = schedule;
   // if (!modalInstance) {
-  modalInstance = new Modal(deleteModalRef.value);
   // }
-  modalInstance.show();
+  // modalInstance = new Modal(deleteModalRef.value);
+  // modalInstance.show();
+  showDeleteModal.value = true;
 }
 
 async function handleDeleteConfirm() {
+  showDeleteModal.value = false;
   try {
     const response = await scheduleApi.scheduleDelete(selectedSchedule.value.scheduleId);
     const result = response.data;
