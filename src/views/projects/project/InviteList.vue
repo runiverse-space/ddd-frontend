@@ -72,7 +72,7 @@ async function handleAcceptInvitation(notice) {
 
         await projectActivityApi.acceptProjectInvitation(notice);
         notifications.value = notifications.value.filter(
-            (n) => n.paId !== notice.paId
+            (n) => n.activityId !== notice.activityId
         );
     } catch (error) {
         console.log(error);
@@ -84,7 +84,7 @@ async function handleDeclineInvitation(notice) {
     try {
         await projectActivityApi.declineProjectInvitation(notice);
         notifications.value = notifications.value.filter(
-            (n) => n.paId !== notice.paId
+            (n) => n.activityId !== notice.activityId
         );
     } catch (error) {
         console.log(error);
