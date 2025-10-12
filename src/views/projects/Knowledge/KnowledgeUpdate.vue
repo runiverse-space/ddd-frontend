@@ -5,18 +5,16 @@
       <div>
         <div class="mb-3">
           <label for="knowledgeTitle" class="form-label">제목</label>
-          <input type="text" class="form-control" v-model="knowledge.knowledgeTitle" 
-          :class="{ 'is-invalid': touched.knowledgeTitle && errors.knowledgeTitle }"
-          @blur="handleTitleBlur"
+          <input type="text" class="form-control" v-model="knowledge.knowledgeTitle" :class="{ 'is-invalid': touched.knowledgeTitle && errors.knowledgeTitle }" @blur="handleTitleBlur"
             @input="handleTitleInput">
         </div>
         <div class="mb-3">
           <label for="knowledgeContent" class="form-label">내용</label>
           <textarea class="form-control" :class="{ 'is-invalid': touched.knowledgeContent && errors.knowledgeContent }" style="width: 100rem; height: 200px; resize: none;" rows="3"
             v-model="knowledge.knowledgeContent" @blur="handleContentBlur" @input="handleContentInput"> </textarea>
-            <div v-if="touched.knowledgeContent && errors.knowledgeContent" class="invalid-feedback">
-              {{ errors.knowledgeContent }}
-            </div>
+          <div v-if="touched.knowledgeContent && errors.knowledgeContent" class="invalid-feedback">
+            {{ errors.knowledgeContent }}
+          </div>
         </div>
         <div class="mb-3">
           <LinkIcon class="need-icon" />
@@ -55,23 +53,13 @@
       </div>
     </form>
 
-    <div class="modal fade" id="validationModal" tabindex="-1" aria-labelledby="validationModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="validationModalLabel"> </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            {{ modalMessage }}
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-dark" data-bs-dismiss="modal">확인</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <BaseModal :show="Default" type="default" buttonAction="confirm" title="지식창고 수정" button-text="수정" @confirm="onConfirm" @close="Default = false">
+      작성하신 글을 수정할까요?
+    </BaseModal>
 
+    <BaseModal :show="showErrorModal" type="error" title="수정 실패" @close="showErrorModal = false">
+      {{ modalMessage }}
+    </BaseModal>
 
 
   </div>
@@ -87,17 +75,20 @@ import { ArchiveBoxArrowDownIcon, LinkIcon } from '@heroicons/vue/24/outline';
 import TagSelector from '@/components/TagSelector.vue';
 import tagApi from '@/apis/tagApi';
 import * as bootstrap from 'bootstrap';
+import BaseModal from '@/components/BaseModal.vue';
 
 
 const route = useRoute();
 const router = useRouter();
 const knowledgeId = route.query.knowledgeId;
-// console.log(knowledgeId);
 
-
+//모달창
+const Default = ref(false);  // ⭐ 성공 모달
+const showErrorModal = ref(false);    // ⭐ 에러 모달
+const modalMessage = ref('');
 
 const selectedTags = ref([]);
-const modalMessage = ref('');
+
 const knowledge = ref({
   knowledgeId: "",
   knowledgeTitle: "",
@@ -150,13 +141,13 @@ function validateForm() {
   return isTitleValid && isContentValid;
 }
 
-function showModal(message) {
-  modalMessage.value = message;
-  const modalElement = document.getElementById('validationModal');
-  const modal = new bootstrap.Modal(modalElement);
-  modal.show();
+// function showModal(message) {
+//   modalMessage.value = message;
+//   const modalElement = document.getElementById('validationModal');
+//   const modal = new bootstrap.Modal(modalElement);
+//   modal.show();
 
-}
+// }
 
 function handleTitleBlur() {
   touched.value.knowledgeTitle = true;
@@ -179,17 +170,25 @@ function handleTitleInput() {
 const kfAttach = ref(null);
 
 async function handleSubmit() {
-  if(!validateForm()){
-    showModal('필수 항목을 입력해주세요.');
+  if (!validateForm()) {
+    modalMessage.value = '필수 항목을 입력해주세요.';
+    console.log("2. 모달 띄우기");
+    showErrorModal.value = true;
     return;
   }
+  Default.value = true;
 
-updateKnowledge();
+
 }
 
+function onConfirm() {
+  Default.value = false;
+  updateKnowledge();
 
-async function updateKnowledge(){
-  
+}
+
+async function updateKnowledge() {
+
   const formData = new FormData();
   formData.append("knowledgeId", knowledgeId);
   // console.log('수정요청 knowledgeId', knowledgeId);
@@ -204,7 +203,7 @@ async function updateKnowledge(){
   //게시판 수정 요청
   try {
     const response = await knowledgeApi.knowledgeUpdate(formData);
-    
+
     const updatedKnowledgeId = response.data.knowledgeId;
 
     //태그 업데이트
@@ -221,11 +220,13 @@ async function updateKnowledge(){
         tagIds: []
       });
     }
-    showModal('수정 완료되었습니다.');
-  router.back();
+    console.log("수정완료, 페이지 이동")
+    router.back();
+
   } catch (error) {
     console.log(error);
-    showModal('서버 오류가 발생했습니다.');
+    modalMessage.value='서버 오류가 발생했습니다.'
+    showErrorModal.value=true;
   }
 }
 
@@ -245,7 +246,7 @@ async function getKnowledgeList() {
     }
 
     const responseTag = await tagApi.getKnowledgeTags(knowledgeId);
-   
+
 
     selectedTags.value = responseTag.data.tags;
 
@@ -261,7 +262,6 @@ getKnowledgeList(knowledgeId);
 </script>
 
 <style scoped>
-
 .available-tags {
   display: flex;
   flex-wrap: wrap;
@@ -332,6 +332,4 @@ getKnowledgeList(knowledgeId);
   width: 24px;
   height: 24px;
 }
-
-
 </style>
