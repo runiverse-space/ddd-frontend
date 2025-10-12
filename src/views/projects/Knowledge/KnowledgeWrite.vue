@@ -46,23 +46,20 @@
 
       </div>
     </form>
+    <BaseModal 
+    :show="Default" 
+    type="default" 
+    buttonAction="confirm" 
+    title="지식창고 등록" 
+    button-text="등록"
+    @confirm="onConfirm" 
+    @close="Default = false" >
+     작성하신 글을 등록할까요?
+    </BaseModal>
 
-    <div class="modal fade" id="validationModal" tabindex="-1" aria-labelledby="validationModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="validationModalLabel"> </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            {{ modalMessage }}
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-dark" data-bs-dismiss="modal">확인</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <BaseModal :show="showErrorModal" type="error" title="등록 실패" @close="showErrorModal = false">
+      {{modalMessage }}
+    </BaseModal>
 
   </div>
 </template>
@@ -70,27 +67,29 @@
 
 <!--컴포넌트의 초기화 또는 이벤트 처리-->
 <script setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { LinkIcon, ArchiveBoxArrowDownIcon } from "@heroicons/vue/24/outline";
 import knowledgeApi from '@/apis/knowledgeApi';
 // @ts-nocheck
-import * as bootstrap from 'bootstrap';
 import tagApi from '@/apis/tagApi';
 import TagSelector from '@/components/TagSelector.vue';
+import BaseModal from '@/components/BaseModal.vue';
 
 
 const store = useStore();
 const router = useRouter();
 const route = useRoute();
 const projectId = route.params.projectId;
-const modalMessage = ref('');
+
+//모달창
+const Default = ref(false);  // ⭐ 성공 모달
+const showErrorModal = ref(false);    // ⭐ 에러 모달
+const modalMessage=ref('');
 
 //태그 추가
 const selectedTags = ref([]);
-
-
 const knowledge = ref({
   knowledgeTitle: "",
   knowledgeContent: "",
@@ -139,13 +138,7 @@ function validateForm() {
   return isTitleValid && isContentValid;
 }
 
-function showModal(message) {
-  modalMessage.value = message;
-  const modalElement = document.getElementById('validationModal');
-  const modal = new bootstrap.Modal(modalElement);
-  modal.show();
 
-}
 
 function handleTitleBlur() {
   touched.value.knowledgeTitle = true;
@@ -169,22 +162,33 @@ const kfAttach = ref(null);
 //멀티 파트 객체 생성
 async function handleSubmit() {
   // console.log('userId를 확인:', store.state.userId);
-
+  console.log("1. handleSubmit 실행");
   touched.value.knowledgeTitle = true;
   touched.value.knowledgeContent = true;
 
   if (!validateForm()) {
-    showModal('필수 항목을 입력해주세요.');
+    modalMessage.value = '필수 항목을 입력해주세요.';
+    console.log("2. 모달 띄우기");
+    showErrorModal.value = true;
     return;
   }
-  //유효성 검사 통과시 실제 등록 처리
-  submitKnowledge();
+// 확인 모달 띄우기  
+  Default.value=true;
+  
+  
 }
+// 확인 버튼 클릭 시 실행
+function onConfirm(){
+  Default.value=false;
+  submitKnowledge();
 
+}
 
 //실제 파일과 함께 등록 처리 함수
 async function submitKnowledge() {
-
+   console.log("3. submitKnowledge 실행됨!");
+  // showInfo.value = false; 
+  
   const formData = new FormData();
   formData.append("knowledgeTitle", knowledge.value.knowledgeTitle);
   formData.append("knowledgeContent", knowledge.value.knowledgeContent);
@@ -199,31 +203,31 @@ async function submitKnowledge() {
   }
 
   try {
+     console.log("4. API 호출 시작");
     const response = await knowledgeApi.knowledgeCreate(formData);
+     console.log("5. API 응답:", response.data);
     const knowledgeId = response.data.knowledgeId;
 
     if (selectedTags.value.length > 0) {
-      const selectedTagIds =selectedTags.value.map(tag=>tag.tagId);
+      const selectedTagIds = selectedTags.value.map(tag => tag.tagId);
 
       await tagApi.updateKnowledgeTags({
         knowledgeId: knowledgeId,
-        tagIds: selectedTagIds 
+        tagIds: selectedTagIds
       });
-
-
     }
-    showModal('등록되었습니다.');
+    console.log("6. 등록 완료, 페이지 이동");
+    router.back();
 
     // console.log(response);
-    router.back();
   } catch (error) {
     console.log(error);
-    showModal('서버 오류가 발생했습니다.');
-    
+    modalMessage.value='서버 오류가 발생했습니다.'
+    showErrorModal.value=true;
+
   }
 
 }
-
 
 
 
