@@ -8,7 +8,11 @@
       <label class="form-label">
         프로젝트명 <span class="text-danger">*</span>
       </label>
-      <input type="text" class="form-control" placeholder="프로젝트명을 입력하세요" v-model="project.projectTitle" />
+      <input type="text" class="form-control" :class="{ 'is-invalid': touched.projectTitle && errors.projectTitle }" placeholder="프로젝트명을 입력하세요" v-model="project.projectTitle" @focus="handleTitleFocus"
+        @blur="handleTitleBlur" @input="handleTitleInput" />
+      <div v-if="touched.projectTitle && errors.projectTitle" class="invalid-feedback">
+        {{ errors.projectTitle }}
+      </div>
     </div>
 
     <!-- 2단계: 프로젝트 개요 -->
@@ -16,7 +20,11 @@
       <label class="form-label">
         프로젝트 개요 <span class="text-danger">*</span>
       </label>
-      <textarea class="form-control" rows="6" placeholder="프로젝트 소개를 입력합니다. (최대 150자 제한)" v-model="project.projectContent" maxlength="150"></textarea>
+      <textarea class="form-control" :class="{ 'is-invalid': touched.projectContent && errors.projectContent }" rows="6" placeholder="프로젝트 소개를 입력합니다. (최대 150자 제한)" v-model="project.projectContent"
+        maxlength="150" @focus="handleContentFocus" @blur="handleContentBlur" @input="handleContentInput"></textarea>
+      <div v-if="touched.projectContent && errors.projectContent" class="invalid-feedback">
+        {{ errors.projectContent }}
+      </div>
       <small class="text-muted">{{ project.projectContent?.length || 0 }}/150 characters</small>
     </div>
 
@@ -70,10 +78,17 @@
       </button>
     </div>
 
-    <!-- 7단계: 태그 추가 -->
+      <!-- 7단계: 태그 추가 (✨ 유효성 검사 추가) -->
     <div class="tag-section">
-      <label>프로젝트 태그</label>
-      <DualTagSelector tagType="PROJECT" v-model="selectedTags" />
+      <label>
+        프로젝트 태그(최대 3개)<span class="text-danger">*</span>
+      </label>
+      <div :class="{ 'border border-danger rounded p-2': touched.tags && errors.tags }">
+        <DualTagSelector tagType="PROJECT" v-model="selectedTags" @update:modelValue="handleTagsChange" />
+      </div>
+      <div v-if="touched.tags && errors.tags" class="text-danger small mt-1">
+        {{ errors.tags }}
+      </div>
     </div>
 
     <!-- 생성 버튼 -->
@@ -86,6 +101,37 @@
       </button>
 
     </div>
+
+    <!-- 프로젝트 수정 -->
+    <BaseModal 
+    :show="showDefault" 
+    buttonAction="confirm"
+    buttonText="수정"
+    type="default" 
+    title="프로젝트 수정" 
+    @close="showDefault = false"
+    @confirm="updateConfirm">
+      프로젝트를 수정하시겠습니까?
+    </BaseModal>
+
+    <!-- 프로젝트 수정 완료 모달 -->
+    <BaseModal 
+    :show="showDefaultCompleted" 
+    type="default" title="수정 완료" 
+    @close="showDefaultCompleted = false; 
+    router.push('/project')">
+      프로젝트 수정이 완료되었습니다.
+    </BaseModal>
+
+    <!-- ✨ 에러 모달 추가 -->
+    <BaseModal :show="showErrorModal"
+     type="error" title="수정 실패"
+      @close="showErrorModal = false">
+      {{ modalMessage }}
+    </BaseModal>
+
+
+
   </div>
 
 </template>
@@ -104,6 +150,7 @@ import DualTagSelector from '@/components/DualTagSelector.vue';
 import defaultImgSrc from '@/assets/default-profile.png';
 import MemberSelector from '@/components/MemberSelector.vue';
 import userprojectroleApi from '@/apis/userprojectroleApi';
+import BaseModal from '@/components/BaseModal.vue';
 
 
 const props = defineProps(['projectId']);
@@ -125,6 +172,13 @@ const projectIdNumber = computed(() => parseInt(projectId.value, 10));
 // memberselecto로 수정
 const projectMembers = ref([]);
 
+//모달창 등록
+const showDefault = ref(false);
+const showDefaultCompleted = ref(false);
+
+const showErrorModal = ref(false);    // ⭐ 에러 모달
+const modalMessage = ref('');
+
 const project = ref({
   projectId: "",
   userId: userId,
@@ -144,6 +198,107 @@ const creatorInfo = ref({
   profileUrl: defaultImg
 })
 
+
+//유효성검사 빨갛게 띄우기
+
+//에러 상태 추가
+const errors = ref({
+  projectTitle: "",
+  projectContent: "",
+  tags: ""
+});
+
+// 터치 상태
+const touched = ref({
+  projectTitle: false,
+  projectContent: false,
+  tags: false
+})
+
+//제목 검증 함수
+function validateTitle() {
+
+  if (!project.value.projectTitle || project.value.projectTitle.trim() === '') {
+    errors.value.projectTitle = '제목은 필수 입력 항목입니다.';
+    return false;
+  }
+  errors.value.projectTitle = '';
+  return true;
+}
+
+//내용 검증 함수
+function validateContent() {
+  if (!project.value.projectContent || project.value.projectContent.trim() === '') {
+    errors.value.projectContent = '내용은 필수 입력 항목입니다.';
+    return false;
+  }
+  errors.value.projectContent = '';
+  return true;
+}
+
+// ✨ 태그 검증 함수 
+function validateTags() {
+  if (!selectedTags.value || selectedTags.value.length === 0) {
+    errors.value.tags = '최소 1개 이상의 태그를 선택해주세요.';
+    return false;
+  }
+  if (selectedTags.value.length > 3) {
+    errors.value.tags = '태그는 최대 3개까지 선택 가능합니다.';
+    return false;
+  }
+  errors.value.tags = '';
+  return true;
+}
+
+//전체 폼 검증
+function validateForm() {
+  const isTitleValid = validateTitle();
+  const isContentValid = validateContent();
+  const isTagsValid = validateTags();
+  return isTitleValid && isContentValid && isTagsValid;
+}
+
+
+// ✨ 제목 focus (지나갈 때 바로 touched 설정)
+function handleTitleFocus() {
+  touched.value.projectTitle = true;
+}
+
+// 제목 blur (검증 실행)
+function handleTitleBlur() {
+  validateTitle();
+}
+
+// 제목 input (실시간 에러 제거)
+function handleTitleInput() {
+  if (touched.value.projectTitle) {
+    validateTitle();
+  }
+}
+
+// ✨ 내용 focus (지나갈 때 바로 touched 설정)
+function handleContentFocus() {
+  touched.value.projectContent = true;
+}
+
+// 내용 blur (검증 실행)
+function handleContentBlur() {
+  validateContent();
+}
+
+// 내용 input (실시간 에러 제거)
+function handleContentInput() {
+  if (touched.value.projectContent) {
+    validateContent();
+  }
+}
+
+// ✨ 태그 변경 핸들러 (선택/해제 시 즉시 검증)
+function handleTagsChange() {
+  touched.value.tags = true;
+  validateTags();
+}
+
 //** 오늘 날짜를 YYYY-MM-DD 형식으로 생성
 const today = computed(() => {
   const date = new Date();
@@ -161,65 +316,64 @@ const minEndDate = computed(() => {
 //프로젝트 수정하기
 async function updateProject() {
 
-  //** 필수 입력 검증
-  if (!project.value.projectTitle.trim()) {
-    alert('프로젝트명을 입력해주세요.');
-    return;
-  }
+  touched.value.projectTitle = true;
+  touched.value.projectContent = true;
+  touched.value.tags = true;
 
-  if (!project.value.projectContent.trim()) {
-    alert('프로젝트 개요를 입력해주세요.');
+  // 전체 유효성 검사
+  if (!validateForm()) {
+    showErrorModal.value = true;
+    modalMessage.value = '필수 항목을 모두 입력해주세요.';
+    console.log("2. 유효성검사완료");
     return;
   }
+console.log("3. 유효성검사 진짜 완료");
+  showDefault.value = true;
+}
+
+async function updateConfirm(){
+  console.log("수정하기 버튼 누르고 실제 api 호출하기");
+  showDefault.value = false;
+  
   try {
-    const currentMemberIds = selectedMembers.value.map(member => member.userId);
+    // 🔍 1. 데이터 확인
+    // console.log("📋 selectedMembers.value:", selectedMembers.value);
+    // console.log("📋 originalMemberIds.value:", originalMemberIds.value);
 
-    //새로운 멤버 추가
-    const newMemberIds = currentMemberIds.filter(
+    // 🔍 2. 현재 선택된 멤버 ID 추출
+    const currentMemberIds = selectedMembers.value.map(member => member.userId);
+    // console.log("🔍 현재 멤버 IDs:", currentMemberIds);
+    
+    // 🔍 3. 추가할 멤버 계산 (현재 있는데 원본에 없는 것)
+    const addUserIdList = currentMemberIds.filter(
       id => !originalMemberIds.value.includes(id)
     );
+    // console.log("➕ 추가할 멤버:", addUserIdList);
 
-    // 삭제된 멤버
-    const removedMemberIds = originalMemberIds.value.filter(
+    // 🔍 4. 삭제할 멤버 계산 (원본에 있는데 현재 없는 것)
+    const removeUserIdList = originalMemberIds.value.filter(
       id => !currentMemberIds.includes(id)
     );
+    // console.log("➖ 삭제할 멤버:", removeUserIdList);
 
-    console.log('원본 멤버:', originalMemberIds.value);
-    console.log('현재 멤버:', currentMemberIds);
-    console.log('추가할 멤버:', newMemberIds);
-    console.log('삭제할 멤버:', removedMemberIds);
-
+    // 🔍 5. 전송할 데이터 구성
     const data = {
       projectId: projectIdNumber.value,
       projectTitle: project.value.projectTitle,
       projectContent: project.value.projectContent,
       projectStartDate: project.value.projectStartDate,
       projectEndDate: project.value.projectEndDate,
-      userIds: newMemberIds,
-      projectMilestones: []
-    }
+      addUserIdList: addUserIdList,        // ✅ 추가
+      removeUserIdList: removeUserIdList,  // ✅ 삭제
+      projectMilestones: project.value.projectMilestones || []
+    };
 
-    // ✅ 삭제할 멤버가 있으면 removeUserIds 추가
-    if (removedMemberIds.length > 0) {
-      data.removeUserIds = removedMemberIds;
-      console.log('🗑️ 삭제할 멤버 추가:', removedMemberIds);
-    }
-
-    // ✅ 로그 출력
-    if (newMemberIds.length > 0) {
-      console.log('➕ 새로 추가할 멤버:', newMemberIds);
-    }
-
-    if (newMemberIds.length === 0 && removedMemberIds.length === 0) {
-      console.log('✅ 멤버 변경 없음');
-    }
-
-
-    console.log('백엔드로 전송할 데이터:', data);
-    const response = await projectApi.updateProject(data);
-    console.log('프로젝트 수정 응답:', response);
-    console.log('응답 상태:', response.data);
-
+    // console.log("🚀 백엔드로 전송할 데이터:", JSON.stringify(data, null, 2));
+    // console.log("   - addUserIdList:", data.addUserIdList);
+    // console.log("   - removeUserIdList:", data.removeUserIdList);
+      const response = await projectApi.updateProject(data);
+    // console.log("✅ 프로젝트 수정 응답:", response);
+    // console.log("✅ 응답 상태:", response.data);
     if (response.data.result !== 'success') {
       throw new Error(response.data.message || '프로젝트 수정 실패');
     }
@@ -241,7 +395,7 @@ async function updateProject() {
 
     //태그 연결 선택된 태그가 있을경우만.. 무조건 태그 선택하도록해야함
     if (selectedTags.value.length > 0) {
-      // const selectedTagIds = selectedTags.value.map(tag => tag.tagId);
+      const selectedTagIds = selectedTags.value.map(tag => tag.tagId);
       await tagApi.updateProjectTags({
         projectId: projectIdNumber.value,
         tagIds: selectedTags.value.map(tag => tag.tagId)
@@ -253,8 +407,8 @@ async function updateProject() {
   } catch (error) {
     console.log(error);
   }
-
 }
+
 
 //기존 프로젝트 내용 조회하기
 //** ===== 기존 프로젝트 내용 조회하기 (디버깅 버전) =====
@@ -263,7 +417,7 @@ async function loadProjectDetail() {
     //** 1️⃣ 프로젝트 기본 정보 불러오기
     const response = await projectApi.getProjectDetail(projectIdNumber.value);
     const data = response.data.data;
-    console.log('📦 1단계: 프로젝트 기본 정보', data);
+    // console.log('📦 1단계: 프로젝트 기본 정보', data);
 
     project.value = {
       ...data,
@@ -276,8 +430,8 @@ async function loadProjectDetail() {
     try {
       const creatorResponse = await usersApi.usersDetailById(data.userId);
       const creatorData = creatorResponse.data.data;
-      console.log('👤 2단계: 만든이 정보', creatorData);
-      
+      // console.log('👤 2단계: 만든이 정보', creatorData);
+
       try {
         const profileResponse = await usersApi.ufAttachDownload(creatorData.userId);
         const blobUrl = URL.createObjectURL(profileResponse.data);
@@ -296,20 +450,20 @@ async function loadProjectDetail() {
     }
 
     //** 3️⃣ 프로젝트 멤버 목록 불러오기
-    console.log('🔍 3단계: 멤버 목록 조회 시작, projectId:', projectIdNumber.value);
-    
+    // console.log('🔍 3단계: 멤버 목록 조회 시작, projectId:', projectIdNumber.value);
+
     const memberResponse = await userprojectroleApi.getMemberList(projectIdNumber.value);
     // console.log('📥 멤버 API 전체 응답:', memberResponse);
     // console.log('📥 멤버 API result:', memberResponse.data.result);
     // console.log('📥 멤버 API data:', memberResponse.data.data);
 
-      const members = memberResponse.data.data ||  memberResponse.data ||[];
-      // console.log('👥 불러온 멤버 목록 (전체):', members);
-      // console.log('👥 멤버 수:', members.length);
+    const members = memberResponse.data.data || memberResponse.data || [];
+    // console.log('👥 불러온 멤버 목록 (전체):', members);
+    // console.log('👥 멤버 수:', members.length);
 
-      //** 각 멤버의 역할 확인
+    //** 각 멤버의 역할 확인
 
-      if (Array.isArray(members) && members.length > 0) {
+    if (Array.isArray(members) && members.length > 0) {
       members.forEach((member, index) => {
         console.log(`  멤버 ${index + 1}:`, {
           userId: member.userId,
@@ -327,11 +481,11 @@ async function loadProjectDetail() {
       originalMemberIds.value = nonAdminMembers.map(m => m.userId);
       // console.log('💾 원본 멤버 ID 저장:', originalMemberIds.value);
       //새배열을 생성
-      const loadedMembers = []; 
+      const loadedMembers = [];
       //** ADMIN이 아닌 멤버들의 상세 정보 불러오기
       for (const member of nonAdminMembers) {
         // console.log(`🔄 멤버 상세 정보 조회 중: userId=${member.userId}`);
-        
+
         const userResponse = await usersApi.usersDetailById(member.userId);
         const userData = userResponse.data.data;
         // console.log('  ✅ 상세 정보:', userData);
@@ -341,40 +495,40 @@ async function loadProjectDetail() {
           const profileResponse = await usersApi.ufAttachDownload(userData.userId);
           const blobUrl = URL.createObjectURL(profileResponse.data);
           userData.profileUrl = blobUrl;
-          // console.log('  ✅ 프로필 이미지 로드 성공');
+          console.log('  ✅ 프로필 이미지 로드 성공');
         } catch (error) {
           userData.profileUrl = defaultImg;
-          // console.log('  ⚠️ 프로필 이미지 로드 실패, 기본 이미지 사용');
+          console.log('  ⚠️ 프로필 이미지 로드 실패, 기본 이미지 사용');
         }
 
 
         loadedMembers.push({
           userId: userData.userId,
-            userEmail: userData.userEmail,
-            userName: userData.userName,
-            ufAttachoname: userData.ufAttachoname,
-            profileUrl: userData.profileUrl
+          userEmail: userData.userEmail,
+          userName: userData.userName,
+          ufAttachoname: userData.ufAttachoname,
+          profileUrl: userData.profileUrl
         })
 
         //  console.log('  ✅ loadedMembers에 추가:', loadedMembers.length, '명');
-        
+
       }
-      selectedMembers.value=loadedMembers;
+      selectedMembers.value = loadedMembers;
       //   console.log('  ✅ selectedMembers에 추가:', selectedMembers.value.length,"명");
       // console.log('✅ 최종 selectedMembers:', selectedMembers.value);
       // console.log('✅ 최종 selectedMembers 길이:', selectedMembers.value.length);
-    }else {
+    } else {
       //** 멤버가 없거나 배열이 아닌 경우
       console.warn('⚠️ 멤버 데이터가 없거나 잘못된 형식입니다:', members);
       selectedMembers.value = [];
       originalMemberIds.value = [];
     }
-    
+
 
     //** 4️⃣ 마일스톤 불러오기
     const milestonesResponse = await projectMilestoneApi.getProjectMilestones(projectIdNumber.value);
     // console.log('📅 4단계: 마일스톤 응답', milestonesResponse.data);
-    
+
     if (milestonesResponse.data.result === 'success') {
       project.value.projectMilestones = (milestonesResponse.data.data || []).map(milestone => ({
         ...milestone,
@@ -387,7 +541,7 @@ async function loadProjectDetail() {
     //** 5️⃣ 태그 내용 불러오기
     const tagResponse = await tagApi.getProjectTags(projectIdNumber.value);
     // console.log('🏷️ 5단계: 태그 응답', tagResponse.data);
-    
+
     selectedTags.value = tagResponse.data.tags || [];
 
     // console.log('✅ 프로젝트 데이터 로드 완료');
