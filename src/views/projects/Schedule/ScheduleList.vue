@@ -190,7 +190,7 @@ import projectApi from "@/apis/projectApi";
 import scheduleApi from "@/apis/scheduleApi";
 import usersApi from "@/apis/usersApi";
 import BaseModal from "@/components/BaseModal.vue";
-import { CalendarIcon, ListBulletIcon, PencilSquareIcon, XMarkIcon } from "@heroicons/vue/24/outline";
+import { CalendarIcon, ListBulletIcon, PencilSquareIcon, PlusIcon, XMarkIcon } from "@heroicons/vue/24/outline";
 import { Modal } from "bootstrap";
 import { computed, onMounted, reactive } from "vue";
 import { ref } from "vue";
