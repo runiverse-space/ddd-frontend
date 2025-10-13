@@ -84,13 +84,13 @@ const milestones = ref([]);
 /* ✅ 마일스톤 불러오기 */
 async function loadMilestones() {
   try {
-    console.log("🔵 타임라인 로드:", projectDetail.value);
+    // console.log("🔵 타임라인 로드:", projectDetail.value);
     const res = await projectMilestoneApi.getProjectMilestones(projectDetail.value.projectId);
     if (res.data.result === "success") {
       milestones.value = res.data.data || [];
-      console.log("로드된 타임라인:", milestones.value);
+      // console.log("로드된 타임라인:", milestones.value);
     } else {
-      console.warn("❌ 타임라인 로드 실패:", res.data.message);
+      // console.warn("❌ 타임라인 로드 실패:", res.data.message);
     }
   } catch (err) {
     console.error("❌ 타임라인 불러오기 오류:", err);
@@ -109,10 +109,10 @@ async function loadProjectAdmin() {
     const response = await userprojectroleApi.getAdmin(projectIdNumber.value);
 
     projectAdminUserId.value = response.data.userId;
-    console.log("✅ Admin 권한 체크:");
-    console.log("  - 프로젝트 Admin userId:", projectAdminUserId.value);
-    console.log("  - 현재 사용자 userId:", store.state.userId);
-    console.log("  - Admin 여부:", isProjectAdmin.value);
+    // console.log("✅ Admin 권한 체크:");
+    // console.log("  - 프로젝트 Admin userId:", projectAdminUserId.value);
+    // console.log("  - 현재 사용자 userId:", store.state.userId);
+    // console.log("  - Admin 여부:", isProjectAdmin.value);
   } catch (error) {
     console.log(error);
   } finally {
@@ -124,7 +124,9 @@ async function deleteProject(projectId) {
   if (!confirm("정말 삭제하시겠습니까?")) return;
 
   try {
-    await projectApi.deleteProject(projectId);
+    const response= await projectApi.deleteProject(projectId);
+    console.log("삭제확인용",response.data);
+
     router.back();
   } catch (error) {
     console.error("삭제 실패:", error);
