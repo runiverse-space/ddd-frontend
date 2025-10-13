@@ -6,7 +6,11 @@
       <h3 class="title">알림</h3>
     </div>
 
-    <div v-if="filteredNotifications.length === 0" class="text-secondary">
+    <div v-if="store.state.userId === ''" class="text-secondary">
+      <p>알림을 읽으시려면 로그인을 하셔야 합니다.</p>
+    </div>
+
+    <div v-if="store.state.userId !== '' && filteredNotifications.length === 0" class="text-secondary">
       <p>읽지 않은 알림이 없습니다.</p>
     </div>
     <ul>
@@ -210,8 +214,10 @@ function formatDate(dataString) {
 }
 
 onMounted(async () => {
-  connect(store.state.userId);
-  await getAlarms();
+  if (store.state.userId !== "") {
+    connect(store.state.userId);
+    await getAlarms();
+  }
 });
 </script>
 
