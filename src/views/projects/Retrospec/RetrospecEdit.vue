@@ -1,6 +1,6 @@
 <template>
   <div class="retrospec-write">
-    <h2 class="page-title">회고 작성하기</h2>
+    <h2 class="page-title">회고 수정하기</h2>
 
     <!-- 제목 입력 -->
     <input v-model="title" type="text" placeholder="제목을 입력하세요" class="title-input" />
@@ -10,16 +10,15 @@
       <div class="template-group">
         <label>템플릿</label>
         <select
-  v-model="templateType"
-  @change="handleTemplateChange"
-  class="select-box"
->
-  <option disabled value="">템플릿을 선택해주세요</option>
-  <option value="KTP">KTP (Keep-Try-Problem)</option>
-  <option value="TIL">TIL (Today I Learned)</option>
-  <option value="CSS">CSS (Continue-Start-Stop)</option>
-</select>
-
+          v-model="templateType"
+          @change="handleTemplateChange"
+          class="select-box"
+        >
+          <option disabled value="">템플릿을 선택해주세요</option>
+          <option value="KTP">KTP (Keep-Try-Problem)</option>
+          <option value="TIL">TIL (Today I Learned)</option>
+          <option value="CSS">CSS (Continue-Start-Stop)</option>
+        </select>
       </div>
 
       <div class="date-group">
@@ -38,19 +37,19 @@
 
     <!-- 버튼 -->
     <div class="actions">
-      <button class="save-btn" @click="showConfirmModal = true">등록하기</button>
+      <button class="save-btn" @click="showConfirmModal = true">수정하기</button>
       <button class="cancel-btn" @click="goBack">취소</button>
     </div>
 
-    <!-- ✅ 등록 확인 모달 -->
+    <!-- ✅ 수정 확인 모달 -->
     <BaseModal
       :show="showConfirmModal"
       type="default-dual"
-      title="회고 등록"
+      title="회고 수정"
       @close="showConfirmModal = false"
-      @confirm="confirmSubmit"
+      @confirm="confirmEdit"
     >
-      글을 작성하시겠습니까?
+      회고를 수정하시겠습니까?
     </BaseModal>
 
     <!-- ✅ 템플릿 변경 경고 모달 -->
@@ -69,7 +68,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Editor from "@toast-ui/editor";
 import "@toast-ui/editor/dist/toastui-editor.css";
@@ -89,27 +88,47 @@ const endDate = ref("");
 const editorRoot = ref(null);
 let editorInstance = null;
 
+// ✅ 기존 데이터 로드용
+const retrospecId = ref(null);
+
 // 모달 상태
 const showConfirmModal = ref(false);
 const showTemplateModal = ref(false);
-const pendingTemplate = ref(""); // 변경하려는 템플릿 임시 저장
-const previousTemplate = ref(""); // 이전 템플릿 저장
+const pendingTemplate = ref("");
+const previousTemplate = ref("");
 
-/* ✅ Toast Editor 초기화 */
-onMounted(() => {
+/* ✅ Toast Editor 초기화 후 기존 데이터 로드 */
+onMounted(async () => {
+  // 먼저 Editor 생성
   editorInstance = new Editor({
     el: editorRoot.value,
     height: "400px",
     initialEditType: "markdown",
     previewStyle: "vertical",
   });
+
+  const { projectId, retroId } = route.params;
+  retrospecId.value = retroId;
+
+  // ✅ 데이터 로드
+  const { data } = await retrospecApi.getRetrospecDetail(retroId);
+
+  // 데이터 상태값 세팅
+  title.value = data.retrospecTitle;
+  templateType.value = data.retrospecTemplateType;
+  previousTemplate.value = data.retrospecTemplateType;
+  startDate.value = data.retrospecStartAt?.split("T")[0];
+  endDate.value = data.retrospecEndAt?.split("T")[0];
+
+  // ✅ Editor가 완전히 렌더된 후 내용 반영 (nextTick 보장)
+  await nextTick();
+  editorInstance.setMarkdown(data.retrospecContent || "");
 });
 
 /* ✅ 템플릿 변경 감지 */
 function handleTemplateChange(e) {
   const newTemplate = e.target.value;
 
-  // ✅ 첫 번째 선택 (이전 템플릿 없음) → 바로 적용
   if (!previousTemplate.value) {
     previousTemplate.value = newTemplate;
     templateType.value = newTemplate;
@@ -117,7 +136,6 @@ function handleTemplateChange(e) {
     return;
   }
 
-  // ✅ 이전과 다른 템플릿 선택 → 경고 모달 표시
   if (previousTemplate.value !== newTemplate) {
     pendingTemplate.value = newTemplate;
     showTemplateModal.value = true;
@@ -134,19 +152,18 @@ function confirmTemplateChange() {
 
 /* ✅ 템플릿 변경 취소 */
 function cancelTemplateChange() {
-  // ✅ select의 시각적 값 되돌리기
   templateType.value = previousTemplate.value;
   showTemplateModal.value = false;
 }
 
-/* ✅ 등록 모달 확인 시 실행 */
-function confirmSubmit() {
+/* ✅ 수정 모달 확인 시 실행 */
+function confirmEdit() {
   showConfirmModal.value = false;
-  submitRetrospec();
+  submitEdit();
 }
 
-/* ✅ 회고 저장 */
-async function submitRetrospec() {
+/* ✅ 회고 수정 요청 */
+async function submitEdit() {
   const content = editorInstance.getMarkdown();
   if (!title.value || !content) return alert("제목과 내용을 입력해주세요!");
   if (!startDate.value) return alert("시작일을 선택해주세요!");
@@ -167,26 +184,30 @@ async function submitRetrospec() {
       retrospecTitle: title.value,
       retrospecContent: content,
       retrospecTemplateType: templateType.value,
-      retrospecCategory: "task",
       retrospecStartAt: startAt,
       retrospecEndAt: endAt,
     };
 
-    console.log("데이터 요청", requestData);
-    await retrospecApi.retrospecCreate(requestData);
+    console.log("수정 요청 데이터", requestData);
+    await retrospecApi.retrospecUpdate(retrospecId.value, requestData);
     goBack();
   } catch (err) {
-    console.error("회고 저장 실패:", err);
+    console.error("회고 수정 실패:", err);
+    alert("수정 실패!");
   }
 }
 
 /* ✅ 뒤로가기 */
 function goBack() {
-  router.push({ name: "RetrospecHome", params: { projectId: route.params.projectId } });
+  router.push({
+    name: "RetrospecDetail",
+    params: { projectId: route.params.projectId, retroId: retrospecId.value },
+  });
 }
 </script>
 
 <style scoped>
+/* ✅ RetrospecWrite.vue 스타일 그대로 복사 */
 .retrospec-write {
   width: 80%;
   max-width: 1200px;
@@ -204,7 +225,6 @@ function goBack() {
   margin-bottom: 10px;
 }
 
-/* 제목 입력 */
 .title-input {
   width: 100%;
   padding: 10px;
@@ -213,7 +233,6 @@ function goBack() {
   font-size: 1rem;
 }
 
-/* 템플릿 + 날짜 한 줄 */
 .date-row {
   display: flex;
   align-items: flex-end;
@@ -221,7 +240,6 @@ function goBack() {
   flex-wrap: wrap;
 }
 
-/* 각 입력 블록 공통 */
 .date-group,
 .template-group {
   display: flex;
@@ -231,7 +249,6 @@ function goBack() {
   min-width: 180px;
 }
 
-/* 라벨 */
 .date-group label,
 .template-group label {
   font-size: 0.9rem;
@@ -239,7 +256,6 @@ function goBack() {
   font-weight: 500;
 }
 
-/* 인풋 공통 */
 .date-group input,
 .select-box {
   padding: 8px 10px;
@@ -249,12 +265,10 @@ function goBack() {
   width: 100%;
 }
 
-/* 에디터 */
 .editor-container {
   margin-top: 10px;
 }
 
-/* 버튼 영역 */
 .actions {
   margin-top: 20px;
   display: flex;

@@ -17,6 +17,12 @@ const routes = [
     component: () => import("@/views/projects/Retrospec/RetrospecDetail.vue"),
     props: true,
   },
+  {
+    path: "retrospec/edit/:retroId",
+    name: "RetrospecEdit",
+    component: () => import("@/views/projects/Retrospec/RetrospecEdit.vue"),
+    props: true,
+  },
 ];
 
 export default routes;
