@@ -3,9 +3,9 @@
     <!-- ✅ 1. Hero Section -->
     <section class="hero">
       <div class="hero-content">
-        <h1 class="headline">Dev. Dot. Done</h1>
+        <h1 class="headline">Dev-Dot-Done</h1>
         <p class="subtext">
-          개발자와 디자이너가 함께 만드는 협업 플랫폼.<br />
+          개발자와 디자이너가 함께 만드는 협업 플랫폼에서,<br />
           아이디어가 현실이 되는 순간을 경험하세요.
         </p>
 
@@ -22,13 +22,14 @@
 
     <!-- ✅ 2. Feature Section -->
     <section class="features">
-      <h2 class="section-title">DDD에서는 이런 걸 할 수 있어요</h2>
+      <h2 class="section-title">💌 DDD에서는 이런 걸 할 수 있어요</h2>
       <div class="feature-grid">
         <div class="feature-card" v-for="feature in features" :key="feature.title">
-          <div class="icon-placeholder">🔹</div>
-          <h3>{{ feature.title }}</h3>
-          <p>{{ feature.desc }}</p>
-        </div>
+  <component :is="feature.icon" class="feature-icon" /> <!-- ✅ 아이콘 표시 -->
+  <h3>{{ feature.title }}</h3>
+  <p>{{ feature.desc }}</p>
+</div>
+
       </div>
     </section>
 
@@ -62,21 +63,26 @@
 
 <script setup>
 import { ref } from "vue";
+import { FaceSmileIcon,ChatBubbleOvalLeftEllipsisIcon } from "@heroicons/vue/24/outline"; 
 
 const features = ref([
   {
+    icon: FaceSmileIcon,
     title: "프로젝트 관리",
     desc: "마일스톤, 일정, 회고를 한 곳에서 관리하세요.",
   },
   {
+    icon: FaceSmileIcon,
     title: "팀 협업",
     desc: "역할 부여와 초대를 통해 효율적인 협업을 경험하세요.",
   },
   {
+    icon: FaceSmileIcon,
     title: "회고 시스템",
     desc: "프로젝트 회고로 팀의 성장과 개선을 이어가세요.",
   },
   {
+    icon: FaceSmileIcon,
     title: "탐색",
     desc: "나와 맞는 프로젝트와 멤버를 손쉽게 찾아보세요.",
   },
@@ -116,10 +122,9 @@ const limitedProjects = ref([
   flex-direction: column;
   align-items: center;
   color: #222;
-  font-family: "Pretendard", sans-serif;
 }
 
-/* 🟣 1. Hero Section */
+/* 🟣 1. Hero Section 
 .hero {
   position: relative;
   width: 100%;
@@ -130,6 +135,25 @@ const limitedProjects = ref([
   text-align: center;
   color: white;
   background: linear-gradient(135deg, #6759f4, #8d7ffb);
+  overflow: hidden;
+}
+  */
+  .hero {
+  position: relative;
+  width: 100%;
+  height: 85vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: white;
+  /* 기존 linear-gradient 대신 이미지 + gradient 함께 사용 */
+  background-image: 
+    
+    url("@/assets/black-ele.png"); /* ✅ 배경 이미지 경로 */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   overflow: hidden;
 }
 
@@ -155,7 +179,7 @@ const limitedProjects = ref([
 }
 
 .subtext {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   line-height: 1.7;
   margin-bottom: 30px;
 }
@@ -177,7 +201,7 @@ const limitedProjects = ref([
 
 .btn.primary {
   background: white;
-  color: #6759f4;
+  color: #111;
 }
 
 .btn.secondary {
@@ -208,12 +232,33 @@ const limitedProjects = ref([
 }
 
 .feature-card {
-  width: 220px;
+  width: 250px;
   background: white;
   border-radius: 16px;
   padding: 30px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
   transition: transform 0.2s;
+}
+
+.feature-card h3 {
+  font-size: 1.1rem;
+  font-weight: 700; /* ✅ 제목 강조 */
+  margin-bottom: 8px;
+  color: #222;
+}
+
+.feature-card p {
+  font-size: 0.95rem;
+  font-weight: 500; /* ✅ 설명은 조금 얇게 */
+  color: #555;
+  line-height: 1.6;
+}
+
+.feature-icon {
+  width: 22px;
+  height: 22px;
+  color: #111;
+  margin-bottom: 10px;
 }
 
 .feature-card:hover {
@@ -280,7 +325,7 @@ const limitedProjects = ref([
   width: 100%;
   padding: 100px 0;
   text-align: center;
-  background: linear-gradient(135deg, #6759f4, #8d7ffb);
+  background: linear-gradient(135deg, #1a1a1a, #000);
   color: white;
 }
 
@@ -288,17 +333,18 @@ const limitedProjects = ref([
   padding: 14px 32px;
   font-size: 1.1rem;
   background: white;
-  color: #6759f4;
+  color: #111;
   border: none;
+  margin-top: 10px;
 }
 
 /* 🟣 5. Footer */
 .footer {
-  background: #111;
+  background: #fff;
   color: #aaa;
   width: 100%;
   text-align: center;
   padding: 30px 0;
-  font-size: 0.85rem;
+  font-size: 0.7rem;
 }
 </style>
